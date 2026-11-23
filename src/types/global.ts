@@ -1,73 +1,26 @@
+import {
+  ActivityAction,
+  ActivityEntity,
+  EntrySource,
+  MemberDeactivateAction,
+  PaymentAccountType,
+  PaymentMethodType,
+  ReturnType,
+  TransactionStatus,
+  UserRole,
+  UserStatus,
+} from "@/types/backend";
+
+/* ==========================================================================
+   1. CORE BASE & SHARED TYPES
+   ========================================================================== */
+
 export interface IMeta {
   page: number;
   limit: number;
   total: number;
   totalPage: number;
 }
-
-export enum StatusEnum {
-  ACTIVE = "ACTIVE",
-  APPROVED = "APPROVED",
-  CLOSED = "CLOSED",
-  COMPLETED = "COMPLETED",
-  PENDING = "PENDING",
-  CANCELLED = "CANCELLED",
-  INACTIVE = "INACTIVE",
-  DISPUTED = "DISPUTED",
-  DISABLED = "DISABLED",
-  SCHEDULED = "SCHEDULED",
-  ERROR = "ERROR",
-  FAILED = "FAILED",
-  SUCCESS = "SUCCESS",
-  UNKNOWN = "UNKNOWN",
-  IN_PROGRESS = "IN_PROGRESS",
-}
-
-export const enum SaleStatus {
-  PENDING = "PENDING",
-  PROCESSING = "PROCESSING",
-  SHIPPED = "SHIPPED",
-  DELIVERED = "DELIVERED",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
-  REFUNDED = "REFUNDED",
-  RETURNED = "RETURNED",
-}
-
-export const enum PaymentStatus {
-  PAID = "PAID",
-  DUE = "DUE",
-  PARTIAL = "PARTIAL",
-  REFUNDED = "REFUNDED",
-}
-
-export const enum PaymentMethod {
-  COD = "COD",
-  CASH = "CASH",
-  BANK = "BANK",
-  MOBILE_BANKING = "MOBILE_BANKING",
-  OTHER = "OTHER",
-}
-
-export const enum IGender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-  OTHER = "OTHER",
-}
-
-export const enum IUserStatus {
-  ACTIVE = "ACTIVE",
-  SUSPENDED = "SUSPENDED",
-  BLOCKED = "BLOCKED",
-}
-
-export const enum IRole {
-  SUPER_ADMIN = "SUPER_ADMIN",
-  ADMIN = "ADMIN",
-  STAFF = "STAFF",
-  USER = "USER",
-}
-// Types & Enums related to Contact Us form - END
 
 export interface IBaseResponse<T = void> {
   success: boolean;
@@ -81,185 +34,119 @@ export interface ChildrenProps {
   children: React.ReactNode;
 }
 
-// IUser
-export interface IUser {
-  id: string;
-  profileImage: string | null;
-  fullName: string;
-  email: string;
-  gender: string | null;
-  accountType: IRole;
-  status: IUserStatus;
-  reportsCount: number;
-  dateJoined: string;
-  plan: string;
-  roleLabel: string;
-  role: string;
+export interface IListQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
 }
 
-// auth flow types
+export interface IActorRef {
+  _id?: string;
+  id?: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  role: UserRole;
+  status?: UserStatus;
+  isDeleted?: boolean;
+}
 
-// Login Types
+export interface IPaymentAccountRef {
+  _id?: string;
+  id?: string;
+  accountName: string;
+  accountNumber: string;
+  method: PaymentMethodType;
+}
+
+export interface IMemberFinancialSummary {
+  totalDeposited: number;
+  totalReturned: number;
+  totalDonatedWaived: number;
+  netBalance: number;
+  pendingDepositsCount: number;
+  pendingReturnsCount: number;
+}
+
+export interface ISoftDeleteResult {
+  id: string;
+  isDeleted: boolean;
+}
+
+export type ISoftDeleteResponse = IBaseResponse<ISoftDeleteResult>;
+
+/* ==========================================================================
+   2. AUTHENTICATION & SELF PROFILE TYPES
+   ========================================================================== */
+
+export interface IAuthUser {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  profileImage?: string;
+  role: UserRole;
+  status: UserStatus;
+  joinedAt?: string;
+  mustChangePassword?: boolean;
+}
+
+export interface IUserProfile extends IAuthUser {
+  financialSummary: IMemberFinancialSummary;
+}
+
+export interface IBootstrapAdminPayload {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+}
+
 export interface ILoginPayload {
   email: string;
   password: string;
 }
 
-export type ILoginResponse = IBaseResponse<{
+export interface IAuthTokenPayload {
   accessToken: string;
   refreshToken: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: "SUPER_ADMIN" | "ADMIN" | "STAFF";
-    permissions?: string[];
-  };
-}>;
+  user: IAuthUser;
+}
 
+export type ILoginResponse = IBaseResponse<IAuthTokenPayload>;
+export type IBootstrapAdminResponse = IBaseResponse<IAuthTokenPayload>;
+export type IRefreshTokenResponse = IBaseResponse<IAuthTokenPayload>;
 export type ILogoutPayload = void;
+export type ILogoutResponse = IBaseResponse<null>;
+export type IGetProfileResponse = IBaseResponse<IUserProfile>;
 
-export interface ILogoutResponse {
-  success: boolean;
-  message: string;
+export interface IUpdateSelfProfilePayload {
+  name?: string;
+  phone?: string;
+  profileImage?: string;
 }
 
-// Get Profile Types
+export type IUpdateSelfProfileResponse = IBaseResponse<IUserProfile>;
 
-export type TPermission =
-  | "sales:view" | "sales:create" | "sales:update" | "sales:delete" | "sales:refund" | "sales:return"
-  | "purchases:view" | "purchases:create" | "purchases:update" | "purchases:delete" | "purchases:return"
-  | "products:view" | "products:create" | "products:update" | "products:delete" | "products:hard_delete"
-  | "categories:view" | "categories:create" | "categories:update" | "categories:delete"
-  | "suppliers:view" | "suppliers:create" | "suppliers:update" | "suppliers:delete"
-  | "customers:view" | "customers:create" | "customers:update" | "customers:delete"
-  | "expenses:view" | "expenses:create" | "expenses:update" | "expenses:delete";
-
-export interface IAdminProfile {
-  id: string;
-  email: string;
-  name: string;
-  profileImage: string;
-  role: "SUPER_ADMIN" | "ADMIN" | "STAFF";
-  permissions?: TPermission[];
-  status: string;
-  isVerified: string;
-  address?: string;
-  createdAt: string;
-  updatedAt: string;
+export interface IChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
 }
 
-export const STAFF_ALLOWED_PERMISSIONS: TPermission[] = [
-  "sales:view", "sales:create",
-  "products:view",
-  "customers:view", "customers:create",
-  "categories:view"
-];
+export type IChangePasswordResponse = IBaseResponse<{ updated: boolean }>;
 
-export const ADMIN_ALLOWED_PERMISSIONS: TPermission[] = [
-  ...STAFF_ALLOWED_PERMISSIONS,
-  "sales:update", "sales:refund", "sales:return",
-  "products:create", "products:update", "products:delete", "products:hard_delete",
-  "purchases:view", "purchases:create", "purchases:update", "purchases:return",
-  "categories:create", "categories:update", "categories:delete",
-  "suppliers:view", "suppliers:create", "suppliers:update", "suppliers:delete",
-  "customers:update", "customers:delete",
-  "expenses:view", "expenses:create", "expenses:update", "expenses:delete"
-];
-
-export type IGetProfileResponse = IBaseResponse<IAdminProfile>;
-
-// =================== AUTHENTICATION ===================
-
-// Register Types
-export type IRegisterPayload = {
-  email: string;
-  password: string;
-  fullName: string;
-  role?: string;
-};
-
-export type IRegisterResponse = IBaseResponse<{
-  email: string;
-}>;
-
-// Password Change Types
-
-// Forgot types
 export interface IForgotPasswordPayload {
   email: string;
 }
-export type IForgotPasswordResponse = IBaseResponse<{ email: string }>;
 
-// Resend OTP
+export type IForgotPasswordResponse = IBaseResponse<{ sent: boolean }>;
+
 export interface IResendOTPReqBody {
   email: string;
 }
-// export interface IResendOTPBaseResponse {
-//   success: boolean;
-//   statusCode: number;
-//   message: string;
-// }
-export type IResendOTPBaseResponse = IBaseResponse;
 
-export type IUploadFolder = "profile" | "activity-cover" | "banner";
+export type IResendOTPBaseResponse = IBaseResponse<{ sent: boolean }>;
 
-export interface IUploadFilePayload {
-  file: File;
-  folder?: IUploadFolder;
-}
-
-export interface IUploadFileData {
-  url: string;
-  fileId?: string;
-  filePath?: string;
-  name?: string;
-}
-
-export type IUploadFileResponse = IBaseResponse<IUploadFileData>;
-
-export interface IChangePasswordPayload {
-  // for admin dashboard settings page
-  oldPassword: string;
-  newPassword: string;
-}
-
-export type IChangePasswordResponse = IBaseResponse<null>;
-
-export type IEmailChangeSendOtpPayload = {
-  newEmail: string;
-};
-
-export type IEmailChangeSendOtpResponse = IBaseResponse<{
-  currentEmail: string;
-  newEmail: string;
-  otpExpiresInMinutes: number;
-}>;
-
-export type IEmailChangeConfirmPayload = {
-  newEmail: string;
-  otp: string;
-};
-
-export type IEmailChangeConfirmResponse = IBaseResponse<{
-  id: string;
-  email: string;
-  role: IRole;
-}>;
-
-// Reset Password
-// export interface IResetPasswordPayload {
-//   newPassword: string;
-//   confirmPassword: string;
-// }
-export interface IResetPasswordPayload {
-  resetToken: string;
-  newPassword: string;
-}
-
-export type IResetPasswordResponse = IBaseResponse<null>;
-
-// Verify OTP type
 export interface IVerifyOTPPayload {
   email: string;
   otp: string;
@@ -267,397 +154,548 @@ export interface IVerifyOTPPayload {
 
 export type IVerifyOTPResponse = IBaseResponse<{ resetToken: string }>;
 
-// DASHBOARD ROUTES TYPES START
+export interface IResetPasswordPayload {
+  resetToken: string;
+  newPassword: string;
+}
 
-// --- USER MANAGEMENT API TYPES ---
-export interface ITeamUser {
+export type IResetPasswordResponse = IBaseResponse<{ reset: boolean }>;
+
+// Compatibility aliases used by legacy verify-signup page
+export interface IRegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+}
+export type IRegisterResponse = IBaseResponse<{ email: string }>;
+
+/* ==========================================================================
+   3. MEMBERS & MEMBER AUDIT TRAIL TYPES
+   ========================================================================== */
+
+export interface IMember {
+  _id?: string;
   id: string;
   name: string;
   email: string;
-  role: "SUPER_ADMIN" | "ADMIN" | "STAFF";
-  status?: string;
-  permissions?: string[];
-  profileImage?: string;
-  isDeleted?: boolean;
-  deletedAt?: string;
-  address?: string;
-  lastLogin?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type IUsersResponse = IBaseResponse<ITeamUser[]>;
-export type IInviteUserResponse = IBaseResponse<{ user: ITeamUser; emailSent: boolean }>;
-export type IUpdateUserResponse = IBaseResponse<ITeamUser>;
-export type IDeleteUserResponse = IBaseResponse<null>;
-
-export interface IInviteUserPayload {
-  name: string;
-  email: string;
-  role: "ADMIN" | "STAFF";
-  permissions?: string[];
-}
-
-export interface IUpdateUserPayload {
-  name?: string;
-  role?: "ADMIN" | "STAFF";
-  status?: "ACTIVE" | "INACTIVE";
-  permissions?: string[];
-}
-
-// --- ACTIVITY LOG API TYPES ---
-export interface IActivityLog {
-  id: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    profileImage?: string;
-  };
-  action: string;
-  entityType: string;
-  details: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type IActivityLogResponse = IBaseResponse<IActivityLog[]>;
-
-// --- CATEGORY API TYPES ---
-export interface ICategory {
-  id: string;
-  name: string;
-  description?: string;
-  image?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ICreateCategoryPayload {
-  name: string;
-  description?: string;
-  image?: string;
-}
-
-export interface IUpdateCategoryPayload extends Partial<ICreateCategoryPayload> {
-  id: string;
-}
-
-export type ICategoryResponse = IBaseResponse<ICategory>;
-export type ICategoriesResponse = IBaseResponse<ICategory[]>;
-
-// --- TRASH API TYPES ---
-export interface ITrashItem {
-  id: string;
-  name?: string;
   phone?: string;
-  email?: string;
-  saleNo?: string;
-  deletedAt?: string;
+  profileImage?: string;
+  role: UserRole;
+  status: UserStatus;
+  joinedAt: string;
+  leftAt?: string | null;
+  leaveNote?: string | null;
+  mustChangePassword?: boolean;
+  isDeleted: boolean;
+  deletedAt?: string | null;
+  createdBy?: IActorRef | null;
+  deletedBy?: IActorRef | null;
+  financialSummary: IMemberFinancialSummary;
+  unsettledPayable: number;
+  createdAt?: string;
   updatedAt?: string;
 }
 
-export type ITrashResponse = IBaseResponse<ITrashItem[]>;
-export type ITrashMutationResponse = IBaseResponse<null>;
+export interface IMembersQuery extends IListQueryParams {
+  status?: UserStatus | "";
+  role?: UserRole | "";
+  onlyDeleted?: boolean;
+  includeDeleted?: boolean;
+}
 
-// --- CUSTOMER API TYPES ---
-export interface ICustomer {
+export interface ICreateMemberPayload {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+  role?: UserRole;
+  joinedAt?: string;
+  profileImage?: string;
+  mustChangePassword?: boolean;
+}
+
+export interface IUpdateMemberPayload {
   id: string;
-  name: string;
-  phone: string;
-  email?: string;
-  address?: string;
-  alternatePhone?: string;
-  customerNo?: string;
-  totalPurchases: number;
-  createdAt: string;
-  updatedAt: string;
+  name?: string;
+  phone?: string;
+  profileImage?: string;
+  joinedAt?: string;
 }
 
-export type ICustomerResponse = IBaseResponse<ICustomer[]>;
-export type ISingleCustomerResponse = IBaseResponse<ICustomer>;
-
-// --- PRODUCT API TYPES ---
-export interface IProduct {
+export interface IChangeMemberRolePayload {
   id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  brand?: string;
-  buyingPrice: number;
-  sellingPrice: number;
-  discountPrice?: number;
-  tax: number;
-  stock: number;
-  alertQuantity: number;
-  unit: string;
-  sku?: string;
-  barcode?: string;
-  images: string[];
-  status: "ACTIVE" | "INACTIVE" | "DRAFT" | "OUT_OF_STOCK" | "DISCONTINUED";
-  tags: string[];
-  isDeleted: boolean;
-  warrantyType?: string;
-  warrantyPeriod?: string;
-  isReturnable?: boolean;
-  returnWindow?: string;
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string;
-  createdBy: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  createdAt: string;
-  updatedAt: string;
+  role: UserRole;
 }
 
-export interface IProductStats {
-  totalProducts: number;
-  activeProducts: number;
-  outOfStock: number;
-  lowStock: number;
-  totalInventoryValue: number;
-  totalRetailValue: number;
+export interface IDeactivateMemberPayload {
+  id: string;
+  action: MemberDeactivateAction;
+  leaveNote?: string;
+  paymentAccountId?: string;
+  paymentMethod?: PaymentMethodType;
+  recipientAccount?: string;
+  trxId?: string;
+  proofImage?: string;
 }
 
-export interface ICreateProductPayload {
-  name: string;
-  description?: string;
-  category: string;
-  brand?: string;
-  buyingPrice: number;
-  sellingPrice: number;
-  discountPrice?: number;
-  tax?: number;
-  stock: number;
-  alertQuantity?: number;
-  unit?: string;
-  sku?: string;
-  barcode?: string;
-  images?: string[];
+export type IMembersResponse = IBaseResponse<IMember[]>;
+export type IMemberResponse = IBaseResponse<IMember>;
+export type IDeactivateMemberResponse = IBaseResponse<{
+  member: IMember;
+  settlementReturn: IDepositReturn | null;
+}>;
+
+export interface IMemberAuditTrailEntry {
+  id: string;
+  eventCategory: "DEPOSIT" | "RETURN" | "LIFECYCLE";
+  eventType: string;
+  action: string;
+  summary: string;
+  date: string;
+  month: string | null;
+  amount: number | null;
+  direction: "CREDIT" | "DEBIT" | "NEUTRAL";
+  paymentMethod: string | null;
+  paymentAccountName: string | null;
+  trxId: string | null;
+  status: string | null;
+  entrySource: string | null;
+  proofImage: string | null;
+  note: string | null;
+  changes?: {
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
+  } | null;
+  performedBy: { id: string; name: string; role: string } | null;
+  reviewedBy: { id: string; name: string; role: string } | null;
+}
+
+export interface IMemberAuditTrailQuery extends IListQueryParams {
+  id: string;
+  category?: "DEPOSIT" | "RETURN" | "LIFECYCLE" | "";
   status?: string;
-  tags?: string[];
+  month?: string;
 }
 
-export type IUpdateProductPayload = Partial<ICreateProductPayload>;
+export type IMemberAuditTrailResponse = IBaseResponse<IMemberAuditTrailEntry[]>;
 
-export type IProductsResponse = IBaseResponse<IProduct[]>;
-export type IProductResponse = IBaseResponse<IProduct>;
-export type IProductStatsResponse = IBaseResponse<IProductStats>;
+/* ==========================================================================
+   4. PAYMENT ACCOUNTS TYPES
+   ========================================================================== */
 
-// --- PURCHASE API TYPES ---
-import { PurchasePaymentMethod, PurchasePaymentStatus, PurchaseStatus } from "@/types/backend";
-export interface IPurchaseItem {
-  product: IProduct;
-  quantity: number;
-  unitCost: number;
-  total: number;
+export interface IAccountBalanceBreakdown {
+  accountId: string;
+  totalInDeposits: number;
+  totalOutReturns: number;
+  totalTransferIn: number;
+  totalTransferOut: number;
+  totalTransferFees: number;
+  totalStandaloneCharges: number;
+  balance: number;
 }
 
-export interface IPurchase {
+export interface IPaymentAccount {
+  _id?: string;
   id: string;
-  purchaseNo: string;
-  supplier: ISupplier; // Using ISupplier now
-  items: IPurchaseItem[];
-  subTotal: number;
-  discount: number;
-  tax: number;
-  totalAmount: number;
-  paidAmount: number;
-  dueAmount: number;
-  returnedAmount: number;
-  paymentStatus: PurchasePaymentStatus;
-  paymentMethod: PurchasePaymentMethod;
-  purchaseDate: string;
+  method: PaymentMethodType;
+  accountName: string;
+  accountNumber: string;
+  accountType: PaymentAccountType;
+  bankName?: string;
+  branchName?: string;
+  routingNumber?: string;
   note?: string;
-  status: PurchaseStatus;
-  createdBy: { id: string; name: string };
+  isActive: boolean;
+  isDeleted: boolean;
+  balance: number;
+  balanceBreakdown?: IAccountBalanceBreakdown;
+  createdBy?: IActorRef | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface IPaymentAccountsQuery extends IListQueryParams {
+  method?: PaymentMethodType | "";
+  isActive?: boolean;
+  onlyDeleted?: boolean;
+}
+
+export interface ICreatePaymentAccountPayload {
+  method: PaymentMethodType;
+  accountName: string;
+  accountNumber: string;
+  accountType?: PaymentAccountType;
+  bankName?: string;
+  branchName?: string;
+  routingNumber?: string;
+  note?: string;
+  isActive?: boolean;
+}
+
+export interface IUpdatePaymentAccountPayload
+  extends Partial<ICreatePaymentAccountPayload> {
+  id: string;
+}
+
+export type IPaymentAccountsResponse = IBaseResponse<IPaymentAccount[]>;
+export type IPaymentAccountResponse = IBaseResponse<IPaymentAccount>;
+
+/* ==========================================================================
+   5. MONTHLY TARGETS TYPES
+   ========================================================================== */
+
+export interface IMonthlyTarget {
+  id: string | null;
+  month: string; // YYYY-MM
+  hasTarget?: boolean;
+  targetAmount: number;
+  note?: string;
+  collectedAmount: number;
+  depositCount: number;
+  remainingAmount: number;
+  progressPercent: number;
+  updatedBy?: IActorRef | null;
+  updatedAt?: string | null;
+}
+
+export interface IUpsertMonthlyTargetPayload {
+  month: string;
+  targetAmount: number;
+  note?: string;
+}
+
+export type IMonthlyTargetsResponse = IBaseResponse<IMonthlyTarget[]>;
+export type IMonthlyTargetResponse = IBaseResponse<IMonthlyTarget>;
+
+/* ==========================================================================
+   6. DEPOSITS & PROOF UPLOAD TYPES
+   ========================================================================== */
+
+export interface IDeposit {
+  _id?: string;
+  id: string;
+  memberId: IActorRef;
+  amount: number;
+  month: string;
+  depositDate: string;
+  paymentMethod: PaymentMethodType;
+  paymentAccountId: IPaymentAccountRef;
+  trxId?: string;
+  proofImage?: string;
+  note?: string;
+  entrySource: EntrySource;
+  status: TransactionStatus;
+  rejectionReason?: string | null;
+  createdBy?: IActorRef | null;
+  reviewedBy?: IActorRef | null;
+  reviewedAt?: string | null;
+  isDeleted: boolean;
+  deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface ICreatePurchasePayload {
-  supplier: string;
-  items: { product: string; quantity: number; unitCost: number; total: number; }[];
-  subTotal: number;
-  discount: number;
-  tax: number;
-  totalAmount: number;
-  paidAmount: number;
-  dueAmount: number;
-  paymentStatus: PurchasePaymentStatus;
-  paymentMethod: PurchasePaymentMethod;
-  purchaseDate?: string;
-  note?: string;
+export interface IDepositsQuery extends IListQueryParams {
+  memberId?: string;
+  month?: string;
+  status?: TransactionStatus | "";
+  paymentMethod?: PaymentMethodType | "";
+  paymentAccountId?: string;
+  onlyDeleted?: boolean;
 }
 
-export interface IPurchasePayment {
-  id: string;
-  purchase: string;
+export interface ICreateDepositPayload {
+  memberId?: string;
   amount: number;
-  paymentMethod: PurchasePaymentMethod;
-  paymentDate: string;
-  note?: string;
-  createdBy: { id: string; name: string };
-  createdAt: string;
-}
-
-export interface IAddPaymentPayload {
-  amount: number;
-  paymentMethod: PurchasePaymentMethod;
-  paymentDate?: string;
+  month?: string;
+  depositDate?: string;
+  paymentAccountId: string;
+  paymentMethod?: PaymentMethodType;
+  trxId?: string;
+  proofImage?: string;
   note?: string;
 }
 
-export interface IPurchaseReturnItem {
-  product: IProduct | string;
-  quantity: number;
-  unitCost: number;
-  total: number;
-}
-
-export interface IPurchaseReturn {
+export interface IUpdateDepositPayload {
   id: string;
-  purchase: string;
-  supplier: string;
-  items: IPurchaseReturnItem[];
-  subTotal: number;
-  tax: number;
-  totalAmount: number;
+  amount?: number;
+  month?: string;
+  depositDate?: string;
+  paymentAccountId?: string;
+  paymentMethod?: PaymentMethodType;
+  trxId?: string;
+  proofImage?: string;
+  note?: string;
+  editReason?: string;
+}
+
+export interface IReviewDepositPayload {
+  id: string;
+  status: "APPROVED" | "REJECTED";
+  rejectionReason?: string;
+}
+
+export type IDepositsResponse = IBaseResponse<IDeposit[]>;
+export type IDepositResponse = IBaseResponse<IDeposit>;
+
+export interface IUploadProofData {
+  url: string;
+  publicId: string;
+  width?: number;
+  height?: number;
+  format?: string;
+  bytes?: number;
+}
+
+export type IUploadProofResponse = IBaseResponse<IUploadProofData>;
+
+/* ==========================================================================
+   7. RETURNS & SETTLEMENTS TYPES
+   ========================================================================== */
+
+export interface IDepositReturn {
+  _id?: string;
+  id: string;
+  memberId: IActorRef;
+  amount: number;
   returnDate: string;
-  note?: string;
-  createdBy: { id: string; name: string };
+  paymentMethod?: PaymentMethodType | null;
+  paymentAccountId?: IPaymentAccountRef | null;
+  recipientAccount?: string;
+  trxId?: string;
+  proofImage?: string;
+  reason?: string;
+  returnType: ReturnType;
+  entrySource: EntrySource;
+  status: TransactionStatus;
+  rejectionReason?: string | null;
+  createdBy?: IActorRef | null;
+  reviewedBy?: IActorRef | null;
+  reviewedAt?: string | null;
+  isDeleted: boolean;
+  deletedAt?: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
-export interface IReturnPurchasePayload {
-  items: { product: string; quantity: number; unitCost: number; total: number; }[];
-  subTotal: number;
-  tax: number;
-  totalAmount: number;
+export interface IReturnsQuery extends IListQueryParams {
+  memberId?: string;
+  status?: TransactionStatus | "";
+  returnType?: ReturnType | "";
+  paymentMethod?: PaymentMethodType | "";
+  onlyDeleted?: boolean;
+}
+
+export interface ICreateReturnPayload {
+  memberId?: string;
+  amount: number;
   returnDate?: string;
-  note?: string;
+  paymentAccountId?: string;
+  paymentMethod?: PaymentMethodType;
+  recipientAccount?: string;
+  trxId?: string;
+  proofImage?: string;
+  reason?: string;
+  returnType?: ReturnType;
 }
 
-export type PurchaseResponse = IBaseResponse<IPurchase[]>;
-export type SinglePurchaseResponse = IBaseResponse<IPurchase>;
-export type PurchasePaymentsResponse = IBaseResponse<IPurchasePayment[]>;
-export type PurchaseReturnsResponse = IBaseResponse<IPurchaseReturn[]>;
-
-// --- SALE API TYPES ---
-import { SalePaymentStatus, SalePaymentMethod } from "@/types/backend";
-export interface ISaleItem {
-  id?: string;
-  product: IProduct;
-  quantity: number;
-  unitPrice: number;
-  total: number;
-}
-
-export interface ISale {
+export interface IUpdateReturnPayload {
   id: string;
-  saleNo: string;
-  customer: ICustomer;
-  items: ISaleItem[];
-  subTotal: number;
-  discount: number;
-  tax: number;
-  shippingCharge: number;
-  totalAmount: number;
-  paidAmount: number;
-  dueAmount: number;
-  refundedAmount?: number;
-  paymentStatus: SalePaymentStatus;
-  paymentMethod: SalePaymentMethod;
-  saleDate: string;
-  source?: "FACEBOOK" | "WEBSITE" | "WHATSAPP" | "DIRECT_MANUAL" | "OTHER";
-  courierDetails?: string;
-  note?: string;
-  status: SaleStatus;
-  statusHistory?: {
-    id: string;
-    status: SaleStatus;
-    note?: string;
-    updatedBy?: { id: string; name: string; };
-    date: string;
-  }[];
-  createdBy: { id: string; name: string; email: string; };
-  createdAt: string;
-  updatedAt: string;
+  amount?: number;
+  recipientAccount?: string;
+  reason?: string;
+  paymentAccountId?: string;
+  paymentMethod?: PaymentMethodType;
+  trxId?: string;
+  proofImage?: string;
 }
 
-export interface ISalePayment {
+export interface IReviewReturnPayload {
   id: string;
-  sale: string;
+  status: "APPROVED" | "REJECTED";
+  rejectionReason?: string;
+  paymentAccountId?: string;
+  paymentMethod?: PaymentMethodType;
+  trxId?: string;
+  proofImage?: string;
+}
+
+export type IReturnsResponse = IBaseResponse<IDepositReturn[]>;
+export type IReturnResponse = IBaseResponse<IDepositReturn>;
+
+/* ==========================================================================
+   8. TRANSFERS, CHARGES, ACTIVITY LOGS & DASHBOARD TYPES
+   ========================================================================== */
+
+export interface IAccountTransfer {
+  _id?: string;
+  id: string;
+  fromAccountId: IPaymentAccountRef;
+  toAccountId: IPaymentAccountRef;
   amount: number;
-  paymentMethod: SalePaymentMethod;
-  paymentDate: string;
+  transferFee: number;
+  transferDate: string;
+  trxId?: string;
+  proofImage?: string;
   note?: string;
-  createdBy: { id: string; name: string; email: string; };
+  createdBy?: IActorRef | null;
+  isDeleted: boolean;
   createdAt: string;
-  updatedAt: string;
 }
 
-export interface ISaleRefund {
-  id: string;
-  sale: string;
+export interface ITransfersQuery extends IListQueryParams {
+  accountId?: string;
+  onlyDeleted?: boolean;
+}
+
+export interface ICreateTransferPayload {
+  fromAccountId: string;
+  toAccountId: string;
   amount: number;
-  refundMethod: string;
-  refundDate: string;
+  transferFee?: number;
+  transferDate?: string;
+  trxId?: string;
+  proofImage?: string;
   note?: string;
-  createdBy: { id: string; name: string; email: string; };
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface ICreateSaleRequest {
-  customer: {
-    id?: string;
-    name: string;
-    phone: string;
-    email?: string;
-    address?: string;
+export type ITransfersResponse = IBaseResponse<IAccountTransfer[]>;
+export type ITransferResponse = IBaseResponse<IAccountTransfer>;
+
+export interface IAccountCharge {
+  _id?: string;
+  id: string;
+  paymentAccountId: IPaymentAccountRef;
+  amount: number;
+  chargeDate: string;
+  title: string;
+  proofImage?: string;
+  note?: string;
+  createdBy?: IActorRef | null;
+  isDeleted: boolean;
+  createdAt: string;
+}
+
+export interface IChargesQuery extends IListQueryParams {
+  paymentAccountId?: string;
+  onlyDeleted?: boolean;
+}
+
+export interface ICreateChargePayload {
+  paymentAccountId: string;
+  amount: number;
+  title: string;
+  chargeDate?: string;
+  proofImage?: string;
+  note?: string;
+}
+
+export type IChargesResponse = IBaseResponse<IAccountCharge[]>;
+export type IChargeResponse = IBaseResponse<IAccountCharge>;
+
+export interface IActivityLogItem {
+  _id?: string;
+  id: string;
+  entityType: ActivityEntity;
+  entityId?: string | null;
+  targetMemberId?: IActorRef | null;
+  action: ActivityAction;
+  summary: string;
+  amount?: number | null;
+  proofImage?: string | null;
+  changes?: {
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
+  } | null;
+  performedBy?: IActorRef | null;
+  createdAt: string;
+}
+
+export interface IActivityLogsQuery extends IListQueryParams {
+  entityType?: ActivityEntity | "";
+  action?: ActivityAction | "";
+  targetMemberId?: string;
+}
+
+export type IActivityLogsResponse = IBaseResponse<IActivityLogItem[]>;
+
+export interface IGroupFundSummary {
+  totalApprovedDeposits: number;
+  totalApprovedPayoutReturns: number;
+  totalDonatedWaivers: number;
+  totalTransferFees: number;
+  totalStandaloneCharges: number;
+  totalCharges: number;
+  totalCashInHand: number;
+  unsettledFormerMemberPayable: number;
+  activeNetFund: number;
+  accountBalancesSum: number;
+  reconciliationDifference: number;
+}
+
+export interface IDashboardAccountBalance {
+  id: string;
+  method: PaymentMethodType;
+  accountName: string;
+  accountNumber: string;
+  accountType: PaymentAccountType;
+  isActive: boolean;
+  balance: number;
+}
+
+export interface IDashboardSummary {
+  fundSummary: IGroupFundSummary;
+  currentMonth: IMonthlyTarget;
+  accountBalances: IDashboardAccountBalance[];
+  methodBalances: { method: PaymentMethodType; balance: number }[];
+  counts: {
+    activeMembersCount: number;
+    inactiveMembersCount: number;
+    pendingDepositsCount: number;
+    pendingReturnsCount: number;
   };
-  items: { product: string; quantity: number; unitPrice: number; total: number; }[];
-  subTotal: number;
-  discount?: number;
-  tax?: number;
-  shippingCharge?: number;
-  totalAmount: number;
-  paidAmount?: number;
-  paymentMethod: SalePaymentMethod;
-  courierDetails?: string;
-  note?: string;
+  mySavings: IMemberFinancialSummary & {
+    currentMonthDeposited: number;
+  };
+  pendingQueue: {
+    deposits: IDeposit[];
+    returns: IDepositReturn[];
+  } | null;
 }
 
-export type SalesResponse = IBaseResponse<ISale[]>;
-export type SingleSaleResponse = IBaseResponse<ISale>;
-export type SalePaymentsResponse = IBaseResponse<{ history: ISalePayment[] }>;
-export type SaleRefundsResponse = IBaseResponse<{ history: ISaleRefund[] }>;
-export type SingleSalePaymentResponse = IBaseResponse<ISalePayment>;
-export type SingleSaleRefundResponse = IBaseResponse<ISaleRefund>;
+export type IDashboardSummaryResponse = IBaseResponse<IDashboardSummary>;
 
-// --- SUPPLIER API TYPES ---
-export interface ISupplier {
+export interface IMonthlyMatrixMonth {
+  month: string;
+  hasTarget: boolean;
+  targetAmount: number;
+  collectedAmount: number;
+  depositCount: number;
+  progressPercent: number;
+}
+
+export interface IMonthlyMatrixRow {
   id: string;
   name: string;
-  company?: string;
-  phone: string;
-  email?: string;
-  address?: string;
-  status: "ACTIVE" | "INACTIVE";
-  totalDue: number;
-  createdAt: string;
-  updatedAt: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  isDeleted: boolean;
+  joinedAt: string;
+  totalDeposited: number;
+  totalReturned: number;
+  netBalance: number;
+  monthlyBreakdown: Record<string, { amount: number; count: number } | null>;
 }
 
-export type SupplierResponse = IBaseResponse<ISupplier[]>;
-export type SingleSupplierResponse = IBaseResponse<ISupplier>;
+export interface IMonthlyMatrixData {
+  months: IMonthlyMatrixMonth[];
+  rows: IMonthlyMatrixRow[];
+}
+
+export interface IMonthlyMatrixQuery {
+  year?: string;
+  includeInactive?: boolean;
+}
+
+export type IMonthlyMatrixResponse = IBaseResponse<IMonthlyMatrixData>;

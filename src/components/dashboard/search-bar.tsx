@@ -1,41 +1,47 @@
 "use client";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Icons } from "@/utils/icons";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import useSetParamsForPagination from "@/utils/setParamsForPagination";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 interface SearchBarProps {
   placeholder?: string;
+  className?: string;
 }
 
-export function SearchBar({ placeholder = "Search..." }: SearchBarProps) {
-  const router = useRouter();
+export function SearchBar({
+  placeholder = "Search...",
+  className = "",
+}: SearchBarProps) {
   const searchParams = useSearchParams();
-  const [value, setValue] = useState(searchParams.get("search") || "");
+  const setParams = useSetParamsForPagination();
+  const urlSearch = searchParams.get("search") || "";
+
+  const [value, setValue] = useState(urlSearch);
+  const debouncedValue = useDebounce(value, 350);
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams(searchParams);
-      if (value) {
-        params.set("search", value);
-        params.set("page", "1");
-      } else {
-        params.delete("search");
-      }
-      router.push(`?${params.toString()}`);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [value, router, searchParams]);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (debouncedValue !== urlSearch) {
+      setParams({ search: debouncedValue || null, page: 1 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedValue]);
 
   return (
-    <div className="relative">
+    <div className={`relative ${className}`}>
       <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
       <input
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors shadow-sm"
+        className="w-full pl-9 pr-3 h-9 rounded border border-input bg-card text-sm text-foreground placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/15 focus:border-primary transition-colors"
       />
     </div>
   );

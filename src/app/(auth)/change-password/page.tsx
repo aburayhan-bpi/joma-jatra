@@ -1,11 +1,8 @@
-import React from "react";
+import { redirect } from "next/navigation";
 
-const ChangePasswordPage = () => {
-  return (
-    <div>
-      <h1>Change Password</h1>
-    </div>
-  );
-};
-
-export default ChangePasswordPage;
+/**
+ * Redirects /change-password to the authenticated profile password settings section.
+ */
+export default function ChangePasswordRedirectPage() {
+  redirect("/dashboard/profile#password");
+}

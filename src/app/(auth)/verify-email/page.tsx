@@ -165,7 +165,7 @@ export default function VerifyEmailPage() {
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-125 relative overflow-hidden flex flex-col justify-center bg-card border border-border auth-card-shadow rounded-32 p-8 sm:p-12"
+        className="w-full max-w-md relative overflow-hidden flex flex-col justify-center bg-card border border-border rounded-md p-7 sm:p-9"
       >
         <div className="relative z-10 flex flex-col justify-center w-full mx-auto gap-8">
           {/* Header */}
@@ -209,7 +209,7 @@ export default function VerifyEmailPage() {
                   onChange={(e) => handleInputChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-transparent border border-border text-center text-xl font-semibold text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all"
+                  className="w-11 h-11 sm:w-12 sm:h-12 rounded bg-transparent border border-input text-center text-lg font-semibold text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-colors"
                 />
               ))}
             </div>
@@ -226,7 +226,7 @@ export default function VerifyEmailPage() {
               type="button"
               onClick={handleSubmit}
               disabled={!isOtpComplete || loading}
-              className="w-full h-12 golden-gradient-card border-0! hover:brightness-105 text-foreground text-[15px] font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(252,150,7,0.28)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-10 bg-primary hover:bg-brand-dark text-primary-foreground text-sm font-semibold rounded flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isVerifying ? (
                 <>

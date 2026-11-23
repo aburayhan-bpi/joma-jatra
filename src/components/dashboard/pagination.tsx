@@ -78,11 +78,11 @@ export function Pagination({
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="w-10 h-10 flex items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"
+          className="w-8 h-8 flex items-center justify-center rounded border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"
           aria-label="Previous page"
         >
           <Icons.ChevronLeft className="w-4 h-4" />
@@ -94,12 +94,12 @@ export function Pagination({
               key={index}
               onClick={() => typeof page === "number" && handlePageChange(page)}
               disabled={page === "..." || page === currentPage}
-              className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium border transition-colors shrink-0 ${
+              className={`w-8 h-8 flex items-center justify-center rounded text-xs font-medium border transition-colors shrink-0 ${
                 page === currentPage
-                  ? "bg-primary text-primary-foreground border-transparent shadow-sm shadow-brand/20"
+                  ? "bg-primary text-primary-foreground border-primary"
                   : page === "..."
                     ? "cursor-default border-transparent text-muted-foreground"
-                    : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:cursor-pointer"
+                    : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground hover:cursor-pointer"
               }`}
               aria-label={`Go to page ${page}`}
               aria-current={page === currentPage ? "page" : undefined}
@@ -112,7 +112,7 @@ export function Pagination({
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="w-10 h-10 flex items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"
+          className="w-8 h-8 flex items-center justify-center rounded border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"
           aria-label="Next page"
         >
           <Icons.ChevronRight className="w-4 h-4" />

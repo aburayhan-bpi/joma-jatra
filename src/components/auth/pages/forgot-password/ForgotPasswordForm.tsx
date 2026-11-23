@@ -1,13 +1,16 @@
 "use client";
+
+import { useForgotPasswordMutation } from "@/redux/api/auth/authApi";
+import { setEmail } from "@/redux/features/verifyAuth/verifyAuth";
+import { useAppDispatch } from "@/redux/hooks";
+import { getApiErrorMessage } from "@/utils/formatMoney";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Mail, CheckCircle2 } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
-import { useForgotPasswordMutation } from "@/redux/api/auth/authApi";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -15,9 +18,13 @@ const forgotPasswordSchema = z.object({
 
 type ForgotPasswordData = z.infer<typeof forgotPasswordSchema>;
 
+/**
+ * Forgot Password Form — requests a 6-digit OTP and navigates to /verify-email.
+ */
 export default function ForgotPasswordForm() {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
   const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
-  const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     register,
@@ -30,58 +37,50 @@ export default function ForgotPasswordForm() {
 
   const onSubmit = async (data: ForgotPasswordData) => {
     try {
-      const result = await forgotPassword(data).unwrap();
+      const result = await forgotPassword({
+        email: data.email.trim().toLowerCase(),
+      }).unwrap();
+
       if (result.success) {
-        setIsSuccess(true);
-        toast.success("Password reset link sent to your email");
+        dispatch(setEmail(data.email.trim().toLowerCase()));
+        toast.success(result.message || "6-digit OTP sent to your email");
+        router.push("/verify-email");
       }
-    } catch (err: unknown) {
-      const error = err as { data?: { message?: string } };
-      toast.error(error?.data?.message || "Failed to send reset link");
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, "Failed to send verification code"));
     }
   };
 
-  if (isSuccess) {
-    return (
-      <div className="w-full bg-card border border-border auth-card-shadow rounded-2xl p-8 sm:p-10 text-center">
-        <div className="flex justify-center mb-6">
-          <CheckCircle2 className="w-12 h-12 text-success" />
-        </div>
-        <h2 className="text-2xl font-bold text-foreground tracking-tight mb-3">Check your email</h2>
-        <p className="text-muted-foreground text-sm mb-8">
-          We&apos;ve sent a password reset link to your email address. Please check your inbox and spam folder.
-        </p>
-        <Link
-          href="/login"
-          className="inline-flex items-center justify-center w-full h-12 bg-card border border-primary text-primary hover:bg-accent font-semibold text-sm rounded-xl transition-colors cursor-pointer"
-        >
-          Return to Login
-        </Link>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full bg-card border border-border auth-card-shadow rounded-2xl p-8 sm:p-10">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight mb-2">Forgot Password</h1>
+    <div className="w-full bg-card border border-border rounded-md p-7 sm:p-9">
+      <div className="text-center mb-7">
+        <h1 className="text-xl font-bold text-foreground tracking-tight mb-1.5">
+          Forgot Password
+        </h1>
         <p className="text-muted-foreground text-sm">
-          No worries, we&apos;ll send you reset instructions.
+          Enter your registered email to receive a 6-digit verification OTP.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div className="space-y-1.5 group">
-          <label htmlFor="email" className="text-sm font-medium text-text-description">Email Address</label>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-1.5">
+          <label
+            htmlFor="email"
+            className="text-xs font-medium text-text-description"
+          >
+            Email Address
+          </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-secondary">
-              <Mail className="h-[18px] w-[18px]" />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
+              <Mail className="h-4 w-4" />
             </div>
             <input
               id="email"
               type="email"
               placeholder="name@example.com"
-              className={`w-full pl-10 pr-4 h-12 bg-card border border-input text-foreground placeholder:text-text-secondary text-sm rounded-xl focus:bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none ${errors.email ? 'border-error focus:border-error focus:ring-error/10' : ''}`}
+              className={`w-full pl-9 pr-3.5 h-10 bg-card border border-input text-foreground placeholder:text-text-secondary text-sm rounded focus:ring-2 focus:ring-primary/15 focus:border-primary transition-colors outline-none ${
+                errors.email ? "border-error focus:border-error" : ""
+              }`}
               {...register("email")}
             />
           </div>
@@ -93,23 +92,26 @@ export default function ForgotPasswordForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 mt-4 bg-primary hover:bg-brand-dark text-primary-foreground font-semibold text-sm rounded-xl transition-colors flex items-center justify-center cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full h-10 mt-2 bg-primary hover:bg-brand-dark text-primary-foreground font-semibold text-sm rounded transition-colors flex items-center justify-center cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending link...
+              Sending OTP...
             </>
           ) : (
-            "Send Reset Link"
+            "Send Verification OTP"
           )}
         </button>
       </form>
 
-      <div className="mt-8 text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="mt-6 text-center">
+        <p className="text-xs text-muted-foreground">
           Remember your password?{" "}
-          <Link href="/login" className="font-medium text-primary hover:text-brand-dark cursor-pointer">
+          <Link
+            href="/login"
+            className="font-medium text-primary hover:text-brand-dark cursor-pointer"
+          >
             Back to login
           </Link>
         </p>

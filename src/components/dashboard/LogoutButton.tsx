@@ -10,7 +10,7 @@ export function LogoutButton({ isCollapsed }: { isCollapsed: boolean }) {
     <button
       onClick={handleLogout}
       className={cn(
-        "group w-full flex items-center gap-4 px-4 py-2.5 rounded-xl transition-all duration-200 cursor-pointer border border-border bg-error-5 shadow-[0_2px_4px_rgba(7,42,31,0.02)] hover:bg-error-20 hover:text-error hover:border-error/40",
+        "group w-full flex items-center gap-3 px-3 py-2 rounded transition-colors cursor-pointer border border-border bg-error-5 hover:bg-error-20 hover:text-error hover:border-error/40",
         "text-sm font-medium text-text-description",
         isCollapsed && "lg:justify-center lg:px-0",
       )}

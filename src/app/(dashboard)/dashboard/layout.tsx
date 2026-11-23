@@ -1,24 +1,57 @@
 "use client";
 
-import type React from "react";
-
 import { Header } from "@/components/dashboard/header";
 import { Sidebar } from "@/components/dashboard/sidebar";
-import { useState } from "react";
+import InlineLoader from "@/components/shared/InlineLoader";
+import useAuth from "@/hooks/useAuth";
+import { useGetMeQuery } from "@/redux/api/getMe/getMeApi";
+import { logout, setUser } from "@/redux/features/user/authSlice";
+import { useAppDispatch } from "@/redux/hook";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  //   const { user, isLoading } = useAuth();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const isAuthenticated = useAuth();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const user = true;
+  // Sync live user profile & role from backend on mount
+  const { data: meRes, isLoading, isError } = useGetMeQuery(undefined, {
+    skip: !isAuthenticated,
+  });
 
-  if (!user) {
-    return null;
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [isAuthenticated, router]);
+
+  useEffect(() => {
+    if (meRes?.data) {
+      dispatch(setUser(meRes.data));
+    }
+  }, [meRes, dispatch]);
+
+  useEffect(() => {
+    if (isError) {
+      dispatch(logout());
+      router.replace("/login");
+    }
+  }, [isError, dispatch, router]);
+
+  if (!isAuthenticated || (isLoading && !meRes)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-dashboard-bg">
+        <InlineLoader text="Loading your workspace..." />
+      </div>
+    );
   }
 
   return (
@@ -29,7 +62,7 @@ export default function DashboardLayout({
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
           sidebarOpen={sidebarOpen}
@@ -38,7 +71,7 @@ export default function DashboardLayout({
         />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="p-4 lg:p-8 mx-auto">{children}</div>
+          <div className="w-full p-4 sm:p-5 lg:p-6">{children}</div>
         </main>
       </div>
     </div>

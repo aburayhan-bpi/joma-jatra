@@ -1,19 +1,12 @@
+import { IAuthUser } from "@/types/global";
+import { decodeJWT } from "@/utils/decodeJWT";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
-import { decodeJWT } from "@/utils/decodeJWT";
-import { TPermission } from "@/types/global";
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  role: "SUPER_ADMIN" | "ADMIN" | "STAFF";
-  name: string;
-  permissions?: TPermission[];
-}
+export type AuthUser = IAuthUser;
 
-// Auth state interface
 export interface AuthState {
-  user: AuthUser | null;
+  user: IAuthUser | null;
   accessToken: string | null;
   refreshToken: string | null;
   resetPassToken: string | null;
@@ -30,7 +23,7 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<AuthUser | null>) => {
+    setUser: (state, action: PayloadAction<IAuthUser | null>) => {
       state.user = action.payload;
     },
 
@@ -40,13 +33,15 @@ const authSlice = createSlice({
     ) => {
       const { accessToken, refreshToken } = action.payload;
       state.accessToken = accessToken;
-      state.refreshToken = refreshToken ?? null;
+      if (refreshToken !== undefined) {
+        state.refreshToken = refreshToken;
+      }
 
       let accessExpires: Date | undefined;
       let refreshExpires: Date | undefined;
 
       try {
-        const decodedAccess = decodeJWT(accessToken);
+        const decodedAccess = decodeJWT<{ exp?: number }>(accessToken);
         if (decodedAccess?.exp) {
           accessExpires = new Date(decodedAccess.exp * 1000);
         }
@@ -56,7 +51,7 @@ const authSlice = createSlice({
 
       if (refreshToken) {
         try {
-          const decodedRefresh = decodeJWT(refreshToken);
+          const decodedRefresh = decodeJWT<{ exp?: number }>(refreshToken);
           if (decodedRefresh?.exp) {
             refreshExpires = new Date(decodedRefresh.exp * 1000);
           }
@@ -67,15 +62,16 @@ const authSlice = createSlice({
 
       Cookies.set("accessToken", accessToken, { expires: accessExpires || 7 });
       if (refreshToken) {
-        Cookies.set("refreshToken", refreshToken, { expires: refreshExpires || 30 });
-      } else {
-        Cookies.remove("refreshToken");
+        Cookies.set("refreshToken", refreshToken, {
+          expires: refreshExpires || 30,
+        });
       }
     },
 
     setResetPassToken: (state, action: PayloadAction<string>) => {
       state.resetPassToken = action.payload;
     },
+
     clearResetPassToken: (state) => {
       state.resetPassToken = null;
     },
@@ -88,6 +84,7 @@ const authSlice = createSlice({
       Cookies.remove("authUser");
       Cookies.remove("accessToken");
       Cookies.remove("refreshToken");
+      Cookies.remove("auth_token");
     },
 
     clearAuthError: () => {},
@@ -103,8 +100,8 @@ export const {
   clearResetPassToken,
 } = authSlice.actions;
 
-// Selectors
 export const selectAuth = (state: { auth: AuthState }) => state.auth;
 export const selectUser = (state: { auth: AuthState }) => state.auth.user;
+export const selectCurrentUser = selectUser;
 
 export default authSlice.reducer;

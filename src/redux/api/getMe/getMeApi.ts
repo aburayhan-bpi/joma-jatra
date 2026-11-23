@@ -1,4 +1,8 @@
-import { IGetProfileResponse } from "@/types/global";
+import {
+  IGetProfileResponse,
+  IUpdateSelfProfilePayload,
+  IUpdateSelfProfileResponse,
+} from "@/types/global";
 import baseApi from "../baseApi";
 
 const getMeApi = baseApi.injectEndpoints({
@@ -7,13 +11,16 @@ const getMeApi = baseApi.injectEndpoints({
       query: () => "/auth/me",
       providesTags: ["User"],
     }),
-    updateProfile: builder.mutation<unknown, FormData>({
+    updateProfile: builder.mutation<
+      IUpdateSelfProfileResponse,
+      IUpdateSelfProfilePayload
+    >({
       query: (body) => ({
         url: "/auth/me",
         method: "PATCH",
         body,
       }),
-      invalidatesTags: ["User"],
+      invalidatesTags: ["User", "Members", "ActivityLogs"],
     }),
   }),
 });

@@ -73,9 +73,9 @@ export default function LoginForm() {
   const loading = isSubmitting || isLoginLoading;
 
   return (
-    <div className="w-full bg-card border border-border auth-card-shadow rounded-2xl p-8 sm:p-10">
-      <div className="text-center mb-10">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight mb-2">
+    <div className="w-full bg-card border border-border rounded-md p-7 sm:p-9">
+      <div className="text-center mb-8">
+        <h1 className="text-xl font-bold text-foreground tracking-tight mb-1.5">
           Welcome Back
         </h1>
         <p className="text-muted-foreground text-sm">
@@ -83,23 +83,23 @@ export default function LoginForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5 group">
           <label
             htmlFor="email"
-            className="text-sm font-medium text-text-description"
+            className="text-xs font-medium text-text-description"
           >
             Email Address
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-secondary">
-              <Mail className="h-[18px] w-[18px]" />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
+              <Mail className="h-4 w-4" />
             </div>
             <input
               id="email"
               type="email"
               placeholder="name@example.com"
-              className={`w-full pl-10 pr-4 h-12 bg-card border border-input text-foreground placeholder:text-text-secondary text-sm rounded-xl focus:bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none ${errors.email ? "border-error focus:border-error focus:ring-error/10" : ""}`}
+              className={`w-full pl-9 pr-3.5 h-10 bg-card border border-input text-foreground placeholder:text-text-secondary text-sm rounded focus:bg-card focus:ring-2 focus:ring-primary/15 focus:border-primary transition-colors outline-none ${errors.email ? "border-error focus:border-error focus:ring-error/10" : ""}`}
               {...register("email")}
             />
           </div>
@@ -112,26 +112,26 @@ export default function LoginForm() {
           <div className="flex items-center justify-between">
             <label
               htmlFor="password"
-              className="text-sm font-medium text-text-description"
+              className="text-xs font-medium text-text-description"
             >
               Password
             </label>
             <Link
               href="/forgot-password"
-              className="text-sm font-medium text-primary hover:text-brand-dark transition-colors cursor-pointer"
+              className="text-xs font-medium text-primary hover:text-brand-dark transition-colors cursor-pointer"
             >
               Forgot password?
             </Link>
           </div>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-secondary">
-              <Lock className="h-[18px] w-[18px]" />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-secondary">
+              <Lock className="h-4 w-4" />
             </div>
             <input
               id="password"
               type={showPassword.password ? "text" : "password"}
               placeholder="••••••••"
-              className={`w-full pl-10 pr-10 h-12 bg-card border border-input text-foreground placeholder:text-text-secondary text-sm rounded-xl focus:bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none ${errors.password ? "border-error focus:border-error focus:ring-error/10" : ""}`}
+              className={`w-full pl-9 pr-10 h-10 bg-card border border-input text-foreground placeholder:text-text-secondary text-sm rounded focus:bg-card focus:ring-2 focus:ring-primary/15 focus:border-primary transition-colors outline-none ${errors.password ? "border-error focus:border-error focus:ring-error/10" : ""}`}
               {...register("password")}
             />
             <PassViewToggleBtn
@@ -150,7 +150,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-12 mt-4 bg-primary hover:bg-brand-dark text-primary-foreground font-semibold text-sm rounded-xl transition-colors flex items-center justify-center cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full h-10 mt-2 bg-primary hover:bg-brand-dark text-primary-foreground font-semibold text-sm rounded transition-colors flex items-center justify-center cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {loading ? (
             <>

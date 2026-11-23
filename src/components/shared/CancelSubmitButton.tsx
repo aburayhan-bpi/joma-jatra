@@ -3,28 +3,31 @@ import CustomButton from "@/components/shared/CustomButton";
 const CancelSubmitButton = ({
   handleCancel,
   loading = false,
+  submitText = "Confirm",
+  cancelText = "Cancel",
 }: {
   handleCancel: () => void;
   loading?: boolean;
+  submitText?: string;
+  cancelText?: string;
 }) => {
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-end">
-        <CustomButton
-          className="w-full sm:w-auto md:px-10 border-foreground text-foreground hover:cursor-pointer hover:bg-foreground/1 transition-colors duration-200 shadow-none"
-          variant="outline"
-          btnText="Cancel"
-          type="button"
-          onClick={handleCancel}
-        />
+    <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-end pt-3 border-t border-border">
+      <CustomButton
+        className="w-full sm:w-auto px-5 border-border bg-card text-foreground hover:bg-muted cursor-pointer transition-colors shadow-none"
+        variant="outline"
+        btnText={cancelText}
+        type="button"
+        onClick={handleCancel}
+        disabled={loading}
+      />
 
-        <CustomButton
-          type="submit"
-          btnText="Confirm"
-          className="w-full sm:w-auto px-10 bg-primary-2 text-background hover:bg-primary-1 transition-colors duration-200 focus-visible:ring-0 hover:cursor-pointer "
-          loading={loading}
-        />
-      </div>
+      <CustomButton
+        type="submit"
+        btnText={submitText}
+        className="w-full sm:w-auto px-6 bg-primary text-primary-foreground hover:bg-brand-dark cursor-pointer transition-colors"
+        loading={loading}
+      />
     </div>
   );
 };

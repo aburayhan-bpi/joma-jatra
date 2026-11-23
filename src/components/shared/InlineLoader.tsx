@@ -1,7 +1,7 @@
 const InlineLoader = ({ text = "Loading..." }: { text?: string }) => {
   return (
-    <div className="flex items-center justify-center space-x-2 py-6">
-      <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full"></div>
+    <div className="flex items-center justify-center gap-2.5 py-10 text-sm text-muted-foreground">
+      <div className="animate-spin h-4 w-4 border-2 border-border border-t-primary rounded-full" />
       <span>{text}</span>
     </div>
   );

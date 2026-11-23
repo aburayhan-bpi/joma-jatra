@@ -101,24 +101,3 @@ export const ACTIVITY_ENTITIES = [
   "AUTH",
 ] as const;
 export type ActivityEntity = (typeof ACTIVITY_ENTITIES)[number];
-
-/* ==========================================================================
-   LEGACY TYPE COMPATIBILITY (Preserved for existing src/types/global.ts)
-   ========================================================================== */
-
-export type PurchasePaymentStatus = "PAID" | "PARTIAL" | "DUE";
-export type PurchasePaymentMethod = "CASH" | "BANK" | "MOBILE_BANKING" | "OTHER";
-export type PurchaseStatus = "COMPLETED" | "CANCELLED";
-export type SalePaymentStatus =
-  | "PAID"
-  | "PARTIAL"
-  | "DUE"
-  | "REFUND_DUE"
-  | "REFUNDED"
-  | "CANCELLED";
-export type SalePaymentMethod =
-  | "CASH"
-  | "BANK"
-  | "MOBILE_BANKING"
-  | "COD"
-  | "OTHER";

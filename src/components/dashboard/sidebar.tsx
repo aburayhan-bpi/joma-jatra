@@ -1,12 +1,24 @@
 "use client";
 
-import type React from "react";
-
-import { SIDEBAR_ITEMS } from "@/lib/constants";
+import StatusPill from "@/components/shared/StatusPill";
+import { SIDEBAR_ITEMS, SidebarNavItem } from "@/lib/constants";
+import { selectUser } from "@/redux/features/user/authSlice";
+import { useAppSelector } from "@/redux/hook";
+import {
+  HandCoins,
+  History,
+  Landmark,
+  LayoutDashboard,
+  PiggyBank,
+  Sheet,
+  UserCircle,
+  Users,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Icons } from "../../utils/icons";
+import React from "react";
 import { LogoutButton } from "./LogoutButton";
 
 interface SidebarProps {
@@ -15,109 +27,125 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+const iconMap: Record<SidebarNavItem["icon"], React.ReactNode> = {
+  LayoutDashboard: <LayoutDashboard className="w-[17px] h-[17px] shrink-0" />,
+  Sheet: <Sheet className="w-[17px] h-[17px] shrink-0" />,
+  PiggyBank: <PiggyBank className="w-[17px] h-[17px] shrink-0" />,
+  HandCoins: <HandCoins className="w-[17px] h-[17px] shrink-0" />,
+  Users: <Users className="w-[17px] h-[17px] shrink-0" />,
+  Landmark: <Landmark className="w-[17px] h-[17px] shrink-0" />,
+  History: <History className="w-[17px] h-[17px] shrink-0" />,
+  UserCircle: <UserCircle className="w-[17px] h-[17px] shrink-0" />,
+};
+
 export function Sidebar({ isOpen, isCollapsed, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const user = useAppSelector(selectUser);
 
-  //   const user = useAppSelector((state) => state.auth.user);
-  const user = {
-    role: "ADMIN",
-  };
-
+  // Filter sidebar links by the authenticated user's role
   const visibleItems = SIDEBAR_ITEMS.filter((item) =>
-    item.roles.includes(user?.role || ""),
+    user?.role ? item.roles.includes(user.role) : true,
   );
 
-  const getIcon = (iconName: string) => {
-    const iconMap: Record<string, React.ReactNode> = {
-      LayoutDashboard: <Icons.LayoutDashboard className="w-5 h-5" />,
-    };
-    return iconMap[iconName];
+  const isNavItemActive = (href: string) => {
+    if (href === "/dashboard") return pathname === "/dashboard";
+    return pathname === href || pathname.startsWith(`${href}/`);
   };
 
   return (
     <>
+      {/* Mobile backdrop overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/10 backdrop-blur-sm lg:hidden z-30"
+          className="fixed inset-0 bg-foreground/20 backdrop-blur-[1px] lg:hidden z-30"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 z-40 lg:relative lg:z-0 ${
-          isOpen ? "w-64" : "-translate-x-full lg:translate-x-0"
-        } ${isCollapsed ? "lg:w-20" : "lg:w-64"}`}
+        className={`fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-200 z-40 lg:relative lg:z-0 ${
+          isOpen ? "w-60" : "-translate-x-full lg:translate-x-0"
+        } ${isCollapsed ? "lg:w-[72px]" : "lg:w-60"}`}
       >
         <div className="flex flex-col h-full">
+          {/* Brand Logo Header */}
           <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
-            <div
-              className={`flex items-center gap-2 ${
+            <Link
+              href="/dashboard"
+              className={`flex items-center cursor-pointer ${
                 isCollapsed ? "lg:justify-center lg:w-full" : ""
               }`}
             >
-              <Link
-                href={"/"}
-                title="Go Homepage"
-                className="flex items-center gap-3 cursor-pointer"
-              >
-                {isCollapsed ? (
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
-                    <Image
-                      src={"/joma-jatra-icononly.png"}
-                      alt="JomaJatra"
-                      width={40}
-                      height={40}
-                      draggable={false}
-                      className="object-contain"
-                    />
-                  </div>
-                ) : (
-                  <Image
-                    src={"/joma-jatra.png"}
-                    alt="JomaJatra"
-                    width={136}
-                    height={44}
-                    draggable={false}
-                    className="h-10 w-auto object-contain"
-                  />
-                )}
-              </Link>
-            </div>
+              {isCollapsed ? (
+                <Image
+                  src="/joma-jatra-icononly.png"
+                  alt="JomaJatra"
+                  width={36}
+                  height={36}
+                  draggable={false}
+                  className="h-9 w-9 object-contain"
+                />
+              ) : (
+                <Image
+                  src="/joma-jatra.png"
+                  alt="JomaJatra"
+                  width={132}
+                  height={42}
+                  draggable={false}
+                  className="h-9 w-auto object-contain"
+                />
+              )}
+            </Link>
+
             <button
+              type="button"
               onClick={onClose}
-              className="lg:hidden text-muted-foreground hover:text-foreground cursor-pointer"
+              className="lg:hidden p-1.5 text-muted-foreground hover:text-foreground cursor-pointer"
               aria-label="Close sidebar"
             >
-              <Icons.X className="w-5 h-5" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-2">
+          {/* Primary Navigation Links */}
+          <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5">
             {visibleItems.map((item) => {
-              const isActive = pathname === item.href;
+              const active = isNavItemActive(item.href);
               return (
                 <Link
                   key={item.id}
                   href={item.href}
-                  onClick={() => onClose()}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors cursor-pointer ${
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm shadow-brand/20"
+                  onClick={onClose}
+                  title={isCollapsed ? item.label : undefined}
+                  className={`flex items-center gap-2.5 px-3 py-2 rounded text-[13px] font-medium transition-colors cursor-pointer ${
+                    active
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   } ${isCollapsed ? "lg:justify-center lg:px-2" : ""}`}
-                  title={isCollapsed ? item.label : undefined}
                 >
-                  {getIcon(item.icon)}
-                  {!isCollapsed && (
-                    <span className="text-sm font-medium">{item.label}</span>
-                  )}
+                  {iconMap[item.icon]}
+                  {!isCollapsed && <span className="truncate">{item.label}</span>}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="p-4 border-t border-sidebar-border">
+          {/* Compact Role Indicator + Logout */}
+          <div className="p-2.5 border-t border-sidebar-border space-y-2">
+            {!isCollapsed && user && (
+              <div className="px-2.5 py-2 rounded bg-background border border-border flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-foreground truncate">
+                    {user.name}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {user.email}
+                  </p>
+                </div>
+                <StatusPill status={user.role} />
+              </div>
+            )}
             <LogoutButton isCollapsed={isCollapsed} />
           </div>
         </div>

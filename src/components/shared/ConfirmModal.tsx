@@ -65,10 +65,10 @@ const ConfirmModal = ({
         onClick={onClose}
       />
 
-      <div className="relative z-101 w-full max-w-md rounded-24 border border-border bg-card p-5 shadow-[0_20px_60px_rgba(7,42,31,0.18)] sm:p-6">
+      <div className="relative z-101 w-full max-w-md rounded-md border border-border bg-card p-5 shadow-[0_14px_38px_rgba(7,42,31,0.16)] sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+            <h3 className="text-base font-semibold text-foreground">{title}</h3>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
               {description}
             </p>
@@ -77,7 +77,7 @@ const ConfirmModal = ({
           <button
             type="button"
             onClick={onClose}
-            className=" inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:cursor-pointer hover:bg-muted hover:text-foreground"
+            className="inline-flex size-8 items-center justify-center rounded text-muted-foreground transition-colors hover:cursor-pointer hover:bg-muted hover:text-foreground"
             aria-label="Close dialog"
           >
             <X className="size-4" />

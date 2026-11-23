@@ -1,22 +1,37 @@
+/**
+ * Restrained, human-crafted semantic status badge styles.
+ * Uses subtle light tints and hairline borders matching the JomaJatra forest/gold palette.
+ */
 export const getStatusBadge = (status: string) => {
   const normalized = status?.toUpperCase();
 
   switch (normalized) {
+    case "APPROVED":
+    case "ACTIVE":
     case "PAID":
-      return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 text-normal px-3 py-1";
+    case "SETTLED":
+    case "RESTORED":
+      return "bg-emerald-50 text-emerald-800 border border-emerald-200/80";
     case "PENDING":
-      return "bg-amber-50 text-amber-700 border border-amber-200 text-normal px-3 py-1";
-    case "OVERDUE":
-      return "bg-red-50 text-red-700 ring-1 ring-red-200 text-normal px-3 py-1";
+    case "PARTIAL":
+    case "CASHIER":
+    case "UNSETTLED":
+      return "bg-amber-50 text-amber-800 border border-amber-200/80";
+    case "REJECTED":
+    case "INACTIVE":
+    case "DELETED":
+    case "DEACTIVATED":
     case "CANCELED":
-      return "bg-red-50 text-red-700 border border-red-200 text-normal px-3 py-1";
-    case "PARTIALLY_PAID":
-      return "bg-blue-50 text-blue-700 ring-1 ring-blue-200 text-normal px-3 py-1";
-    case "UNPAID":
-      return "bg-orange-50 text-orange-700 ring-1 ring-orange-200 text-normal px-3 py-1";
-    case "CONFIRMED":
-      return "bg-indigo-50 text-indigo-700 border border-indigo-200 text-normal px-3 py-1";
+    case "OVERDUE":
+      return "bg-rose-50 text-rose-700 border border-rose-200/80";
+    case "ADMIN":
+    case "FULL_SETTLEMENT":
+      return "bg-brand-5 text-brand-dark border border-brand-20";
+    case "DONATED_WAIVER":
+    case "UPDATED":
+    case "ROLE_CHANGED":
+      return "bg-muted text-foreground border border-border";
     default:
-      return "bg-gray-100 text-gray-700 ring-1 ring-gray-200 text-normal px-3 py-1";
+      return "bg-muted text-muted-foreground border border-border";
   }
 };

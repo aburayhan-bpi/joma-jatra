@@ -108,4 +108,4 @@ All balances are computed dynamically from approved, non-deleted records:
 - [x] **Step 6:** Deposits & Returns APIs (Duplicate TrxID check, Balance checks, Review w/ anti-self-approval, Soft Delete & Restore)
 - [x] **Step 7:** Internal Transfers (w/ optional fee), Standalone Charges, Global Activity Log & Role-Based Dashboard / Monthly Matrix APIs
 - [x] **Step 8:** Postman Collection JSON, Vitest Unit Tests & `pnpm check`
-- [ ] **Next Track:** Frontend Redux RTK Query + `src/proxy.ts` Route Protection + All Dashboard UI Pages + Reusable `ProofPreviewModal` + Excel/PDF Export
+- [x] **Frontend Track:** Centralized `src/types/global.ts`, Redux RTK Query APIs, `src/proxy.ts` Route Protection, All 8 Dashboard UI Pages, Reusable `ProofPreviewModal` & `ProofUploadField`, Strict 3-Role RBAC Sync, Excel/PDF Exports & `pnpm check`
