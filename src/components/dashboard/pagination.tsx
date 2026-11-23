@@ -82,7 +82,7 @@ export function Pagination({
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="w-10 h-10 flex items-center justify-center rounded-xl border border-white/10 text-muted-foreground hover:bg-white/5 disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"
+          className="w-10 h-10 flex items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"
           aria-label="Previous page"
         >
           <Icons.ChevronLeft className="w-4 h-4" />
@@ -96,10 +96,10 @@ export function Pagination({
               disabled={page === "..." || page === currentPage}
               className={`w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium border transition-colors shrink-0 ${
                 page === currentPage
-                  ? "bg-[#294066] text-white border-transparent"
+                  ? "bg-primary text-primary-foreground border-transparent shadow-sm shadow-brand/20"
                   : page === "..."
                     ? "cursor-default border-transparent text-muted-foreground"
-                    : "border-white/10 text-muted-foreground hover:bg-white/5 hover:cursor-pointer"
+                    : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:cursor-pointer"
               }`}
               aria-label={`Go to page ${page}`}
               aria-current={page === currentPage ? "page" : undefined}
@@ -112,7 +112,7 @@ export function Pagination({
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="w-10 h-10 flex items-center justify-center rounded-xl border border-white/10 text-muted-foreground hover:bg-white/5 disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"
+          className="w-10 h-10 flex items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"
           aria-label="Next page"
         >
           <Icons.ChevronRight className="w-4 h-4" />

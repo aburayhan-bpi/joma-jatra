@@ -27,7 +27,6 @@ export default function DashboardLayout({
         isOpen={sidebarOpen}
         isCollapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
-        onExpand={() => setSidebarCollapsed(false)}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">

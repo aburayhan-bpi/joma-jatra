@@ -43,7 +43,7 @@ export default function GlobalError({
           <Button
             onClick={() => reset()}
             size="lg"
-            className="bg-error hover:bg-error-80 text-white rounded-lg px-8 transition-transform active:scale-95"
+            className="bg-error hover:bg-error-80 text-white rounded-lg px-8 transition-transform active:scale-95 cursor-pointer"
           >
             <RefreshCcw className="mr-2 h-5 w-5" />
             Try again
@@ -53,7 +53,7 @@ export default function GlobalError({
             asChild
             variant="outline"
             size="lg"
-            className="rounded-lg border-border bg-white text-title hover:bg-muted"
+            className="rounded-lg border-border bg-card text-title hover:bg-muted cursor-pointer"
           >
             <Link href="/dashboard/admin">
               <Home className="mr-2 h-5 w-5" />

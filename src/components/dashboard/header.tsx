@@ -106,7 +106,7 @@ export function Header({
             "text-primary! hover:bg-primary/10! rounded-xl p-2 sm:p-2.5 transition-all duration-300 hover:cursor-pointer lg:hidden shrink-0",
             sidebarOpen
               ? "text-primary! bg-primary/10!"
-              : "text-muted-foreground hover:bg-input",
+              : "text-muted-foreground hover:bg-muted",
           )}
           aria-label="Toggle menu"
         >
@@ -138,7 +138,7 @@ export function Header({
           <input
             type="search"
             placeholder="Search..."
-            className="block w-full pl-9 pr-3 py-2.5 sm:py-2 bg-input border border-border rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground shadow-sm text-foreground"
+            className="block w-full pl-9 pr-3 py-2.5 sm:py-2 bg-card border border-border rounded-xl sm:rounded-2xl text-xs sm:text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground shadow-sm text-foreground"
           />
         </div>
       </div>
@@ -154,8 +154,8 @@ export function Header({
             <Icons.Bell className="w-4.5 h-4.5 text-brand" />
             {hasNotifications && (
               <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500 border-2 border-white"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-gold border-2 border-card"></span>
               </span>
             )}
           </button>
@@ -190,8 +190,8 @@ export function Header({
           <button
             onClick={() => setShowDropdown(!showDropdown)}
             className={cn(
-              "flex items-center gap-3 p-1.5 pr-3 rounded-full hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200 cursor-pointer",
-              showDropdown && "bg-slate-100 border-slate-200",
+              "flex items-center gap-3 p-1.5 pr-3 rounded-full hover:bg-muted transition-all border border-transparent hover:border-border cursor-pointer",
+              showDropdown && "bg-muted border-border",
             )}
             aria-expanded={showDropdown}
             aria-haspopup="true"
@@ -209,21 +209,21 @@ export function Header({
               )}
             </div>
             <div className="hidden md:block text-left mr-1">
-              <p className="text-sm font-bold text-slate-700">{user?.name}</p>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-sm font-bold text-foreground">{user?.name}</p>
+              <p className="text-xs text-muted-foreground font-medium">
                 {formatStatusText(user?.role || "USER")}
               </p>
             </div>
             <Icons.ChevronDown
               className={cn(
-                "w-3.5 h-3.5 text-slate-400 transition-transform ml-1",
+                "w-3.5 h-3.5 text-text-secondary transition-transform ml-1",
                 showDropdown && "rotate-180",
               )}
             />
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl border border-border bg-background shadow-[0_12px_30px_rgba(0,0,0,0.08)]">
+            <div className="absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_30px_rgba(7,42,31,0.08)]">
               <div className="p-4.5 border-b border-border bg-muted/50">
                 <p className="text-sm font-bold text-foreground leading-none">
                   {displayName}

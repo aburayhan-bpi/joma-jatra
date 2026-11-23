@@ -131,9 +131,9 @@ const Navbar = () => {
     <>
       <nav
         className={cn(
-          "fixed top-0 left-0 right-0 z-100 md:px-4 2xl:px-0 border-b border-white/5 transition-all duration-500 ease-in-out",
+          "fixed top-0 left-0 right-0 z-100 md:px-4 2xl:px-0 border-b border-border/80 transition-all duration-500 ease-in-out",
           isVisible
-            ? "translate-y-0 bg-transparent backdrop-blur-[2px]"
+            ? "translate-y-0 bg-background/85 backdrop-blur-md"
             : "-translate-y-full bg-transparent border-none",
         )}
       >
@@ -147,15 +147,15 @@ const Navbar = () => {
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }
             }}
-            className="flex items-center gap-2 group relative z-110"
+            className="flex items-center gap-2 group relative z-110 cursor-pointer"
           >
-            {/* <Logo className="w-44 h-12 group-hover:scale-105 transition-transform" /> */}
-            <Image draggable={false}
-              src="/logo.png"
-              alt="logo"
-              width={50}
-              height={50}
-              
+            <Image
+              draggable={false}
+              src="/joma-jatra.png"
+              alt={WEBSITE_DETAILS.SITE_NAME}
+              width={140}
+              height={48}
+              className="h-11 w-auto object-contain"
             />
           </Link>
 
@@ -170,8 +170,8 @@ const Navbar = () => {
                   href={link.href}
                   onClick={getAnchorClickHandler(link.href)}
                   className={cn(
-                    "relative py-1 text-gray-300 hover:text-white transition-colors font-medium text-sm lg:text-base",
-                    isActive && "text-primary",
+                    "relative py-1 text-muted-foreground hover:text-primary transition-colors font-medium text-sm lg:text-base cursor-pointer",
+                    isActive && "text-primary font-semibold",
                   )}
                 >
                   {link.name}
@@ -186,19 +186,19 @@ const Navbar = () => {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="flex items-center gap-2 p-1 rounded-full border border-primary/10 hover:border-brand/30 hover:bg-brand/5 hover:cursor-pointer transition-all duration-200"
+                  className="flex items-center gap-2 p-1 rounded-full border border-primary/15 hover:border-brand/40 hover:bg-brand-5 hover:cursor-pointer transition-all duration-200"
                   aria-label="User menu"
                 >
                   <Avatar name={displayName} src={profileImage} size={40} />
                 </button>
 
                 {showDropdown && (
-                  <div className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-2xl border border-slate-100 bg-white p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.08)] animate-in fade-in-0 zoom-in-95 duration-200">
-                    <div className="hidden lg:block text-left pr-1">
+                  <div className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-2xl border border-border bg-card p-1.5 shadow-[0_10px_30px_rgba(7,42,31,0.08)] animate-in fade-in-0 zoom-in-95 duration-200">
+                    <div className="hidden lg:block text-left px-3 py-2 border-b border-border/60">
                       <p className="text-xs font-semibold text-foreground leading-none mb-0.5">
                         {profile?.name || "-"}
                       </p>
-                      <p className="text-[9px] text-brand uppercase tracking-wider font-bold">
+                      <p className="text-[10px] text-brand uppercase tracking-wider font-bold">
                         {profile?.email || ""}
                       </p>
                     </div>
@@ -206,7 +206,7 @@ const Navbar = () => {
                       <Link
                         href="/dashboard"
                         onClick={() => setShowDropdown(false)}
-                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-700 hover:bg-brand/5 hover:text-brand hover:cursor-pointer transition-colors"
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium text-text-description hover:bg-brand-5 hover:text-brand hover:cursor-pointer transition-colors"
                       >
                         <LayoutDashboard className="w-3.5 h-3.5" />
                         Go to Dashboard
@@ -216,7 +216,7 @@ const Navbar = () => {
                           setShowDropdown(false);
                           handleLogout();
                         }}
-                        className="flex w-full items-center gap-2 hover:cursor-pointer rounded-xl px-3 py-2.5 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+                        className="flex w-full items-center gap-2 hover:cursor-pointer rounded-xl px-3 py-2.5 text-xs font-medium text-error hover:bg-error-5 transition-colors"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         Log Out
@@ -229,13 +229,13 @@ const Navbar = () => {
               <div className="hidden sm:flex items-center gap-4">
                 <Link
                   href="/login"
-                  className="px-7 py-2.5 text-base rounded-20! font-semibold text-foreground hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-primary/50 transition-all active:scale-95 flex items-center justify-center backdrop-blur-md"
+                  className="px-7 py-2.5 text-base rounded-20! font-semibold text-foreground hover:text-primary bg-card hover:bg-accent border border-border hover:border-primary/40 transition-all active:scale-95 flex items-center justify-center cursor-pointer"
                 >
                   Log In
                 </Link>
                 <Link
                   href="/register"
-                  className="rounded-full px-7 py-2.5 text-base font-bold text-brand-dark golden-gradient-card border-none! hover:brightness-105 transition-all active:scale-95 shadow-[0_4px_14px_rgba(255,212,81,0.25)] flex items-center justify-center"
+                  className="rounded-full px-7 py-2.5 text-base font-bold text-foreground golden-gradient-card border-none! hover:brightness-105 transition-all active:scale-95 shadow-[0_4px_14px_rgba(252,150,7,0.28)] flex items-center justify-center cursor-pointer"
                 >
                   Get Started
                 </Link>
@@ -243,7 +243,7 @@ const Navbar = () => {
             )}
 
             <button
-              className="md:hidden p-2 text-title hover:bg-brand-dark hover:scale-95 hover:cursor-pointer rounded-16 transition-all duration-300"
+              className="md:hidden p-2 text-title hover:bg-accent hover:text-primary hover:scale-95 hover:cursor-pointer rounded-16 transition-all duration-300"
               onClick={() => setIsOpen(!isOpen)}
               aria-label="Toggle Menu"
             >
@@ -256,7 +256,7 @@ const Navbar = () => {
       {/* Professional Full-Screen Mobile Menu Overlay */}
       <div
         className={cn(
-          "fixed inset-0 z-9999 md:hidden bg-background/95 backdrop-blur-xl transition-all duration-500 ease-in-out",
+          "fixed inset-0 z-9999 md:hidden bg-background/98 backdrop-blur-xl transition-all duration-500 ease-in-out",
           isOpen
             ? "opacity-100 translate-y-0"
             : "opacity-0 -translate-y-full pointer-events-none",
@@ -264,22 +264,23 @@ const Navbar = () => {
       >
         <div className="flex flex-col h-full bg-transparent">
           {/* Mobile Menu Header */}
-          <div className="flex items-center justify-between px-6 h-20 border-b border-white/10">
+          <div className="flex items-center justify-between px-6 h-20 border-b border-border">
             <Link
               href="/"
               onClick={() => setIsOpen(false)}
-              className="flex items-center"
+              className="flex items-center cursor-pointer"
             >
-              <Image draggable={false}
-                src="/logo.png"
-                alt="logo"
-                width={45}
-                height={45}
-                
+              <Image
+                draggable={false}
+                src="/joma-jatra.png"
+                alt={WEBSITE_DETAILS.SITE_NAME}
+                width={130}
+                height={44}
+                className="h-10 w-auto object-contain"
               />
             </Link>
             <button
-              className="p-2 text-gray-300 hover:text-white hover:bg-brand-dark hover:cursor-pointer rounded-full transition-all active:scale-90"
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent hover:cursor-pointer rounded-full transition-all active:scale-90"
               onClick={() => setIsOpen(false)}
             >
               <X size={28} />
@@ -299,10 +300,10 @@ const Navbar = () => {
                     setIsOpen(false),
                   )}
                   className={cn(
-                    "text-3xl font-bold transition-all duration-300 transform flex items-center justify-between",
+                    "text-3xl font-bold transition-all duration-300 transform flex items-center justify-between cursor-pointer",
                     isActive
                       ? "text-primary"
-                      : "text-gray-300 hover:text-white",
+                      : "text-muted-foreground hover:text-foreground",
                     isOpen
                       ? "translate-x-0 opacity-100"
                       : "translate-x-10 opacity-0",
@@ -311,7 +312,7 @@ const Navbar = () => {
                 >
                   <span>{item.name}</span>
                   {isActive && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_10px_rgba(255,212,81,0.5)]" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-gold shadow-[0_0_10px_rgba(252,150,7,0.5)]" />
                   )}
                 </Link>
               );
@@ -319,12 +320,12 @@ const Navbar = () => {
           </div>
 
           {/* Mobile Footer Action */}
-          <div className="p-6 border-t border-white/10 bg-black/20">
+          <div className="p-6 border-t border-border bg-card">
             {isAuthenticated ? (
               <div className="flex flex-col gap-3">
                 <Link href="/dashboard" onClick={() => setIsOpen(false)}>
                   <Button
-                    className="w-full py-6 text-lg font-bold bg-primary hover:bg-primary/90 text-brand-dark transition-all active:scale-95"
+                    className="w-full py-6 text-lg font-bold bg-primary hover:bg-brand-dark text-primary-foreground cursor-pointer transition-all active:scale-95"
                     size="lg"
                   >
                     Go to Dashboard
@@ -336,7 +337,7 @@ const Navbar = () => {
                     handleLogout();
                   }}
                   variant="outline"
-                  className="w-full py-6 text-lg font-bold border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all active:scale-95"
+                  className="w-full py-6 text-lg font-bold border-error/30 text-error hover:bg-error-5 cursor-pointer transition-all active:scale-95"
                   size="lg"
                 >
                   Log Out
@@ -351,7 +352,7 @@ const Navbar = () => {
                 >
                   <Button
                     variant="outline"
-                    className="w-full py-6 text-lg font-semibold text-white bg-white/5 border-white/10 hover:bg-white/10 transition-all active:scale-95 backdrop-blur-md"
+                    className="w-full py-6 text-lg font-semibold text-foreground bg-card border-border hover:bg-accent cursor-pointer transition-all active:scale-95"
                     size="lg"
                   >
                     Log In
@@ -363,7 +364,7 @@ const Navbar = () => {
                   className="w-full"
                 >
                   <Button
-                    className="w-full py-6 text-lg font-bold text-brand-dark hover:cursor-pointer border-none! golden-gradient-card hover:brightness-105 transition-all active:scale-95 shadow-[0_4px_14px_rgba(255,212,81,0.25)]"
+                    className="w-full py-6 text-lg font-bold text-foreground hover:cursor-pointer border-none! golden-gradient-card hover:brightness-105 transition-all active:scale-95 shadow-[0_4px_14px_rgba(252,150,7,0.28)]"
                     size="lg"
                   >
                     Get Started
@@ -371,7 +372,7 @@ const Navbar = () => {
                 </Link>
 
                 <div className="mt-4 flex flex-col items-center gap-1">
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-[0.2em]">
+                  <p className="text-xs text-muted-foreground font-bold uppercase tracking-[0.2em]">
                     © 2026 {WEBSITE_DETAILS.SITE_NAME}
                   </p>
                 </div>

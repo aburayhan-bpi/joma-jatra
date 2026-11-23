@@ -165,7 +165,7 @@ export default function VerifyEmailPage() {
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-125 relative overflow-hidden flex flex-col justify-center bg-card rounded-32 p-8 sm:p-12"
+        className="w-full max-w-125 relative overflow-hidden flex flex-col justify-center bg-card border border-border auth-card-shadow rounded-32 p-8 sm:p-12"
       >
         <div className="relative z-10 flex flex-col justify-center w-full mx-auto gap-8">
           {/* Header */}
@@ -216,7 +216,7 @@ export default function VerifyEmailPage() {
 
             {error && <p className="text-xs text-error text-center">{error}</p>}
             {resendMessage && (
-              <p className="text-xs text-green-500 text-center">
+              <p className="text-xs text-success text-center">
                 {resendMessage}
               </p>
             )}
@@ -226,11 +226,11 @@ export default function VerifyEmailPage() {
               type="button"
               onClick={handleSubmit}
               disabled={!isOtpComplete || loading}
-              className="w-full h-12 golden-gradient-card border-0! hover:opacity-90 text-background text-[15px] font-bold rounded-xl flex items-center justify-center gap-2 transition-opacity shadow-[0_4px_14px_rgba(255,212,81,0.25)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-12 golden-gradient-card border-0! hover:brightness-105 text-foreground text-[15px] font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-[0_4px_14px_rgba(252,150,7,0.28)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isVerifying ? (
                 <>
-                  <span className="h-4 w-4 rounded-full border-2 border-background border-t-transparent animate-spin" />
+                  <span className="h-4 w-4 rounded-full border-2 border-foreground border-t-transparent animate-spin" />
                   Verifying
                 </>
               ) : (

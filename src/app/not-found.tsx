@@ -7,8 +7,8 @@ import Link from "next/link";
 
 export default function NotFoundPage() {
   return (
-    /* Using your dashboard-bg and soft-blue for a cleaner, branded gradient */
-    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-b from-dashboard-bg to-soft-blue px-4">
+    /* Soft emerald-tinted light gradient matching JomaJatra brand */
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-b from-dashboard-bg to-soft-emerald px-4">
       <div className="text-center max-w-md">
         {/* Icon - Using brand-5 for the background and brand for the icon */}
         {/* <div className="mb-8 flex justify-center">
@@ -34,7 +34,7 @@ export default function NotFoundPage() {
           <Button
             asChild
             size="lg"
-            className="bg-brand text-background rounded-lg px-8 py-6 shadow-lg shadow-brand/20 transition-all hover:scale-105"
+            className="bg-primary hover:bg-brand-dark text-primary-foreground rounded-lg px-8 py-6 shadow-lg shadow-brand/20 transition-all hover:scale-105 cursor-pointer"
           >
             <Link href="/dashboard/admin">
               <ArrowLeft className="mr-2 h-5 w-5" /> Back to Dashboard

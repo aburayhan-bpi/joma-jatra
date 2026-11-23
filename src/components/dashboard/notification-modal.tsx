@@ -81,10 +81,10 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full bg-brand/16 max-w-sm sm:max-w-md rounded-2xl sm:rounded-3xl border border-brand/20 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            className="relative w-full bg-card max-w-sm sm:max-w-md rounded-2xl sm:rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-4 relative shrink-0 border-b border-brand/10">
+            <div className="flex items-center justify-between p-4 sm:p-4 relative shrink-0 border-b border-border">
               <h2 className="text-sm sm:text-base font-semibold text-foreground absolute left-1/2 -translate-x-1/2">
                 Notification
               </h2>
@@ -98,7 +98,7 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
                     damping: 600,
                   }}
                   onClick={onClose}
-                  className="group text-gray-400 hover:text-white cursor-pointer p-1.5 rounded-full hover:bg-brand/10 transition-all"
+                  className="group text-muted-foreground hover:text-foreground cursor-pointer p-1.5 rounded-full hover:bg-accent transition-all"
                   aria-label="Close modal"
                 >
                   <Icons.MdOutlineClose className="w-4 h-4 sm:w-5 sm:h-5 " />
@@ -111,11 +111,11 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
               {NOTIFICATIONS.map((notif) => (
                 <div
                   key={notif.id}
-                  className="flex gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-brand/5 rounded-xl sm:rounded-2xl transition-colors cursor-pointer hover:cursor-pointer group"
+                  className="flex gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-brand-5 rounded-xl sm:rounded-2xl transition-colors cursor-pointer hover:cursor-pointer group"
                 >
                   {/* Dot Indicator */}
                   <div className="pt-1.5 shrink-0">
-                    <div className="w-1.5 h-1.5 group-hover:w-2 group-hover:h-2 rounded-full bg-white/60 group-hover:bg-brand transition-all duration-300 ease-in-out shadow-[0_0_8px_rgba(255,255,255,0.3)] group-hover:shadow-[0_0_8px_var(--brand)]" />
+                    <div className="w-1.5 h-1.5 group-hover:w-2 group-hover:h-2 rounded-full bg-brand/40 group-hover:bg-brand transition-all duration-300 ease-in-out group-hover:shadow-[0_0_8px_var(--brand)]" />
                   </div>
 
                   {/* Content */}

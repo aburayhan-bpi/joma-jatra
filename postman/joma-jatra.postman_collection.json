@@ -1,0 +1,2600 @@
+{
+  "info": {
+    "name": "JomaJatra — Pure Money Management API (v1)",
+    "description": "Complete REST API collection for JomaJatra (জমা যাত্রা) Pure Money Management MVP with 3-role RBAC (ADMIN, CASHIER, MEMBER), flexible monthly savings, deposits, returns/settlements, transfers, charges, audit trails, soft-delete/restore, dashboard reconciliation, and full saved IBaseResponse examples for every endpoint.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "resetToken",
+      "value": ""
+    },
+    {
+      "key": "memberId",
+      "value": ""
+    },
+    {
+      "key": "paymentAccountId",
+      "value": ""
+    },
+    {
+      "key": "secondAccountId",
+      "value": ""
+    },
+    {
+      "key": "depositId",
+      "value": ""
+    },
+    {
+      "key": "returnId",
+      "value": ""
+    },
+    {
+      "key": "transferId",
+      "value": ""
+    },
+    {
+      "key": "chargeId",
+      "value": ""
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Bootstrap First Admin (One-Time)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.accessToken) pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "if (res?.data?.refreshToken) pm.collectionVariables.set('refreshToken', res.data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/bootstrap-admin",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Abu Rayhan\",\n  \"email\": \"aburayhan.bpi@gmail.com\",\n  \"phone\": \"01719857898\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/bootstrap-admin",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Abu Rayhan\",\n  \"email\": \"aburayhan.bpi@gmail.com\",\n  \"phone\": \"01719857898\",\n  \"password\": \"Admin@123\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Initial Admin account created successfully\",\n  \"data\": {\n    \"accessToken\": \"<jwt-access-token>\",\n    \"refreshToken\": \"<jwt-refresh-token>\",\n    \"user\": {\n      \"id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"email\": \"aburayhan.bpi@gmail.com\",\n      \"phone\": \"01719857898\",\n      \"profileImage\": \"\",\n      \"role\": \"ADMIN\",\n      \"status\": \"ACTIVE\",\n      \"joinedAt\": \"2026-11-23T10:34:57.708Z\",\n      \"mustChangePassword\": false\n    }\n  }\n}"
+            },
+            {
+              "name": "409 Already Initialized",
+              "originalRequest": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/bootstrap-admin",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Abu Rayhan\",\n  \"email\": \"aburayhan.bpi@gmail.com\",\n  \"phone\": \"01719857898\",\n  \"password\": \"Admin@123\"\n}"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"statusCode\": 409,\n  \"message\": \"System is already initialized. Please log in with an existing Admin account.\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.accessToken) pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "if (res?.data?.refreshToken) pm.collectionVariables.set('refreshToken', res.data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"aburayhan.bpi@gmail.com\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/login",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"aburayhan.bpi@gmail.com\",\n  \"password\": \"Admin@123\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Logged in successfully\",\n  \"data\": {\n    \"accessToken\": \"<jwt-access-token>\",\n    \"refreshToken\": \"<jwt-refresh-token>\",\n    \"user\": {\n      \"id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"email\": \"aburayhan.bpi@gmail.com\",\n      \"phone\": \"01719857898\",\n      \"profileImage\": \"\",\n      \"role\": \"ADMIN\",\n      \"status\": \"ACTIVE\",\n      \"joinedAt\": \"2026-11-23T10:34:57.708Z\",\n      \"mustChangePassword\": false\n    }\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/login",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"aburayhan.bpi@gmail.com\",\n  \"password\": \"Admin@123\"\n}"
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"statusCode\": 401,\n  \"message\": \"Invalid email or password\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.accessToken) pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "if (res?.data?.refreshToken) pm.collectionVariables.set('refreshToken', res.data.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/refresh",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Session refreshed successfully\",\n  \"data\": {\n    \"accessToken\": \"<new-jwt-access-token>\",\n    \"refreshToken\": \"<new-jwt-refresh-token>\",\n    \"user\": {\n      \"id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"email\": \"aburayhan.bpi@gmail.com\",\n      \"phone\": \"01719857898\",\n      \"profileImage\": \"\",\n      \"role\": \"ADMIN\",\n      \"status\": \"ACTIVE\",\n      \"joinedAt\": \"2026-11-23T10:34:57.708Z\",\n      \"mustChangePassword\": false\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Me (Profile + Personal Balance)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/auth/me"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Profile fetched successfully\",\n  \"data\": {\n    \"id\": \"6b0416d166c353cb8a822fbb\",\n    \"name\": \"Abu Rayhan\",\n    \"email\": \"aburayhan.bpi@gmail.com\",\n    \"phone\": \"01719857898\",\n    \"profileImage\": \"\",\n    \"role\": \"ADMIN\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-23T10:34:57.708Z\",\n    \"mustChangePassword\": false,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 0,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 5000,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update My Profile (Self)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Abu Rayhan\",\n  \"phone\": \"01719857898\",\n  \"profileImage\": \"\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/me",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Abu Rayhan\",\n  \"phone\": \"01719857898\",\n  \"profileImage\": \"\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Profile updated successfully\",\n  \"data\": {\n    \"id\": \"6b0416d166c353cb8a822fbb\",\n    \"name\": \"Abu Rayhan\",\n    \"email\": \"aburayhan.bpi@gmail.com\",\n    \"phone\": \"01719857898\",\n    \"profileImage\": \"\",\n    \"role\": \"ADMIN\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-23T10:34:57.708Z\",\n    \"mustChangePassword\": false,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 0,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 5000,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/change-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Admin@123\",\n  \"newPassword\": \"NewPass@123\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/change-password",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"Admin@123\",\n  \"newPassword\": \"NewPass@123\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Password changed successfully\",\n  \"data\": {\n    \"updated\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Forgot Password (Send OTP)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/forgot-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"aburayhan.bpi@gmail.com\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/forgot-password",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"aburayhan.bpi@gmail.com\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"If an active account exists for this email, a verification code has been sent.\",\n  \"data\": {\n    \"sent\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Resend Forgot Password OTP",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/resend-otp/forgot-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"aburayhan.bpi@gmail.com\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/resend-otp/forgot-password",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"aburayhan.bpi@gmail.com\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Verification code resent successfully\",\n  \"data\": {\n    \"sent\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify Forgot Password OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.resetToken) pm.collectionVariables.set('resetToken', res.data.resetToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/verify-forgot-password-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"aburayhan.bpi@gmail.com\",\n  \"otp\": \"123456\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/verify-forgot-password-otp",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"aburayhan.bpi@gmail.com\",\n  \"otp\": \"123456\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"OTP verified successfully\",\n  \"data\": {\n    \"resetToken\": \"<short-lived-reset-jwt>\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/reset-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resetToken\": \"{{resetToken}}\",\n  \"newPassword\": \"NewPass@123\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/auth/reset-password",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"resetToken\": \"{{resetToken}}\",\n  \"newPassword\": \"NewPass@123\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Password reset successfully\",\n  \"data\": {\n    \"reset\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/auth/logout"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": "{{baseUrl}}/auth/logout"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Logged out successfully\",\n  \"data\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Members & Audit Trail",
+      "item": [
+        {
+          "name": "List Members (URL Paginated + Search)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/members?page=1&limit=25&search=&status=ACTIVE&onlyDeleted=false"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/members?page=1&limit=25&search=&status=ACTIVE&onlyDeleted=false"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Members fetched successfully\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"total\": 1,\n    \"totalPage\": 1\n  },\n  \"data\": [\n    {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"profileImage\": \"\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\",\n      \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n      \"leftAt\": null,\n      \"leaveNote\": null,\n      \"mustChangePassword\": true,\n      \"isDeleted\": false,\n      \"financialSummary\": {\n        \"totalDeposited\": 5000,\n        \"totalReturned\": 500,\n        \"totalDonatedWaived\": 0,\n        \"netBalance\": 4500,\n        \"pendingDepositsCount\": 0,\n        \"pendingReturnsCount\": 0\n      },\n      \"unsettledPayable\": 0\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Add Member (Admin Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.id) pm.collectionVariables.set('memberId', res.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/members",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rahim Uddin\",\n  \"email\": \"rahim@jomajatra.app\",\n  \"phone\": \"01711111111\",\n  \"password\": \"Friend@123\",\n  \"role\": \"MEMBER\",\n  \"joinedAt\": \"2026-11-01\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/members",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Rahim Uddin\",\n  \"email\": \"rahim@jomajatra.app\",\n  \"phone\": \"01711111111\",\n  \"password\": \"Friend@123\",\n  \"role\": \"MEMBER\",\n  \"joinedAt\": \"2026-11-01\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Member added successfully\",\n  \"data\": {\n    \"id\": \"6b0417a266c353cb8a822fc1\",\n    \"name\": \"Rahim Uddin\",\n    \"email\": \"rahim@jomajatra.app\",\n    \"phone\": \"01711111111\",\n    \"role\": \"MEMBER\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n    \"mustChangePassword\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Member Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/members/{{memberId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/members/{{memberId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Member details fetched successfully\",\n  \"data\": {\n    \"_id\": \"6b0417a266c353cb8a822fc1\",\n    \"id\": \"6b0417a266c353cb8a822fc1\",\n    \"name\": \"Rahim Uddin\",\n    \"email\": \"rahim@jomajatra.app\",\n    \"phone\": \"01711111111\",\n    \"profileImage\": \"\",\n    \"role\": \"MEMBER\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n    \"leftAt\": null,\n    \"leaveNote\": null,\n    \"mustChangePassword\": true,\n    \"isDeleted\": false,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 500,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 4500,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    },\n    \"unsettledPayable\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Member Profile (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/members/{{memberId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rahim Uddin\",\n  \"phone\": \"01711111112\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/members/{{memberId}}",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Rahim Uddin\",\n  \"phone\": \"01711111112\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Member updated successfully\",\n  \"data\": {\n    \"_id\": \"6b0417a266c353cb8a822fc1\",\n    \"id\": \"6b0417a266c353cb8a822fc1\",\n    \"name\": \"Rahim Uddin\",\n    \"email\": \"rahim@jomajatra.app\",\n    \"phone\": \"01711111112\",\n    \"profileImage\": \"\",\n    \"role\": \"MEMBER\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n    \"leftAt\": null,\n    \"leaveNote\": null,\n    \"mustChangePassword\": true,\n    \"isDeleted\": false,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 500,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 4500,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    },\n    \"unsettledPayable\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Promote / Change Member Role (MEMBER <-> CASHIER)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/members/{{memberId}}/role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"CASHIER\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/members/{{memberId}}/role",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"CASHIER\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Member role updated to CASHIER successfully\",\n  \"data\": {\n    \"_id\": \"6b0417a266c353cb8a822fc1\",\n    \"id\": \"6b0417a266c353cb8a822fc1\",\n    \"name\": \"Rahim Uddin\",\n    \"email\": \"rahim@jomajatra.app\",\n    \"phone\": \"01711111111\",\n    \"profileImage\": \"\",\n    \"role\": \"CASHIER\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n    \"leftAt\": null,\n    \"leaveNote\": null,\n    \"mustChangePassword\": true,\n    \"isDeleted\": false,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 500,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 4500,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    },\n    \"unsettledPayable\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Deactivate Member — Case 1 (Settle & Close Atomically)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/members/{{memberId}}/deactivate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"SETTLE_AND_CLOSE\",\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"recipientAccount\": \"01711111111\",\n  \"trxId\": \"SETTLE9901\",\n  \"proofImage\": \"\",\n  \"leaveNote\": \"Returned full balance via bKash on leaving\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK (Settled & Closed)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/members/{{memberId}}/deactivate",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"SETTLE_AND_CLOSE\",\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"recipientAccount\": \"01711111111\",\n  \"trxId\": \"SETTLE9901\",\n  \"proofImage\": \"\",\n  \"leaveNote\": \"Returned full balance via bKash on leaving\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Member account deactivated successfully\",\n  \"data\": {\n    \"member\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"profileImage\": \"\",\n      \"role\": \"MEMBER\",\n      \"status\": \"INACTIVE\",\n      \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n      \"leftAt\": null,\n      \"leaveNote\": null,\n      \"mustChangePassword\": true,\n      \"isDeleted\": true,\n      \"financialSummary\": {\n        \"totalDeposited\": 5000,\n        \"totalReturned\": 5000,\n        \"totalDonatedWaived\": 0,\n        \"netBalance\": 0,\n        \"pendingDepositsCount\": 0,\n        \"pendingReturnsCount\": 0\n      },\n      \"unsettledPayable\": 0\n    },\n    \"settlementReturn\": {\n      \"_id\": \"6b04195566c353cb8a823001\",\n      \"id\": \"6b04195566c353cb8a823001\",\n      \"memberId\": {\n        \"_id\": \"6b0417a266c353cb8a822fc1\",\n        \"name\": \"Rahim Uddin\",\n        \"email\": \"rahim@jomajatra.app\",\n        \"phone\": \"01711111111\",\n        \"role\": \"MEMBER\",\n        \"status\": \"ACTIVE\",\n        \"isDeleted\": false\n      },\n      \"amount\": 4500,\n      \"returnDate\": \"2026-11-23T11:00:00.000Z\",\n      \"paymentMethod\": \"BKASH\",\n      \"paymentAccountId\": {\n        \"_id\": \"6b04181066c353cb8a822fd0\",\n        \"accountName\": \"Rayhan Personal bKash\",\n        \"accountNumber\": \"01719857898\",\n        \"method\": \"BKASH\"\n      },\n      \"recipientAccount\": \"01711111111\",\n      \"trxId\": \"SETTLE9901\",\n      \"proofImage\": \"\",\n      \"reason\": \"Urgent personal need\",\n      \"returnType\": \"FULL_SETTLEMENT\",\n      \"entrySource\": \"ADMIN_MANUAL\",\n      \"status\": \"APPROVED\",\n      \"rejectionReason\": null,\n      \"createdBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedAt\": \"2026-11-23T11:00:00.000Z\",\n      \"isDeleted\": false\n    }\n  }\n}"
+            },
+            {
+              "name": "409 Blocked by Pending Requests",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/members/{{memberId}}/deactivate",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"SETTLE_AND_CLOSE\",\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"recipientAccount\": \"01711111111\",\n  \"trxId\": \"SETTLE9901\",\n  \"proofImage\": \"\",\n  \"leaveNote\": \"Returned full balance via bKash on leaving\"\n}"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"statusCode\": 409,\n  \"message\": \"This member has 1 pending deposit(s) and 0 pending return(s). Please approve or reject them before closing the account.\",\n  \"data\": {\n    \"pendingDepositsCount\": 1,\n    \"pendingReturnsCount\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Deactivate Member — Case 2 (Keep Balance Unsettled)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/members/{{memberId}}/deactivate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"DEACTIVATE_ONLY\",\n  \"leaveNote\": \"Will return balance next week\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK (Deactivated With Unsettled Balance)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/members/{{memberId}}/deactivate",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"DEACTIVATE_ONLY\",\n  \"leaveNote\": \"Will return balance next week\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Member account deactivated successfully\",\n  \"data\": {\n    \"member\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"profileImage\": \"\",\n      \"role\": \"MEMBER\",\n      \"status\": \"INACTIVE\",\n      \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n      \"leftAt\": null,\n      \"leaveNote\": \"Will return balance next week\",\n      \"mustChangePassword\": true,\n      \"isDeleted\": true,\n      \"financialSummary\": {\n        \"totalDeposited\": 5000,\n        \"totalReturned\": 500,\n        \"totalDonatedWaived\": 0,\n        \"netBalance\": 4500,\n        \"pendingDepositsCount\": 0,\n        \"pendingReturnsCount\": 0\n      },\n      \"unsettledPayable\": 4500\n    },\n    \"settlementReturn\": null\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Deactivate Member — Case 3 (Donate Remaining Balance & Close)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/members/{{memberId}}/deactivate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"DONATE_AND_CLOSE\",\n  \"leaveNote\": \"Member waived remaining balance to group fund\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK (Donated & Closed)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/members/{{memberId}}/deactivate",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"action\": \"DONATE_AND_CLOSE\",\n  \"leaveNote\": \"Member waived remaining balance to group fund\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Member account deactivated successfully\",\n  \"data\": {\n    \"member\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"profileImage\": \"\",\n      \"role\": \"MEMBER\",\n      \"status\": \"INACTIVE\",\n      \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n      \"leftAt\": null,\n      \"leaveNote\": null,\n      \"mustChangePassword\": true,\n      \"isDeleted\": true,\n      \"financialSummary\": {\n        \"totalDeposited\": 5000,\n        \"totalReturned\": 5000,\n        \"totalDonatedWaived\": 4500,\n        \"netBalance\": 0,\n        \"pendingDepositsCount\": 0,\n        \"pendingReturnsCount\": 0\n      },\n      \"unsettledPayable\": 0\n    },\n    \"settlementReturn\": {\n      \"_id\": \"6b04195566c353cb8a823001\",\n      \"id\": \"6b04195566c353cb8a823001\",\n      \"memberId\": {\n        \"_id\": \"6b0417a266c353cb8a822fc1\",\n        \"name\": \"Rahim Uddin\",\n        \"email\": \"rahim@jomajatra.app\",\n        \"phone\": \"01711111111\",\n        \"role\": \"MEMBER\",\n        \"status\": \"ACTIVE\",\n        \"isDeleted\": false\n      },\n      \"amount\": 4500,\n      \"returnDate\": \"2026-11-23T11:00:00.000Z\",\n      \"paymentMethod\": null,\n      \"paymentAccountId\": null,\n      \"recipientAccount\": \"01711111111\",\n      \"trxId\": \"RET202601\",\n      \"proofImage\": \"\",\n      \"reason\": \"Urgent personal need\",\n      \"returnType\": \"DONATED_WAIVER\",\n      \"entrySource\": \"ADMIN_MANUAL\",\n      \"status\": \"APPROVED\",\n      \"rejectionReason\": null,\n      \"createdBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedAt\": \"2026-11-23T11:00:00.000Z\",\n      \"isDeleted\": false\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Restore Soft-Deleted / Inactive Member (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/members/{{memberId}}/restore"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": "{{baseUrl}}/members/{{memberId}}/restore"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Member restored and reactivated successfully\",\n  \"data\": {\n    \"_id\": \"6b0417a266c353cb8a822fc1\",\n    \"id\": \"6b0417a266c353cb8a822fc1\",\n    \"name\": \"Rahim Uddin\",\n    \"email\": \"rahim@jomajatra.app\",\n    \"phone\": \"01711111111\",\n    \"profileImage\": \"\",\n    \"role\": \"MEMBER\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n    \"leftAt\": null,\n    \"leaveNote\": null,\n    \"mustChangePassword\": true,\n    \"isDeleted\": false,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 500,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 4500,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    },\n    \"unsettledPayable\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Member Full Audit Trail (URL Paginated + Proof URLs)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/members/{{memberId}}/audit-trail?page=1&limit=25&category=&status=&month=&search="
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/members/{{memberId}}/audit-trail?page=1&limit=25&category=&status=&month=&search="
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Member audit trail fetched successfully\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"total\": 2,\n    \"totalPage\": 1\n  },\n  \"data\": [\n    {\n      \"id\": \"6b04190166c353cb8a822ff1\",\n      \"eventCategory\": \"DEPOSIT\",\n      \"eventType\": \"DEPOSIT\",\n      \"action\": \"APPROVED\",\n      \"summary\": \"First November savings\",\n      \"date\": \"2026-11-23T10:45:00.000Z\",\n      \"month\": \"2026-11\",\n      \"amount\": 1500,\n      \"direction\": \"CREDIT\",\n      \"paymentMethod\": \"BKASH\",\n      \"paymentAccountName\": \"Rayhan Personal bKash\",\n      \"trxId\": \"BKS8A7B9C1\",\n      \"status\": \"APPROVED\",\n      \"entrySource\": \"ADMIN_MANUAL\",\n      \"proofImage\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n      \"note\": \"First November savings\",\n      \"performedBy\": {\n        \"id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedBy\": {\n        \"id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      }\n    },\n    {\n      \"id\": \"6b04195566c353cb8a823001\",\n      \"eventCategory\": \"RETURN\",\n      \"eventType\": \"PARTIAL\",\n      \"action\": \"APPROVED\",\n      \"summary\": \"Urgent personal need\",\n      \"date\": \"2026-11-23T11:00:00.000Z\",\n      \"month\": \"2026-11\",\n      \"amount\": 500,\n      \"direction\": \"DEBIT\",\n      \"paymentMethod\": \"BKASH\",\n      \"paymentAccountName\": \"Rayhan Personal bKash\",\n      \"trxId\": \"RET202601\",\n      \"status\": \"APPROVED\",\n      \"entrySource\": \"ADMIN_MANUAL\",\n      \"proofImage\": null,\n      \"note\": \"Urgent personal need\",\n      \"performedBy\": {\n        \"id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedBy\": {\n        \"id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      }\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Payment Accounts",
+      "item": [
+        {
+          "name": "List Payment Accounts (With Live Balances)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/payment-accounts?page=1&limit=25&search=&method=&onlyDeleted=false"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/payment-accounts?page=1&limit=25&search=&method=&onlyDeleted=false"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Payment accounts fetched successfully\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"total\": 1,\n    \"totalPage\": 1\n  },\n  \"data\": [\n    {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"id\": \"6b04181066c353cb8a822fd0\",\n      \"method\": \"BKASH\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"accountType\": \"PERSONAL\",\n      \"bankName\": \"\",\n      \"branchName\": \"\",\n      \"routingNumber\": \"\",\n      \"note\": \"Send Money only\",\n      \"isActive\": true,\n      \"isDeleted\": false,\n      \"balance\": 14500,\n      \"balanceBreakdown\": {\n        \"accountId\": \"6b04181066c353cb8a822fd0\",\n        \"totalInDeposits\": 25000,\n        \"totalOutReturns\": 500,\n        \"totalTransferIn\": 0,\n        \"totalTransferOut\": 10000,\n        \"totalTransferFees\": 0,\n        \"totalStandaloneCharges\": 0,\n        \"balance\": 14500\n      }\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Payment Account (Admin / Cashier)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.id) pm.collectionVariables.set('paymentAccountId', res.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/payment-accounts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"BKASH\",\n  \"accountName\": \"Rayhan Personal bKash\",\n  \"accountNumber\": \"01719857898\",\n  \"accountType\": \"PERSONAL\",\n  \"note\": \"Send Money only\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/payment-accounts",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"method\": \"BKASH\",\n  \"accountName\": \"Rayhan Personal bKash\",\n  \"accountNumber\": \"01719857898\",\n  \"accountType\": \"PERSONAL\",\n  \"note\": \"Send Money only\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Payment account created successfully\",\n  \"data\": {\n    \"_id\": \"6b04181066c353cb8a822fd0\",\n    \"id\": \"6b04181066c353cb8a822fd0\",\n    \"method\": \"BKASH\",\n    \"accountName\": \"Rayhan Personal bKash\",\n    \"accountNumber\": \"01719857898\",\n    \"accountType\": \"PERSONAL\",\n    \"bankName\": \"\",\n    \"branchName\": \"\",\n    \"routingNumber\": \"\",\n    \"note\": \"Send Money only\",\n    \"isActive\": true,\n    \"isDeleted\": false,\n    \"balance\": 0,\n    \"balanceBreakdown\": {\n      \"accountId\": \"6b04181066c353cb8a822fd0\",\n      \"totalInDeposits\": 25000,\n      \"totalOutReturns\": 500,\n      \"totalTransferIn\": 0,\n      \"totalTransferOut\": 10000,\n      \"totalTransferFees\": 0,\n      \"totalStandaloneCharges\": 0,\n      \"balance\": 14500\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Single Payment Account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/payment-accounts/{{paymentAccountId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/payment-accounts/{{paymentAccountId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Payment account fetched successfully\",\n  \"data\": {\n    \"_id\": \"6b04181066c353cb8a822fd0\",\n    \"id\": \"6b04181066c353cb8a822fd0\",\n    \"method\": \"BKASH\",\n    \"accountName\": \"Rayhan Personal bKash\",\n    \"accountNumber\": \"01719857898\",\n    \"accountType\": \"PERSONAL\",\n    \"bankName\": \"\",\n    \"branchName\": \"\",\n    \"routingNumber\": \"\",\n    \"note\": \"Send Money only\",\n    \"isActive\": true,\n    \"isDeleted\": false,\n    \"balance\": 14500,\n    \"balanceBreakdown\": {\n      \"accountId\": \"6b04181066c353cb8a822fd0\",\n      \"totalInDeposits\": 25000,\n      \"totalOutReturns\": 500,\n      \"totalTransferIn\": 0,\n      \"totalTransferOut\": 10000,\n      \"totalTransferFees\": 0,\n      \"totalStandaloneCharges\": 0,\n      \"balance\": 14500\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Payment Account",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/payment-accounts/{{paymentAccountId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Send Money without cash-out fee\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/payment-accounts/{{paymentAccountId}}",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"note\": \"Send Money without cash-out fee\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Payment account updated successfully\",\n  \"data\": {\n    \"_id\": \"6b04181066c353cb8a822fd0\",\n    \"id\": \"6b04181066c353cb8a822fd0\",\n    \"method\": \"BKASH\",\n    \"accountName\": \"Rayhan Personal bKash\",\n    \"accountNumber\": \"01719857898\",\n    \"accountType\": \"PERSONAL\",\n    \"bankName\": \"\",\n    \"branchName\": \"\",\n    \"routingNumber\": \"\",\n    \"note\": \"Send Money without cash-out fee\",\n    \"isActive\": true,\n    \"isDeleted\": false,\n    \"balance\": 14500,\n    \"balanceBreakdown\": {\n      \"accountId\": \"6b04181066c353cb8a822fd0\",\n      \"totalInDeposits\": 25000,\n      \"totalOutReturns\": 500,\n      \"totalTransferIn\": 0,\n      \"totalTransferOut\": 10000,\n      \"totalTransferFees\": 0,\n      \"totalStandaloneCharges\": 0,\n      \"balance\": 14500\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Soft Delete Payment Account (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/payment-accounts/{{paymentAccountId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/payment-accounts/{{paymentAccountId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Payment account moved to trash successfully\",\n  \"data\": {\n    \"id\": \"6b04181066c353cb8a822fd0\",\n    \"isDeleted\": true\n  }\n}"
+            },
+            {
+              "name": "400 Non-Zero Balance Protection",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/payment-accounts/{{paymentAccountId}}"
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"statusCode\": 400,\n  \"message\": \"Cannot delete \\\"Rayhan Personal bKash\\\" while it holds ৳14500. Transfer the balance to another account first.\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Restore Payment Account (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/payment-accounts/{{paymentAccountId}}/restore"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": "{{baseUrl}}/payment-accounts/{{paymentAccountId}}/restore"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Payment account restored successfully\",\n  \"data\": {\n    \"_id\": \"6b04181066c353cb8a822fd0\",\n    \"id\": \"6b04181066c353cb8a822fd0\",\n    \"method\": \"BKASH\",\n    \"accountName\": \"Rayhan Personal bKash\",\n    \"accountNumber\": \"01719857898\",\n    \"accountType\": \"PERSONAL\",\n    \"bankName\": \"\",\n    \"branchName\": \"\",\n    \"routingNumber\": \"\",\n    \"note\": \"Send Money only\",\n    \"isActive\": true,\n    \"isDeleted\": false,\n    \"balance\": 14500,\n    \"balanceBreakdown\": {\n      \"accountId\": \"6b04181066c353cb8a822fd0\",\n      \"totalInDeposits\": 25000,\n      \"totalOutReturns\": 500,\n      \"totalTransferIn\": 0,\n      \"totalTransferOut\": 10000,\n      \"totalTransferFees\": 0,\n      \"totalStandaloneCharges\": 0,\n      \"balance\": 14500\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Monthly Targets",
+      "item": [
+        {
+          "name": "List Monthly Targets (With Live Progress)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/monthly-targets?page=1&limit=25&search="
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/monthly-targets?page=1&limit=25&search="
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Monthly targets fetched successfully\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"total\": 1,\n    \"totalPage\": 1\n  },\n  \"data\": [\n    {\n      \"id\": \"6b04185066c353cb8a822fe0\",\n      \"month\": \"2026-11\",\n      \"hasTarget\": true,\n      \"targetAmount\": 15000,\n      \"note\": \"Flexible November group goal\",\n      \"collectedAmount\": 12500,\n      \"depositCount\": 6,\n      \"remainingAmount\": 2500,\n      \"progressPercent\": 83,\n      \"updatedBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"email\": \"aburayhan.bpi@gmail.com\",\n        \"role\": \"ADMIN\"\n      },\n      \"updatedAt\": \"2026-11-23T10:40:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Upsert / Edit Monthly Target (Admin / Cashier)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/monthly-targets",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": \"2026-11\",\n  \"targetAmount\": 15000,\n  \"note\": \"Flexible November group goal\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/monthly-targets",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"month\": \"2026-11\",\n  \"targetAmount\": 15000,\n  \"note\": \"Flexible November group goal\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Monthly target for 2026-11 saved successfully\",\n  \"data\": {\n    \"id\": \"6b04185066c353cb8a822fe0\",\n    \"month\": \"2026-11\",\n    \"hasTarget\": true,\n    \"targetAmount\": 15000,\n    \"note\": \"Flexible November group goal\",\n    \"collectedAmount\": 12500,\n    \"depositCount\": 6,\n    \"remainingAmount\": 2500,\n    \"progressPercent\": 83,\n    \"updatedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"email\": \"aburayhan.bpi@gmail.com\",\n      \"role\": \"ADMIN\"\n    },\n    \"updatedAt\": \"2026-11-23T10:40:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Target & Collection by Month",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/monthly-targets/2026-11"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/monthly-targets/2026-11"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Monthly target fetched successfully\",\n  \"data\": {\n    \"id\": \"6b04185066c353cb8a822fe0\",\n    \"month\": \"2026-11\",\n    \"hasTarget\": true,\n    \"targetAmount\": 15000,\n    \"note\": \"Flexible November group goal\",\n    \"collectedAmount\": 12500,\n    \"depositCount\": 6,\n    \"remainingAmount\": 2500,\n    \"progressPercent\": 83,\n    \"updatedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"email\": \"aburayhan.bpi@gmail.com\",\n      \"role\": \"ADMIN\"\n    },\n    \"updatedAt\": \"2026-11-23T10:40:00.000Z\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Deposits",
+      "item": [
+        {
+          "name": "List Deposits (URL Paginated + Filters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/deposits?page=1&limit=25&search=&month=2026-11&status=&paymentMethod=&memberId=&onlyDeleted=false"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/deposits?page=1&limit=25&search=&month=2026-11&status=&paymentMethod=&memberId=&onlyDeleted=false"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Deposits fetched successfully\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"total\": 1,\n    \"totalPage\": 1\n  },\n  \"data\": [\n    {\n      \"_id\": \"6b04190166c353cb8a822ff1\",\n      \"id\": \"6b04190166c353cb8a822ff1\",\n      \"memberId\": {\n        \"_id\": \"6b0417a266c353cb8a822fc1\",\n        \"name\": \"Rahim Uddin\",\n        \"email\": \"rahim@jomajatra.app\",\n        \"phone\": \"01711111111\",\n        \"role\": \"MEMBER\",\n        \"status\": \"ACTIVE\"\n      },\n      \"amount\": 1500,\n      \"month\": \"2026-11\",\n      \"depositDate\": \"2026-11-23T10:45:00.000Z\",\n      \"paymentMethod\": \"BKASH\",\n      \"paymentAccountId\": {\n        \"_id\": \"6b04181066c353cb8a822fd0\",\n        \"accountName\": \"Rayhan Personal bKash\",\n        \"accountNumber\": \"01719857898\",\n        \"method\": \"BKASH\"\n      },\n      \"trxId\": \"BKS8A7B9C1\",\n      \"proofImage\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n      \"note\": \"First November savings\",\n      \"entrySource\": \"ADMIN_MANUAL\",\n      \"status\": \"APPROVED\",\n      \"rejectionReason\": null,\n      \"createdBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedAt\": \"2026-11-23T10:45:00.000Z\",\n      \"isDeleted\": false\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create / Submit Flexible Deposit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.id) pm.collectionVariables.set('depositId', res.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/deposits",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"{{memberId}}\",\n  \"amount\": 1500,\n  \"month\": \"2026-11\",\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"trxId\": \"BKS8A7B9C1\",\n  \"proofImage\": \"\",\n  \"note\": \"First November savings\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created (Admin Manual Auto-Approved)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/deposits",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"memberId\": \"{{memberId}}\",\n  \"amount\": 1500,\n  \"month\": \"2026-11\",\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"trxId\": \"BKS8A7B9C1\",\n  \"proofImage\": \"\",\n  \"note\": \"First November savings\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Deposit recorded and approved successfully\",\n  \"data\": {\n    \"_id\": \"6b04190166c353cb8a822ff1\",\n    \"id\": \"6b04190166c353cb8a822ff1\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\"\n    },\n    \"amount\": 1500,\n    \"month\": \"2026-11\",\n    \"depositDate\": \"2026-11-23T10:45:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"trxId\": \"BKS8A7B9C1\",\n    \"proofImage\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n    \"note\": \"First November savings\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T10:45:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            },
+            {
+              "name": "201 Created (Member Pending Approval)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/deposits",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"memberId\": \"{{memberId}}\",\n  \"amount\": 1500,\n  \"month\": \"2026-11\",\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"trxId\": \"BKS8A7B9C1\",\n  \"proofImage\": \"\",\n  \"note\": \"First November savings\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Deposit request submitted for approval\",\n  \"data\": {\n    \"_id\": \"6b04190166c353cb8a822ff1\",\n    \"id\": \"6b04190166c353cb8a822ff1\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\"\n    },\n    \"amount\": 1500,\n    \"month\": \"2026-11\",\n    \"depositDate\": \"2026-11-23T10:45:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"trxId\": \"BKS8A7B9C1\",\n    \"proofImage\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n    \"note\": \"First November savings\",\n    \"entrySource\": \"MEMBER_REQUEST\",\n    \"status\": \"PENDING\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": null,\n    \"reviewedAt\": null,\n    \"isDeleted\": false\n  }\n}"
+            },
+            {
+              "name": "409 Duplicate TrxID",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/deposits",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"memberId\": \"{{memberId}}\",\n  \"amount\": 1500,\n  \"month\": \"2026-11\",\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"trxId\": \"BKS8A7B9C1\",\n  \"proofImage\": \"\",\n  \"note\": \"First November savings\"\n}"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"statusCode\": 409,\n  \"message\": \"Duplicate TrxID \\\"BKS8A7B9C1\\\" already exists on an existing deposit. Please verify the transaction reference.\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Single Deposit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/deposits/{{depositId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/deposits/{{depositId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Deposit fetched successfully\",\n  \"data\": {\n    \"_id\": \"6b04190166c353cb8a822ff1\",\n    \"id\": \"6b04190166c353cb8a822ff1\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\"\n    },\n    \"amount\": 1500,\n    \"month\": \"2026-11\",\n    \"depositDate\": \"2026-11-23T10:45:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"trxId\": \"BKS8A7B9C1\",\n    \"proofImage\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n    \"note\": \"First November savings\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T10:45:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Deposit (Owner Pending / Admin Any)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/deposits/{{depositId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 2000,\n  \"editReason\": \"Corrected typo in deposit amount\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/deposits/{{depositId}}",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 2000,\n  \"editReason\": \"Corrected typo in deposit amount\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Deposit updated successfully\",\n  \"data\": {\n    \"_id\": \"6b04190166c353cb8a822ff1\",\n    \"id\": \"6b04190166c353cb8a822ff1\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\"\n    },\n    \"amount\": 2000,\n    \"month\": \"2026-11\",\n    \"depositDate\": \"2026-11-23T10:45:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"trxId\": \"BKS8A7B9C1\",\n    \"proofImage\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n    \"note\": \"First November savings\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T10:45:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Review Deposit (Approve / Reject)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/deposits/{{depositId}}/review",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK (Approved)",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/deposits/{{depositId}}/review",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"APPROVED\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Deposit approved successfully\",\n  \"data\": {\n    \"_id\": \"6b04190166c353cb8a822ff1\",\n    \"id\": \"6b04190166c353cb8a822ff1\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\"\n    },\n    \"amount\": 1500,\n    \"month\": \"2026-11\",\n    \"depositDate\": \"2026-11-23T10:45:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"trxId\": \"BKS8A7B9C1\",\n    \"proofImage\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n    \"note\": \"First November savings\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T10:45:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            },
+            {
+              "name": "403 Cashier Anti-Self-Approval",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/deposits/{{depositId}}/review",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"APPROVED\"\n}"
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"statusCode\": 403,\n  \"message\": \"Cashiers cannot approve or reject their own deposits. Please ask an Admin.\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Soft Delete / Cancel Deposit",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/deposits/{{depositId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/deposits/{{depositId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Deposit deleted successfully\",\n  \"data\": {\n    \"id\": \"6b04190166c353cb8a822ff1\",\n    \"isDeleted\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Restore Deposit (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/deposits/{{depositId}}/restore"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": "{{baseUrl}}/deposits/{{depositId}}/restore"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Deposit restored successfully\",\n  \"data\": {\n    \"_id\": \"6b04190166c353cb8a822ff1\",\n    \"id\": \"6b04190166c353cb8a822ff1\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\"\n    },\n    \"amount\": 1500,\n    \"month\": \"2026-11\",\n    \"depositDate\": \"2026-11-23T10:45:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"trxId\": \"BKS8A7B9C1\",\n    \"proofImage\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n    \"note\": \"First November savings\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T10:45:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Returns & Settlements",
+      "item": [
+        {
+          "name": "List Returns",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/returns?page=1&limit=25&search=&status=&returnType=&memberId=&onlyDeleted=false"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/returns?page=1&limit=25&search=&status=&returnType=&memberId=&onlyDeleted=false"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Returns fetched successfully\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"total\": 1,\n    \"totalPage\": 1\n  },\n  \"data\": [\n    {\n      \"_id\": \"6b04195566c353cb8a823001\",\n      \"id\": \"6b04195566c353cb8a823001\",\n      \"memberId\": {\n        \"_id\": \"6b0417a266c353cb8a822fc1\",\n        \"name\": \"Rahim Uddin\",\n        \"email\": \"rahim@jomajatra.app\",\n        \"phone\": \"01711111111\",\n        \"role\": \"MEMBER\",\n        \"status\": \"ACTIVE\",\n        \"isDeleted\": false\n      },\n      \"amount\": 500,\n      \"returnDate\": \"2026-11-23T11:00:00.000Z\",\n      \"paymentMethod\": \"BKASH\",\n      \"paymentAccountId\": {\n        \"_id\": \"6b04181066c353cb8a822fd0\",\n        \"accountName\": \"Rayhan Personal bKash\",\n        \"accountNumber\": \"01719857898\",\n        \"method\": \"BKASH\"\n      },\n      \"recipientAccount\": \"01711111111\",\n      \"trxId\": \"RET202601\",\n      \"proofImage\": \"\",\n      \"reason\": \"Urgent personal need\",\n      \"returnType\": \"PARTIAL\",\n      \"entrySource\": \"ADMIN_MANUAL\",\n      \"status\": \"APPROVED\",\n      \"rejectionReason\": null,\n      \"createdBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"reviewedAt\": \"2026-11-23T11:00:00.000Z\",\n      \"isDeleted\": false\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create / Request Return",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.id) pm.collectionVariables.set('returnId', res.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/returns",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"{{memberId}}\",\n  \"amount\": 500,\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"recipientAccount\": \"01711111111\",\n  \"trxId\": \"RET202601\",\n  \"reason\": \"Urgent personal need\",\n  \"returnType\": \"PARTIAL\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created (Approved)",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/returns",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"memberId\": \"{{memberId}}\",\n  \"amount\": 500,\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"recipientAccount\": \"01711111111\",\n  \"trxId\": \"RET202601\",\n  \"reason\": \"Urgent personal need\",\n  \"returnType\": \"PARTIAL\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Return recorded and approved successfully\",\n  \"data\": {\n    \"_id\": \"6b04195566c353cb8a823001\",\n    \"id\": \"6b04195566c353cb8a823001\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\",\n      \"isDeleted\": false\n    },\n    \"amount\": 500,\n    \"returnDate\": \"2026-11-23T11:00:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"recipientAccount\": \"01711111111\",\n    \"trxId\": \"RET202601\",\n    \"proofImage\": \"\",\n    \"reason\": \"Urgent personal need\",\n    \"returnType\": \"PARTIAL\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T11:00:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            },
+            {
+              "name": "400 Exceeds Member Net Balance",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/returns",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"memberId\": \"{{memberId}}\",\n  \"amount\": 500,\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"recipientAccount\": \"01711111111\",\n  \"trxId\": \"RET202601\",\n  \"reason\": \"Urgent personal need\",\n  \"returnType\": \"PARTIAL\"\n}"
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"statusCode\": 400,\n  \"message\": \"Return amount (৳9000) exceeds Rahim Uddin's available net balance (৳4500).\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Single Return",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/returns/{{returnId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/returns/{{returnId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Return record fetched successfully\",\n  \"data\": {\n    \"_id\": \"6b04195566c353cb8a823001\",\n    \"id\": \"6b04195566c353cb8a823001\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\",\n      \"isDeleted\": false\n    },\n    \"amount\": 500,\n    \"returnDate\": \"2026-11-23T11:00:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"recipientAccount\": \"01711111111\",\n    \"trxId\": \"RET202601\",\n    \"proofImage\": \"\",\n    \"reason\": \"Urgent personal need\",\n    \"returnType\": \"PARTIAL\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T11:00:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Pending Return",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/returns/{{returnId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 400,\n  \"reason\": \"Adjusted return amount\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/returns/{{returnId}}",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": 400,\n  \"reason\": \"Adjusted return amount\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Return request updated successfully\",\n  \"data\": {\n    \"_id\": \"6b04195566c353cb8a823001\",\n    \"id\": \"6b04195566c353cb8a823001\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\",\n      \"isDeleted\": false\n    },\n    \"amount\": 400,\n    \"returnDate\": \"2026-11-23T11:00:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"recipientAccount\": \"01711111111\",\n    \"trxId\": \"RET202601\",\n    \"proofImage\": \"\",\n    \"reason\": \"Urgent personal need\",\n    \"returnType\": \"PARTIAL\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T11:00:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Review Return (Approve / Reject)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/returns/{{returnId}}/review",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\",\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"trxId\": \"RET202602\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/returns/{{returnId}}/review",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"APPROVED\",\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"trxId\": \"RET202602\"\n}"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Return request approved successfully\",\n  \"data\": {\n    \"_id\": \"6b04195566c353cb8a823001\",\n    \"id\": \"6b04195566c353cb8a823001\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\",\n      \"isDeleted\": false\n    },\n    \"amount\": 500,\n    \"returnDate\": \"2026-11-23T11:00:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"recipientAccount\": \"01711111111\",\n    \"trxId\": \"RET202602\",\n    \"proofImage\": \"\",\n    \"reason\": \"Urgent personal need\",\n    \"returnType\": \"PARTIAL\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T11:00:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Soft Delete / Cancel Return",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/returns/{{returnId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/returns/{{returnId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Return record deleted successfully\",\n  \"data\": {\n    \"id\": \"6b04195566c353cb8a823001\",\n    \"isDeleted\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Restore Return (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/returns/{{returnId}}/restore"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": "{{baseUrl}}/returns/{{returnId}}/restore"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Return record restored successfully\",\n  \"data\": {\n    \"_id\": \"6b04195566c353cb8a823001\",\n    \"id\": \"6b04195566c353cb8a823001\",\n    \"memberId\": {\n      \"_id\": \"6b0417a266c353cb8a822fc1\",\n      \"name\": \"Rahim Uddin\",\n      \"email\": \"rahim@jomajatra.app\",\n      \"phone\": \"01711111111\",\n      \"role\": \"MEMBER\",\n      \"status\": \"ACTIVE\",\n      \"isDeleted\": false\n    },\n    \"amount\": 500,\n    \"returnDate\": \"2026-11-23T11:00:00.000Z\",\n    \"paymentMethod\": \"BKASH\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"recipientAccount\": \"01711111111\",\n    \"trxId\": \"RET202601\",\n    \"proofImage\": \"\",\n    \"reason\": \"Urgent personal need\",\n    \"returnType\": \"PARTIAL\",\n    \"entrySource\": \"ADMIN_MANUAL\",\n    \"status\": \"APPROVED\",\n    \"rejectionReason\": null,\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"reviewedAt\": \"2026-11-23T11:00:00.000Z\",\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Transfers, Charges, Logs & Dashboard",
+      "item": [
+        {
+          "name": "List Internal Transfers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/transfers?page=1&limit=25&search=&accountId=&onlyDeleted=false"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/transfers?page=1&limit=25&search=&accountId=&onlyDeleted=false"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Transfers fetched successfully\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"total\": 1,\n    \"totalPage\": 1\n  },\n  \"data\": [\n    {\n      \"_id\": \"6b04199966c353cb8a823010\",\n      \"id\": \"6b04199966c353cb8a823010\",\n      \"fromAccountId\": {\n        \"_id\": \"6b04181066c353cb8a822fd0\",\n        \"accountName\": \"Rayhan Personal bKash\",\n        \"accountNumber\": \"01719857898\",\n        \"method\": \"BKASH\"\n      },\n      \"toAccountId\": {\n        \"_id\": \"6b04181066c353cb8a822fd1\",\n        \"accountName\": \"Cash in Hand\",\n        \"accountNumber\": \"CASH-MAIN\",\n        \"method\": \"CASH\"\n      },\n      \"amount\": 10000,\n      \"transferFee\": 185,\n      \"transferDate\": \"2026-11-23T11:15:00.000Z\",\n      \"trxId\": \"TRF0001\",\n      \"proofImage\": \"\",\n      \"note\": \"bKash cash-out to physical cash\",\n      \"createdBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"isDeleted\": false\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Internal Transfer (With Optional Cash-Out Fee)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.id) pm.collectionVariables.set('transferId', res.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/transfers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fromAccountId\": \"{{paymentAccountId}}\",\n  \"toAccountId\": \"{{secondAccountId}}\",\n  \"amount\": 10000,\n  \"transferFee\": 185,\n  \"trxId\": \"TRF0001\",\n  \"note\": \"bKash cash-out to physical cash\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/transfers",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fromAccountId\": \"{{paymentAccountId}}\",\n  \"toAccountId\": \"{{secondAccountId}}\",\n  \"amount\": 10000,\n  \"transferFee\": 185,\n  \"trxId\": \"TRF0001\",\n  \"note\": \"bKash cash-out to physical cash\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Internal account transfer recorded successfully\",\n  \"data\": {\n    \"_id\": \"6b04199966c353cb8a823010\",\n    \"id\": \"6b04199966c353cb8a823010\",\n    \"fromAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"toAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd1\",\n      \"accountName\": \"Cash in Hand\",\n      \"accountNumber\": \"CASH-MAIN\",\n      \"method\": \"CASH\"\n    },\n    \"amount\": 10000,\n    \"transferFee\": 185,\n    \"transferDate\": \"2026-11-23T11:15:00.000Z\",\n    \"trxId\": \"TRF0001\",\n    \"proofImage\": \"\",\n    \"note\": \"bKash cash-out to physical cash\",\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Single Transfer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/transfers/{{transferId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/transfers/{{transferId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Transfer record fetched successfully\",\n  \"data\": {\n    \"_id\": \"6b04199966c353cb8a823010\",\n    \"id\": \"6b04199966c353cb8a823010\",\n    \"fromAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"toAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd1\",\n      \"accountName\": \"Cash in Hand\",\n      \"accountNumber\": \"CASH-MAIN\",\n      \"method\": \"CASH\"\n    },\n    \"amount\": 10000,\n    \"transferFee\": 185,\n    \"transferDate\": \"2026-11-23T11:15:00.000Z\",\n    \"trxId\": \"TRF0001\",\n    \"proofImage\": \"\",\n    \"note\": \"bKash cash-out to physical cash\",\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Soft Delete Transfer (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/transfers/{{transferId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/transfers/{{transferId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Transfer moved to trash successfully\",\n  \"data\": {\n    \"id\": \"6b04199966c353cb8a823010\",\n    \"isDeleted\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Restore Transfer (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/transfers/{{transferId}}/restore"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": "{{baseUrl}}/transfers/{{transferId}}/restore"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Transfer restored successfully\",\n  \"data\": {\n    \"_id\": \"6b04199966c353cb8a823010\",\n    \"id\": \"6b04199966c353cb8a823010\",\n    \"fromAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"toAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd1\",\n      \"accountName\": \"Cash in Hand\",\n      \"accountNumber\": \"CASH-MAIN\",\n      \"method\": \"CASH\"\n    },\n    \"amount\": 10000,\n    \"transferFee\": 185,\n    \"transferDate\": \"2026-11-23T11:15:00.000Z\",\n    \"trxId\": \"TRF0001\",\n    \"proofImage\": \"\",\n    \"note\": \"bKash cash-out to physical cash\",\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Standalone Account Charges",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/charges?page=1&limit=25&search=&paymentAccountId=&onlyDeleted=false"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/charges?page=1&limit=25&search=&paymentAccountId=&onlyDeleted=false"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Account charges fetched successfully\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"total\": 1,\n    \"totalPage\": 1\n  },\n  \"data\": [\n    {\n      \"_id\": \"6b0419aa66c353cb8a823020\",\n      \"id\": \"6b0419aa66c353cb8a823020\",\n      \"paymentAccountId\": {\n        \"_id\": \"6b04181066c353cb8a822fd0\",\n        \"accountName\": \"Rayhan Personal bKash\",\n        \"accountNumber\": \"01719857898\",\n        \"method\": \"BKASH\"\n      },\n      \"amount\": 15,\n      \"chargeDate\": \"2026-11-23T11:20:00.000Z\",\n      \"title\": \"Bank SMS alert charge\",\n      \"proofImage\": \"\",\n      \"note\": \"Half-yearly SMS fee\",\n      \"createdBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"role\": \"ADMIN\"\n      },\n      \"isDeleted\": false\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Account Charge (Admin / Cashier)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.id) pm.collectionVariables.set('chargeId', res.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/charges",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"amount\": 15,\n  \"title\": \"Bank SMS alert charge\",\n  \"note\": \"Half-yearly SMS fee\"\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{baseUrl}}/charges",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"paymentAccountId\": \"{{paymentAccountId}}\",\n  \"amount\": 15,\n  \"title\": \"Bank SMS alert charge\",\n  \"note\": \"Half-yearly SMS fee\"\n}"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Account charge recorded successfully\",\n  \"data\": {\n    \"_id\": \"6b0419aa66c353cb8a823020\",\n    \"id\": \"6b0419aa66c353cb8a823020\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"amount\": 15,\n    \"chargeDate\": \"2026-11-23T11:20:00.000Z\",\n    \"title\": \"Bank SMS alert charge\",\n    \"proofImage\": \"\",\n    \"note\": \"Half-yearly SMS fee\",\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Single Charge",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/charges/{{chargeId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/charges/{{chargeId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Charge record fetched successfully\",\n  \"data\": {\n    \"_id\": \"6b0419aa66c353cb8a823020\",\n    \"id\": \"6b0419aa66c353cb8a823020\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"amount\": 15,\n    \"chargeDate\": \"2026-11-23T11:20:00.000Z\",\n    \"title\": \"Bank SMS alert charge\",\n    \"proofImage\": \"\",\n    \"note\": \"Half-yearly SMS fee\",\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Soft Delete Charge (Admin Only)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/charges/{{chargeId}}"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": "{{baseUrl}}/charges/{{chargeId}}"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Charge moved to trash successfully\",\n  \"data\": {\n    \"id\": \"6b0419aa66c353cb8a823020\",\n    \"isDeleted\": true\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Restore Charge (Admin Only)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/charges/{{chargeId}}/restore"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [],
+                "url": "{{baseUrl}}/charges/{{chargeId}}/restore"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Charge restored successfully\",\n  \"data\": {\n    \"_id\": \"6b0419aa66c353cb8a823020\",\n    \"id\": \"6b0419aa66c353cb8a823020\",\n    \"paymentAccountId\": {\n      \"_id\": \"6b04181066c353cb8a822fd0\",\n      \"accountName\": \"Rayhan Personal bKash\",\n      \"accountNumber\": \"01719857898\",\n      \"method\": \"BKASH\"\n    },\n    \"amount\": 15,\n    \"chargeDate\": \"2026-11-23T11:20:00.000Z\",\n    \"title\": \"Bank SMS alert charge\",\n    \"proofImage\": \"\",\n    \"note\": \"Half-yearly SMS fee\",\n    \"createdBy\": {\n      \"_id\": \"6b0416d166c353cb8a822fbb\",\n      \"name\": \"Abu Rayhan\",\n      \"role\": \"ADMIN\"\n    },\n    \"isDeleted\": false\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Global Activity / Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/activity-logs?page=1&limit=25&search=&entityType=&action=&targetMemberId="
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/activity-logs?page=1&limit=25&search=&entityType=&action=&targetMemberId="
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Activity logs fetched successfully\",\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 25,\n    \"total\": 1,\n    \"totalPage\": 1\n  },\n  \"data\": [\n    {\n      \"_id\": \"6b0419bb66c353cb8a823030\",\n      \"entityType\": \"DEPOSIT\",\n      \"entityId\": \"6b04190166c353cb8a822ff1\",\n      \"targetMemberId\": {\n        \"_id\": \"6b0417a266c353cb8a822fc1\",\n        \"name\": \"Rahim Uddin\",\n        \"email\": \"rahim@jomajatra.app\",\n        \"role\": \"MEMBER\",\n        \"status\": \"ACTIVE\"\n      },\n      \"action\": \"APPROVED\",\n      \"summary\": \"Abu Rayhan recorded & approved ৳1500 deposit for Rahim Uddin (2026-11 via BKASH)\",\n      \"amount\": 1500,\n      \"proofImage\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n      \"changes\": null,\n      \"performedBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"email\": \"aburayhan.bpi@gmail.com\",\n        \"role\": \"ADMIN\"\n      },\n      \"createdAt\": \"2026-11-23T10:45:00.000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Dashboard Summary (Role-Aware + Reconciliation)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/dashboard/summary?month=2026-11"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/dashboard/summary?month=2026-11"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Dashboard summary fetched successfully\",\n  \"data\": {\n    \"fundSummary\": {\n      \"totalApprovedDeposits\": 50000,\n      \"totalApprovedPayoutReturns\": 4000,\n      \"totalDonatedWaivers\": 0,\n      \"totalTransferFees\": 185,\n      \"totalStandaloneCharges\": 15,\n      \"totalCharges\": 200,\n      \"totalCashInHand\": 45800,\n      \"unsettledFormerMemberPayable\": 4500,\n      \"activeNetFund\": 41300,\n      \"accountBalancesSum\": 45800,\n      \"reconciliationDifference\": 0\n    },\n    \"currentMonth\": {\n      \"id\": \"6b04185066c353cb8a822fe0\",\n      \"month\": \"2026-11\",\n      \"hasTarget\": true,\n      \"targetAmount\": 15000,\n      \"note\": \"Flexible November group goal\",\n      \"collectedAmount\": 12500,\n      \"depositCount\": 6,\n      \"remainingAmount\": 2500,\n      \"progressPercent\": 83,\n      \"updatedBy\": {\n        \"_id\": \"6b0416d166c353cb8a822fbb\",\n        \"name\": \"Abu Rayhan\",\n        \"email\": \"aburayhan.bpi@gmail.com\",\n        \"role\": \"ADMIN\"\n      },\n      \"updatedAt\": \"2026-11-23T10:40:00.000Z\"\n    },\n    \"accountBalances\": [\n      {\n        \"id\": \"6b04181066c353cb8a822fd0\",\n        \"method\": \"BKASH\",\n        \"accountName\": \"Rayhan Personal bKash\",\n        \"accountNumber\": \"01719857898\",\n        \"accountType\": \"PERSONAL\",\n        \"isActive\": true,\n        \"balance\": 25800\n      },\n      {\n        \"id\": \"6b04181066c353cb8a822fd1\",\n        \"method\": \"CASH\",\n        \"accountName\": \"Cash in Hand\",\n        \"accountNumber\": \"CASH-MAIN\",\n        \"accountType\": \"CASH\",\n        \"isActive\": true,\n        \"balance\": 20000\n      }\n    ],\n    \"methodBalances\": [\n      {\n        \"method\": \"BKASH\",\n        \"balance\": 25800\n      },\n      {\n        \"method\": \"CASH\",\n        \"balance\": 20000\n      }\n    ],\n    \"counts\": {\n      \"activeMembersCount\": 8,\n      \"inactiveMembersCount\": 1,\n      \"pendingDepositsCount\": 2,\n      \"pendingReturnsCount\": 0\n    },\n    \"mySavings\": {\n      \"totalDeposited\": 6000,\n      \"totalReturned\": 0,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 6000,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0,\n      \"currentMonthDeposited\": 2000\n    },\n    \"pendingQueue\": {\n      \"deposits\": [],\n      \"returns\": []\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Dashboard Monthly Matrix & Chart Series",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/dashboard/monthly-matrix?year=2026&includeInactive=false"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/dashboard/monthly-matrix?year=2026&includeInactive=false"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Monthly matrix fetched successfully\",\n  \"data\": {\n    \"months\": [\n      {\n        \"month\": \"2026-10\",\n        \"hasTarget\": true,\n        \"targetAmount\": 12000,\n        \"collectedAmount\": 12500,\n        \"depositCount\": 6,\n        \"progressPercent\": 104\n      },\n      {\n        \"month\": \"2026-11\",\n        \"hasTarget\": true,\n        \"targetAmount\": 15000,\n        \"collectedAmount\": 12500,\n        \"depositCount\": 6,\n        \"progressPercent\": 83\n      }\n    ],\n    \"rows\": [\n      {\n        \"id\": \"6b0417a266c353cb8a822fc1\",\n        \"name\": \"Rahim Uddin\",\n        \"email\": \"rahim@jomajatra.app\",\n        \"role\": \"MEMBER\",\n        \"status\": \"ACTIVE\",\n        \"isDeleted\": false,\n        \"joinedAt\": \"2026-11-01T00:00:00.000Z\",\n        \"totalDeposited\": 5000,\n        \"totalReturned\": 500,\n        \"netBalance\": 4500,\n        \"monthlyBreakdown\": {\n          \"2026-10\": null,\n          \"2026-11\": {\n            \"amount\": 5000,\n            \"count\": 2\n          }\n        }\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Upload Proof Screenshot (Cloudinary)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "folder",
+                  "value": "joma-jatra/proofs",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": "{{baseUrl}}/upload",
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": ""
+                    },
+                    {
+                      "key": "folder",
+                      "value": "joma-jatra/proofs",
+                      "type": "text"
+                    }
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Proof image uploaded successfully\",\n  \"data\": {\n    \"url\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n    \"publicId\": \"joma-jatra/proofs/slip1\",\n    \"width\": 1080,\n    \"height\": 1920,\n    \"format\": \"jpg\",\n    \"bytes\": 245120\n  }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,11 +1,16 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @theme inline {
-  --font-sans: var(--font-nunito), var(--font-hind-siliguri), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-jetbrains-mono: "JetBrains Mono", monospace;
+  --font-sans:
+    var(--font-plus-jakarta-sans), var(--font-hind-siliguri), ui-sans-serif,
+    system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: var(--font-jb-mono), ui-monospace, monospace;
+  --font-jetbrains-mono: var(--font-jb-mono), ui-monospace, monospace;
+
+  /* Core Theme Tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -26,6 +31,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Sidebar Tokens */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -35,6 +41,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Border Radius Tokens */
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
@@ -46,41 +53,54 @@
   --radius-48: 48px;
   --radius-60: 60px;
 
-  /* Custom Color Utilities */
+  /* Primary Brand Utilities - Logo Forest Emerald */
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
+  --color-brand-light: var(--brand-light);
   --color-brand-80: var(--brand-80);
   --color-brand-50: var(--brand-50);
   --color-brand-20: var(--brand-20);
+  --color-brand-10: var(--brand-10);
   --color-brand-5: var(--brand-5);
 
+  /* Secondary Brand Utilities - Logo Sun & Coin Gold */
+  --color-gold: var(--gold);
+  --color-gold-dark: var(--gold-dark);
+  --color-gold-light: var(--gold-light);
+  --color-gold-50: var(--gold-50);
+  --color-gold-20: var(--gold-20);
+  --color-gold-10: var(--gold-10);
+  --color-gold-5: var(--gold-5);
+
+  /* Warning Colors */
   --color-warning: var(--warning);
   --color-warning-80: var(--warning-80);
   --color-warning-50: var(--warning-50);
   --color-warning-20: var(--warning-20);
   --color-warning-5: var(--warning-5);
 
+  /* KPI Colors */
   --color-kpi-teal: var(--kpi-teal);
   --color-kpi-blue: var(--kpi-blue);
   --color-kpi-purple: var(--kpi-purple);
   --color-kpi-sky: var(--kpi-sky);
 
+  /* Success Colors */
   --color-success: var(--success);
   --color-success-80: var(--success-80);
   --color-success-50: var(--success-50);
   --color-success-20: var(--success-20);
   --color-success-5: var(--success-5);
 
+  /* Error Colors */
   --color-error: var(--error);
   --color-error-80: var(--error-80);
   --color-error-50: var(--error-50);
   --color-error-20: var(--error-20);
   --color-error-5: var(--error-5);
 
-  --color-chart-muted: var(--chart-muted);
-  --color-chart-grid: var(--chart-grid);
-
   /* Chart Colors */
+  --color-chart-muted: var(--chart-muted);
   --color-chart-surface: var(--chart-surface);
   --color-chart-border: var(--chart-border);
   --color-chart-track: var(--chart-track);
@@ -89,22 +109,26 @@
   --color-chart-text-muted: var(--chart-text-muted);
   --color-chart-primary: var(--chart-primary);
   --color-chart-primary-dark: var(--chart-primary-dark);
+  --color-chart-secondary: var(--chart-secondary);
   --color-chart-tooltip-bg: var(--chart-tooltip-bg);
   --color-chart-tooltip-text: var(--chart-tooltip-text);
 
+  /* Soft Surface & Typography Aliases */
   --color-soft-white: var(--soft-white);
   --color-soft-blue: var(--soft-blue);
+  --color-soft-emerald: var(--soft-emerald);
+  --color-soft-gold: var(--soft-gold);
   --color-title: var(--foreground);
   --color-subtitle: var(--muted-foreground);
   --color-text-description: var(--text-description);
   --color-text-secondary: var(--text-secondary);
 
-  /* Dashboard */
+  /* Dashboard Layout */
   --color-dashboard-bg: var(--dashboard-bg);
   --color-dashboard-surface: var(--dashboard-surface);
   --color-error-accent: var(--error-accent);
 
-  /* Custom design token mappings */
+  /* Custom design token mappings (preserved for component compatibility) */
   --color-card-bg: var(--background);
   --color-Strok-Color: var(--border);
   --color-Less-opacity-Color: color-mix(in srgb, var(--card) 8%, transparent);
@@ -114,107 +138,133 @@
 }
 
 :root {
-  --background: #F8FAFC;
-  --foreground: #0F172A; /* Text title */
+  /* ==========================================================================
+   * JomaJatra (জমা যাত্রা) Light Theme Palette
+   * Derived directly from the official logo:
+   * - Deep Forest Green (#003024 / #025128): Typography & deep mountain shadows
+   * - Rich Emerald Green (#046c4e / #148065): Primary brand & sunlit peaks
+   * - Fresh Leaf Green (#3fb23f / #229943): Growth sprout & success states
+   * - Sunlit Amber Gold (#fc9607 / #fdab05 / #ffcb3d): Sun, coins & paper plane
+   * - Soft Mint-Ivory (#f6faf7 / #eff5f1): Clean light canvas & winding path
+   * ========================================================================== */
+
+  /* Base Light Surfaces & Ink */
+  --background: #f6faf7;
+  --foreground: #072a1f; /* Deep forest text title */
   --soft-white: #ffffff;
-  --soft-blue: #00B4D8;
+  --soft-blue: #e4f3ec; /* Kept token name safely, re-themed to soft emerald mist */
+  --soft-emerald: #e4f3ec;
+  --soft-gold: #fff6e0;
 
-  /* Main Content Card */
-  --card: #FFFFFF;
-  --card-foreground: #0F172A;
+  /* Elevated Surfaces (Cards & Popovers) */
+  --card: #ffffff;
+  --card-foreground: #072a1f;
+  --popover: #ffffff;
+  --popover-foreground: #072a1f;
 
-  /* Primary Brand - Raantech Cyan */
-  --primary: #00B4D8;
-  --primary-foreground: #FFFFFF;
+  /* Primary Brand - JomaJatra Forest Emerald */
+  --primary: #046c4e;
+  --primary-foreground: #ffffff;
 
-  /* Sidebar */
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #475569;
-  --sidebar-primary: #00B4D8;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: rgba(0, 180, 216, 0.1);
-  --sidebar-accent-foreground: #0089A7;
-  --sidebar-border: #E2E8F0;
+  /* Sidebar - Crisp Light Surface with Emerald Accent */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #335247;
+  --sidebar-primary: #046c4e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(4, 108, 78, 0.08);
+  --sidebar-accent-foreground: #024f38;
+  --sidebar-border: #dce8e1;
+  --sidebar-ring: #046c4e;
 
-  /* Dashboard layout */
-  --dashboard-bg: #F1F5F9;
-  --dashboard-surface: #FFFFFF;
-  --error-accent: rgba(230, 71, 93, 0.1);
+  /* Dashboard Layout */
+  --dashboard-bg: #eff5f1;
+  --dashboard-surface: #ffffff;
+  --error-accent: rgba(220, 53, 69, 0.08);
 
-  /* Shadcn UI Missing Colors */
-  --destructive: #e6475d;
-  --destructive-foreground: #FFFFFF;
-  --accent: #F1F5F9;
-  --accent-foreground: #0F172A;
-  --secondary: #F1F5F9;
-  --secondary-foreground: #0F172A;
+  /* Shadcn UI Semantic Colors */
+  --destructive: #dc3545;
+  --destructive-foreground: #ffffff;
+  --accent: #e6f4ee;
+  --accent-foreground: #024f38;
+  --secondary: #eaf2ed;
+  --secondary-foreground: #072a1f;
 
-  /* Borders & Inputs */
-  --border: #E2E8F0;
-  --input: #FFFFFF;
-  --ring: #00B4D8;
+  /* Borders, Inputs & Focus Ring */
+  --border: #d7e5dd;
+  --input: #cfe0d7;
+  --ring: #046c4e;
 
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B; /* Text sub-title */
-  --text-description: #475569; /* Feature description text */
-  --text-secondary: #94A3B8; /* Secondary text / muted copy */
+  /* Text Hierarchy */
+  --muted: #eaf2ed;
+  --muted-foreground: #557066; /* Text sub-title */
+  --text-description: #335247; /* Feature description text */
+  --text-secondary: #7d948b; /* Secondary text / muted copy */
 
   --radius: 12px;
 
-  /* Brand Colors & Shades - Cyan */
-  --brand: #00B4D8;
-  --brand-dark: #0089A7;
+  /* Primary Brand Shades - Forest Emerald */
+  --brand: #046c4e;
+  --brand-dark: #024f38;
+  --brand-light: #148065;
   --brand-80: color-mix(in srgb, var(--brand) 80%, transparent);
   --brand-50: color-mix(in srgb, var(--brand) 50%, transparent);
   --brand-20: color-mix(in srgb, var(--brand) 20%, transparent);
+  --brand-10: color-mix(in srgb, var(--brand) 10%, transparent);
   --brand-5: color-mix(in srgb, var(--brand) 5%, transparent);
 
-  /* Warning Colors */
-  --warning: #F59E0B;
+  /* Secondary Brand Accent - Logo Sun & Coin Gold */
+  --gold: #fc9607;
+  --gold-dark: #d97706;
+  --gold-light: #ffcb3d;
+  --gold-50: color-mix(in srgb, var(--gold) 50%, transparent);
+  --gold-20: color-mix(in srgb, var(--gold) 20%, transparent);
+  --gold-10: color-mix(in srgb, var(--gold) 10%, transparent);
+  --gold-5: color-mix(in srgb, var(--gold) 5%, transparent);
+
+  /* Warning Colors - Logo Sun Amber */
+  --warning: #f59705;
   --warning-80: color-mix(in srgb, var(--warning) 80%, transparent);
   --warning-50: color-mix(in srgb, var(--warning) 50%, transparent);
   --warning-20: color-mix(in srgb, var(--warning) 20%, transparent);
   --warning-5: color-mix(in srgb, var(--warning) 5%, transparent);
 
-  /* KPI Colors */
-  --kpi-teal: #63cf73;
-  --kpi-blue: #00B4D8;
-  --kpi-purple: #e6475d;
-  --kpi-sky: #F59E0B;
+  /* KPI Colors - Harmonized with Logo Palette */
+  --kpi-teal: #148065;
+  --kpi-blue: #046c4e;
+  --kpi-purple: #dc3545;
+  --kpi-sky: #fc9607;
 
-  /* Success Colors */
-  --success: #63cf73;
+  /* Success Colors - Logo Fresh Leaf Green */
+  --success: #229943;
   --success-80: color-mix(in srgb, var(--success) 80%, transparent);
   --success-50: color-mix(in srgb, var(--success) 50%, transparent);
   --success-20: color-mix(in srgb, var(--success) 20%, transparent);
   --success-5: color-mix(in srgb, var(--success) 5%, transparent);
 
   /* Error Colors */
-  --error: #e6475d;
+  --error: #dc3545;
   --error-80: color-mix(in srgb, var(--error) 80%, transparent);
   --error-50: color-mix(in srgb, var(--error) 50%, transparent);
   --error-20: color-mix(in srgb, var(--error) 20%, transparent);
   --error-5: color-mix(in srgb, var(--error) 5%, transparent);
 
-  /* Chart Colors */
-  --chart-muted: rgba(255, 255, 255, 0.1);
-  --chart-grid: rgba(255, 255, 255, 0.05);
-
-  /* Chart Colors */
-  --chart-surface: #FFFFFF;
-  --chart-border: #E2E8F0;
-  --chart-track: rgba(0, 0, 0, 0.05);
-  --chart-grid: rgba(0, 0, 0, 0.05);
-  --chart-text: #0F172A;
-  --chart-text-muted: #64748B;
-  --chart-primary: #F59E0B;
-  --chart-primary-dark: #B45309;
-  --chart-tooltip-bg: #FFFFFF;
-  --chart-tooltip-text: #0F172A;
+  /* Chart Colors - Light Theme */
+  --chart-surface: #ffffff;
+  --chart-border: #d7e5dd;
+  --chart-track: rgba(4, 108, 78, 0.08);
+  --chart-grid: rgba(7, 42, 31, 0.07);
+  --chart-muted: rgba(7, 42, 31, 0.08);
+  --chart-text: #072a1f;
+  --chart-text-muted: #557066;
+  --chart-primary: #046c4e;
+  --chart-primary-dark: #024f38;
+  --chart-secondary: #fc9607;
+  --chart-tooltip-bg: #ffffff;
+  --chart-tooltip-text: #072a1f;
 }
 
 /* === BASE LAYER STYLES === */
-/* 
+/*
  * Base layer applies fundamental styles to all elements
  * These styles have the lowest specificity and can be overridden
  */
@@ -264,7 +314,12 @@
   @apply mx-auto max-w-360 px-4 pt-24;
 }
 
-/* Scrollbar refinement - subtle but visible */
+/* Tabular numerals utility for neatly aligned currency & savings amounts */
+@utility font-money {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbar refinement - subtle emerald tint */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -318,31 +373,36 @@
   scrollbar-color: color-mix(in srgb, var(--brand) 30%, transparent) transparent;
 }
 
+/* Sunlit Coin Gold Gradient Card - Derived from Logo Sun & Gold Coins */
 .golden-gradient-card {
   border-radius: 16px;
-  border-top: 0.3px solid #b4b4b4;
+  border-top: 1px solid rgba(255, 203, 61, 0.65);
   background: linear-gradient(
-    90deg,
-    #F59E0B 1.1%,
-    #FCD34D 74.38%,
-    #F59E0B 99.75%
+    135deg,
+    #fc9607 0%,
+    #fdab05 45%,
+    #ffcb3d 100%
   );
 }
 
+/* Light Glass Surface Card */
 .glass-card {
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(4, 108, 78, 0.08);
+  box-shadow:
+    0 4px 12px -2px rgba(7, 42, 31, 0.05),
+    0 2px 4px -1px rgba(7, 42, 31, 0.03);
 }
 
 /* Base button and input styling overrides */
-input[type="email"], input[type="password"], input[type="text"] {
+input[type="email"],
+input[type="password"],
+input[type="text"] {
   color: var(--foreground);
 }
 
 .auth-card-shadow {
-  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 40px -10px rgba(7, 42, 31, 0.08);
 }
-

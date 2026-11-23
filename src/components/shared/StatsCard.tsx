@@ -41,24 +41,24 @@ const variantStyles: Record<
   }
 > = {
   filled: {
-    card: "bg-linear-to-br from-card to-brand text-white shadow-lg shadow-brand/20 border border-brand/15 rounded-lg",
+    card: "bg-linear-to-br from-brand-dark to-brand text-white shadow-lg shadow-brand/20 border border-brand/20 rounded-lg",
     content: "",
     value: "text-white",
-    valueText: "text-white/80",
-    title: "text-white/75",
+    valueText: "text-white/85",
+    title: "text-white/80",
     iconWrapper: "rounded-lg bg-white/15 backdrop-blur-sm",
     icon: "text-white",
     skeleton: "bg-white/25",
   },
   outlined: {
-    card: "bg-white text-foreground border-t border-r border-b border-solid border-l-2 shadow-[0px_0px_5px_rgba(0,0,0,0.1)] rounded-lg",
+    card: "bg-card text-foreground border-t border-r border-b border-border border-solid border-l-2 shadow-[0px_2px_8px_rgba(7,42,31,0.06)] rounded-lg",
     content: "",
     value: "text-foreground",
     valueText: "text-foreground",
-    title: "text-[#424242]",
+    title: "text-text-description",
     iconWrapper: "rounded-lg p-0",
     icon: "text-white",
-    skeleton: "bg-soft-white",
+    skeleton: "bg-muted",
   },
 };
 

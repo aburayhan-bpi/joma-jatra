@@ -1,0 +1,145 @@
+import {
+  DEFAULT_USER_ROLE,
+  DEFAULT_USER_STATUS,
+  USER_ROLES,
+  USER_STATUSES,
+  UserRole,
+  UserStatus,
+} from "@/types/backend";
+import bcrypt from "bcryptjs";
+import mongoose, { Document, Model, Schema } from "mongoose";
+
+export interface IUserDocument extends Document {
+  name: string;
+  email: string;
+  phone?: string;
+  password: string;
+  profileImage?: string;
+  role: UserRole;
+  status: UserStatus;
+  joinedAt: Date;
+  leftAt?: Date | null;
+  leaveNote?: string | null;
+  mustChangePassword: boolean;
+  resetOtp?: string | null;
+  resetOtpExpires?: Date | null;
+  isDeleted: boolean;
+  deletedAt?: Date | null;
+  deletedBy?: mongoose.Types.ObjectId | null;
+  createdBy?: mongoose.Types.ObjectId | null;
+  createdAt: Date;
+  updatedAt: Date;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+const userSchema = new Schema<IUserDocument>(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 100,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+      select: false,
+    },
+    profileImage: {
+      type: String,
+      default: "",
+    },
+    role: {
+      type: String,
+      enum: USER_ROLES,
+      default: DEFAULT_USER_ROLE,
+    },
+    status: {
+      type: String,
+      enum: USER_STATUSES,
+      default: DEFAULT_USER_STATUS,
+    },
+    joinedAt: {
+      type: Date,
+      default: Date.now,
+    },
+    leftAt: {
+      type: Date,
+      default: null,
+    },
+    leaveNote: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
+    resetOtp: {
+      type: String,
+      select: false,
+      default: null,
+    },
+    resetOtpExpires: {
+      type: Date,
+      select: false,
+      default: null,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
+);
+
+userSchema.index({ role: 1, status: 1, isDeleted: 1 });
+userSchema.index({ joinedAt: 1 });
+
+// Hash password automatically before saving when modified
+userSchema.pre("save", async function hashPasswordIfModified() {
+  if (!this.isModified("password")) return;
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+userSchema.methods.comparePassword = async function comparePassword(
+  candidatePassword: string,
+): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+export const UserModel: Model<IUserDocument> =
+  mongoose.models.User || mongoose.model<IUserDocument>("User", userSchema);

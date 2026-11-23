@@ -43,17 +43,17 @@ export default function ForgotPasswordForm() {
 
   if (isSuccess) {
     return (
-      <div className="w-full bg-white border border-slate-200/60 shadow-sm rounded-2xl p-8 sm:p-10 text-center">
+      <div className="w-full bg-card border border-border auth-card-shadow rounded-2xl p-8 sm:p-10 text-center">
         <div className="flex justify-center mb-6">
-          <CheckCircle2 className="w-12 h-12 text-emerald-500" />
+          <CheckCircle2 className="w-12 h-12 text-success" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">Check your email</h2>
-        <p className="text-slate-500 text-sm mb-8">
+        <h2 className="text-2xl font-bold text-foreground tracking-tight mb-3">Check your email</h2>
+        <p className="text-muted-foreground text-sm mb-8">
           We&apos;ve sent a password reset link to your email address. Please check your inbox and spam folder.
         </p>
         <Link
           href="/login"
-          className="inline-flex items-center justify-center w-full h-12 bg-white border border-primary text-primary hover:bg-slate-50 font-semibold text-sm rounded-xl transition-colors"
+          className="inline-flex items-center justify-center w-full h-12 bg-card border border-primary text-primary hover:bg-accent font-semibold text-sm rounded-xl transition-colors cursor-pointer"
         >
           Return to Login
         </Link>
@@ -62,38 +62,38 @@ export default function ForgotPasswordForm() {
   }
 
   return (
-    <div className="w-full bg-white border border-slate-200/60 shadow-sm rounded-2xl p-8 sm:p-10">
+    <div className="w-full bg-card border border-border auth-card-shadow rounded-2xl p-8 sm:p-10">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-2">Forgot Password</h1>
-        <p className="text-slate-500 text-sm">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight mb-2">Forgot Password</h1>
+        <p className="text-muted-foreground text-sm">
           No worries, we&apos;ll send you reset instructions.
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-1.5 group">
-          <label htmlFor="email" className="text-sm font-medium text-slate-700">Email Address</label>
+          <label htmlFor="email" className="text-sm font-medium text-text-description">Email Address</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-secondary">
               <Mail className="h-[18px] w-[18px]" />
             </div>
             <input
               id="email"
               type="email"
               placeholder="name@example.com"
-              className={`w-full pl-10 pr-4 h-12 bg-white border border-slate-200 text-slate-800 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''}`}
+              className={`w-full pl-10 pr-4 h-12 bg-card border border-input text-foreground placeholder:text-text-secondary text-sm rounded-xl focus:bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none ${errors.email ? 'border-error focus:border-error focus:ring-error/10' : ''}`}
               {...register("email")}
             />
           </div>
           {errors.email && (
-            <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
+            <p className="text-xs text-error mt-1">{errors.email.message}</p>
           )}
         </div>
 
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 mt-4 bg-primary hover:bg-[#007B96] text-white font-semibold text-sm rounded-xl transition-colors flex items-center justify-center disabled:opacity-70"
+          className="w-full h-12 mt-4 bg-primary hover:bg-brand-dark text-primary-foreground font-semibold text-sm rounded-xl transition-colors flex items-center justify-center cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>
@@ -107,9 +107,9 @@ export default function ForgotPasswordForm() {
       </form>
 
       <div className="mt-8 text-center">
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">
           Remember your password?{" "}
-          <Link href="/login" className="font-medium text-primary hover:text-[#006A82]">
+          <Link href="/login" className="font-medium text-primary hover:text-brand-dark cursor-pointer">
             Back to login
           </Link>
         </p>

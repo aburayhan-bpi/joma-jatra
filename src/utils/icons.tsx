@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Image from "next/image";
 import {
   AlertCircle,
   Bell,
@@ -31,7 +30,9 @@ import {
   UserRoundCheck,
   Users,
   Video,
+  X,
 } from "lucide-react";
+import Image from "next/image";
 import { IoMdCloudUpload } from "react-icons/io";
 import { MdOutlineFileUpload } from "react-icons/md";
 import {
@@ -47,8 +48,14 @@ import {
  * Only icons that are actively used are maintained here to keep the bundle size small.
  */
 import { BsLockFill } from "react-icons/bs";
+import {
+  FaBoxOpen,
+  FaShoppingCart,
+  FaTags,
+  FaTrash,
+  FaUsersCog,
+} from "react-icons/fa";
 import { FaBookmark, FaReceipt, FaTrashCan, FaTruck } from "react-icons/fa6";
-import { FaShoppingCart, FaBoxOpen, FaTags, FaUsersCog, FaTrash } from "react-icons/fa";
 import { HiUserGroup } from "react-icons/hi";
 import {
   HiCheckBadge,
@@ -66,15 +73,17 @@ import {
 } from "react-icons/ri";
 import {
   TbBellRingingFilled,
+  TbCalendarMonth,
   TbLayoutDashboardFilled,
+  TbTrashFilled,
   TbUserCircle,
   TbUserDollar,
-  TbTrashFilled,
 } from "react-icons/tb";
 
 export const Icons = {
   // Navigation & Core UI
   LayoutDashboard,
+  X,
   TbLayoutDashboardFilled,
   RiExchangeDollarLine,
   FaTrashCan,
@@ -83,6 +92,7 @@ export const Icons = {
   RiShieldStarFill,
   HiCheckBadge,
   RiUserForbidLine,
+  TbCalendarMonth,
   UserRoundCheck,
   PiCubeFocusLight,
   TbUserCircle,
@@ -145,23 +155,59 @@ export const Icons = {
 
   // Custom image icons
   CustomTotalIcon: ({ className }: any) => (
-    <div className={className} style={{ position: 'relative', display: 'inline-block' }}>
-      <Image draggable={false} src="/dashboard/Total.png" alt="icon" fill className="object-contain" />
+    <div
+      className={className}
+      style={{ position: "relative", display: "inline-block" }}
+    >
+      <Image
+        draggable={false}
+        src="/dashboard/Total.png"
+        alt="icon"
+        fill
+        className="object-contain"
+      />
     </div>
   ),
   CustomVectorIcon: ({ className }: any) => (
-    <div className={className} style={{ position: 'relative', display: 'inline-block' }}>
-      <Image draggable={false} src="/dashboard/Vector.png" alt="icon" fill className="object-contain" />
+    <div
+      className={className}
+      style={{ position: "relative", display: "inline-block" }}
+    >
+      <Image
+        draggable={false}
+        src="/dashboard/Vector.png"
+        alt="icon"
+        fill
+        className="object-contain"
+      />
     </div>
   ),
   CustomHoldIcon: ({ className }: any) => (
-    <div className={className} style={{ position: 'relative', display: 'inline-block' }}>
-      <Image draggable={false} src="/dashboard/hold.png" alt="icon" fill className="object-contain" />
+    <div
+      className={className}
+      style={{ position: "relative", display: "inline-block" }}
+    >
+      <Image
+        draggable={false}
+        src="/dashboard/hold.png"
+        alt="icon"
+        fill
+        className="object-contain"
+      />
     </div>
   ),
   CustomActionsIcon: ({ className }: any) => (
-    <div className={className} style={{ position: 'relative', display: 'inline-block' }}>
-      <Image draggable={false} src="/dashboard/actions.png" alt="icon" fill className="object-contain" />
+    <div
+      className={className}
+      style={{ position: "relative", display: "inline-block" }}
+    >
+      <Image
+        draggable={false}
+        src="/dashboard/actions.png"
+        alt="icon"
+        fill
+        className="object-contain"
+      />
     </div>
   ),
 };

@@ -27,7 +27,7 @@ export default function ResetSuccessForm() {
       initial={{ opacity: 0, x: 40 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full relative overflow-hidden flex flex-col justify-center bg-card rounded-32 p-8 md:p-12 h-fit min-h-100"
+      className="w-full relative overflow-hidden flex flex-col justify-center bg-card border border-border auth-card-shadow rounded-32 p-8 md:p-12 h-fit min-h-100"
     >
       <div className="relative z-10 flex flex-col justify-center max-w-105 w-full mx-auto h-full gap-8">
         {/* Success Icon */}
@@ -57,8 +57,8 @@ export default function ResetSuccessForm() {
                   y2="100"
                   gradientUnits="userSpaceOnUse"
                 >
-                  <stop stopColor="#0089A7" />
-                  <stop offset="1" stopColor="#0089A7" />
+                  <stop stopColor="#148065" />
+                  <stop offset="1" stopColor="#046C4E" />
                 </linearGradient>
               </defs>
             </svg>
@@ -89,7 +89,7 @@ export default function ResetSuccessForm() {
           transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
           onClick={handleManualRedirect}
           disabled={isSubmitting}
-          className="w-full h-12 golden-gradient-card border-0! hover:opacity-90 text-background text-[15px] font-bold rounded-xl inline-flex justify-center items-center gap-2 cursor-pointer transition-opacity shadow-[0_4px_14px_rgba(255,212,81,0.25)] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-12 golden-gradient-card border-0! hover:brightness-105 text-foreground text-[15px] font-bold rounded-xl inline-flex justify-center items-center gap-2 cursor-pointer transition-all shadow-[0_4px_14px_rgba(252,150,7,0.28)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
           {isSubmitting ? "Redirecting..." : "Back to Login"}

@@ -64,17 +64,17 @@ export default function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="w-full bg-white border border-slate-200/60 shadow-sm rounded-2xl p-8 sm:p-10 text-center">
+      <div className="w-full bg-card border border-border auth-card-shadow rounded-2xl p-8 sm:p-10 text-center">
         <div className="flex justify-center mb-6">
-          <AlertCircle className="w-12 h-12 text-red-500" />
+          <AlertCircle className="w-12 h-12 text-error" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">Invalid Link</h2>
-        <p className="text-slate-500 text-sm mb-8">
+        <h2 className="text-2xl font-bold text-foreground tracking-tight mb-3">Invalid Link</h2>
+        <p className="text-muted-foreground text-sm mb-8">
           This password reset link is invalid or has expired. Please request a new one.
         </p>
         <Link
           href="/forgot-password"
-          className="inline-flex items-center justify-center w-full h-12 bg-white border border-primary text-primary hover:bg-slate-50 font-semibold text-sm rounded-xl transition-colors"
+          className="inline-flex items-center justify-center w-full h-12 bg-card border border-primary text-primary hover:bg-accent font-semibold text-sm rounded-xl transition-colors cursor-pointer"
         >
           Request New Link
         </Link>
@@ -83,26 +83,26 @@ export default function ResetPasswordForm() {
   }
 
   return (
-    <div className="w-full bg-white border border-slate-200/60 shadow-sm rounded-2xl p-8 sm:p-10">
+    <div className="w-full bg-card border border-border auth-card-shadow rounded-2xl p-8 sm:p-10">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-2">Set New Password</h1>
-        <p className="text-slate-500 text-sm">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight mb-2">Set New Password</h1>
+        <p className="text-muted-foreground text-sm">
           Please enter your new password below.
         </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-1.5 group">
-          <label htmlFor="password" className="text-sm font-medium text-slate-700">New Password</label>
+          <label htmlFor="password" className="text-sm font-medium text-text-description">New Password</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-secondary">
               <Lock className="h-[18px] w-[18px]" />
             </div>
             <input
               id="password"
               type={showPassword.password ? "text" : "password"}
               placeholder="••••••••"
-              className={`w-full pl-10 pr-10 h-12 bg-white border border-slate-200 text-slate-800 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''}`}
+              className={`w-full pl-10 pr-10 h-12 bg-card border border-input text-foreground placeholder:text-text-secondary text-sm rounded-xl focus:bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none ${errors.password ? 'border-error focus:border-error focus:ring-error/10' : ''}`}
               {...register("password")}
             />
             <PassViewToggleBtn 
@@ -112,21 +112,21 @@ export default function ResetPasswordForm() {
             />
           </div>
           {errors.password && (
-            <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>
+            <p className="text-xs text-error mt-1">{errors.password.message}</p>
           )}
         </div>
 
         <div className="space-y-1.5 group">
-          <label htmlFor="confirmPassword" className="text-sm font-medium text-slate-700">Confirm Password</label>
+          <label htmlFor="confirmPassword" className="text-sm font-medium text-text-description">Confirm Password</label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-secondary">
               <Lock className="h-[18px] w-[18px]" />
             </div>
             <input
               id="confirmPassword"
               type={showPassword.confirmPassword ? "text" : "password"}
               placeholder="••••••••"
-              className={`w-full pl-10 pr-10 h-12 bg-white border border-slate-200 text-slate-800 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none ${errors.confirmPassword ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10' : ''}`}
+              className={`w-full pl-10 pr-10 h-12 bg-card border border-input text-foreground placeholder:text-text-secondary text-sm rounded-xl focus:bg-card focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none ${errors.confirmPassword ? 'border-error focus:border-error focus:ring-error/10' : ''}`}
               {...register("confirmPassword")}
             />
             <PassViewToggleBtn 
@@ -136,14 +136,14 @@ export default function ResetPasswordForm() {
             />
           </div>
           {errors.confirmPassword && (
-            <p className="text-xs text-red-500 mt-1">{errors.confirmPassword.message}</p>
+            <p className="text-xs text-error mt-1">{errors.confirmPassword.message}</p>
           )}
         </div>
 
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full h-12 mt-4 bg-primary hover:bg-[#007B96] text-white font-semibold text-sm rounded-xl transition-colors flex items-center justify-center disabled:opacity-70"
+          className="w-full h-12 mt-4 bg-primary hover:bg-brand-dark text-primary-foreground font-semibold text-sm rounded-xl transition-colors flex items-center justify-center cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <>

@@ -3,20 +3,33 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { WEBSITE_DETAILS } from "@/lib/constants";
 import ReduxProvider from "@/redux/ReduxProvider";
 import type { Metadata } from "next";
-import { Nunito, Hind_Siliguri } from "next/font/google";
+import {
+  Hind_Siliguri,
+  JetBrains_Mono,
+  Plus_Jakarta_Sans,
+} from "next/font/google";
 import "./globals.css";
 
-const nunito = Nunito({
+// Primary English & numeric font (variable font): modern, friendly fintech clarity
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-nunito",
+  variable: "--font-plus-jakarta-sans",
 });
 
+// Primary Bangla font: clean UI legibility that pairs smoothly with Plus Jakarta Sans
 const hindSiliguri = Hind_Siliguri({
   subsets: ["bengali"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-hind-siliguri",
+});
+
+// Monospace font (variable font) for transaction IDs, codes, and aligned figures
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jb-mono",
 });
 
 export const metadata: Metadata = {
@@ -31,7 +44,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${nunito.variable} ${hindSiliguri.variable} font-sans antialiased`}>
+      <body
+        className={`${plusJakartaSans.variable} ${hindSiliguri.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+      >
         <ReduxProvider>
           <TooltipProvider>
             <svg
@@ -47,9 +62,9 @@ export default function RootLayout({
                   x2="100%"
                   y2="0%"
                 >
-                  <stop offset="1.1%" stopColor="#0089A7" />
-                  <stop offset="74.38%" stopColor="#0089A7" />
-                  <stop offset="99.75%" stopColor="#0089A7" />
+                  <stop offset="0%" stopColor="#FC9607" />
+                  <stop offset="50%" stopColor="#FDAB05" />
+                  <stop offset="100%" stopColor="#FFCB3D" />
                 </linearGradient>
               </defs>
             </svg>
