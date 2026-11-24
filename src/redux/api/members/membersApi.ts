@@ -55,12 +55,12 @@ const membersApi = baseApi.injectEndpoints({
       IMemberResponse,
       IChangeMemberRolePayload
     >({
-      query: ({ id, role }) => ({
+      query: ({ id, role, previousAdminNextRole }) => ({
         url: `/members/${id}/role`,
         method: "PATCH",
-        body: { role },
+        body: { role, previousAdminNextRole },
       }),
-      invalidatesTags: ["Members", "User", "ActivityLogs"],
+      invalidatesTags: ["Members", "User", "Dashboard", "ActivityLogs"],
     }),
     deactivateMember: builder.mutation<
       IDeactivateMemberResponse,

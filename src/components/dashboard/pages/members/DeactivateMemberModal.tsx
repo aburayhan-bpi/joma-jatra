@@ -29,8 +29,8 @@ function DeactivateMemberForm({
   member: IMember;
   onClose: () => void;
 }) {
+  // Allow settling from any non-deleted account (including inactive ones holding funds)
   const { data: accountsRes } = useGetPaymentAccountsQuery({
-    isActive: true,
     limit: 100,
   });
   const [deactivateMember, { isLoading }] = useDeactivateMemberMutation();
@@ -201,7 +201,7 @@ function DeactivateMemberForm({
               placeholder="Select account..."
               options={accounts.map((acc) => ({
                 value: acc.id,
-                label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)}) — ${formatTaka(acc.balance)}`,
+                label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)})${!acc.isActive ? " [Inactive]" : ""} — ${formatTaka(acc.balance)}`,
               }))}
             />
           </div>
@@ -237,6 +237,7 @@ function DeactivateMemberForm({
             value={proofImage}
             onChange={setProofImage}
             label="Settlement Proof Screenshot (Optional)"
+            folder="joma-jatra/returns"
           />
         </div>
       )}

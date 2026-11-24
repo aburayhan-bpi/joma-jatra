@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { serverEnv } from "../core/env";
 
-interface SendEmailOptions {
+export interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
@@ -41,4 +41,19 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
   });
 
   return true;
+}
+
+/**
+ * Non-fatal wrapper for notification emails (receipts, welcome, role updates).
+ * Ensures a temporary SMTP/network glitch never rolls back or fails a financial API call.
+ */
+export async function safeSendEmail(options: SendEmailOptions): Promise<void> {
+  try {
+    await sendEmail(options);
+  } catch (err) {
+    console.error(
+      `[EMAIL_ERROR] Failed sending "${options.subject}" to ${options.to}:`,
+      err,
+    );
+  }
 }

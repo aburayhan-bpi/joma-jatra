@@ -15,6 +15,8 @@ import {
   getAccountBalance,
   getMemberBalance,
 } from "../../shared/accounting.service";
+import { safeSendEmail } from "../../shared/email";
+import { buildReturnReceiptEmail } from "../../shared/email-templates";
 import { normalizeTrxId, roundMoney, toObjectId } from "../../shared/normalize";
 import {
   buildPaginationMeta,
@@ -289,6 +291,34 @@ export async function createReturn(
     performedBy: actor.id,
   });
 
+  if (status === "APPROVED" && targetMember.email) {
+    const [updatedBalance, accountDoc] = await Promise.all([
+      getMemberBalance(targetMember._id),
+      record.paymentAccountId
+        ? PaymentAccountModel.findById(record.paymentAccountId)
+            .select("accountName")
+            .lean()
+        : Promise.resolve(null),
+    ]);
+
+    await safeSendEmail({
+      to: targetMember.email,
+      ...buildReturnReceiptEmail({
+        memberName: targetMember.name,
+        status: "APPROVED",
+        amount: record.amount,
+        returnType: record.returnType,
+        returnDate: record.returnDate,
+        paymentAccountName: accountDoc?.accountName || null,
+        paymentMethod: record.paymentMethod || null,
+        recipientAccount: record.recipientAccount || null,
+        trxId: record.trxId,
+        reviewedByName: actor.name,
+        newNetBalance: updatedBalance.netBalance,
+      }),
+    });
+  }
+
   return getReturnById(record._id.toString());
 }
 
@@ -490,7 +520,14 @@ export async function reviewReturn(
   record.reviewedAt = new Date();
   await record.save();
 
-  const member = await UserModel.findById(record.memberId).select("name").lean();
+  const [member, accountDoc] = await Promise.all([
+    UserModel.findById(record.memberId).select("name email").lean(),
+    record.paymentAccountId
+      ? PaymentAccountModel.findById(record.paymentAccountId)
+          .select("accountName")
+          .lean()
+      : Promise.resolve(null),
+  ]);
 
   await logActivity({
     entityType: "RETURN",
@@ -505,6 +542,30 @@ export async function reviewReturn(
     proofImage: record.proofImage || null,
     performedBy: actor.id,
   });
+
+  if (member?.email) {
+    const updatedBalance =
+      input.status === "APPROVED"
+        ? await getMemberBalance(record.memberId)
+        : null;
+    await safeSendEmail({
+      to: member.email,
+      ...buildReturnReceiptEmail({
+        memberName: member.name,
+        status: input.status,
+        amount: record.amount,
+        returnType: record.returnType,
+        returnDate: record.returnDate,
+        paymentAccountName: accountDoc?.accountName || null,
+        paymentMethod: record.paymentMethod || null,
+        recipientAccount: record.recipientAccount || null,
+        trxId: record.trxId,
+        reviewedByName: actor.name,
+        rejectionReason: record.rejectionReason,
+        newNetBalance: updatedBalance?.netBalance,
+      }),
+    });
+  }
 
   return getReturnById(record._id.toString());
 }

@@ -10,7 +10,8 @@ export const createMemberSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address"),
   phone: z.string().trim().max(25).optional().default(""),
   password: z.string().min(6, "Temporary password must be at least 6 characters"),
-  role: z.enum(USER_ROLES).optional().default("MEMBER"),
+  // Strictly 1 active Admin is allowed — new members start as MEMBER or CASHIER
+  role: z.enum(["MEMBER", "CASHIER"]).optional().default("MEMBER"),
   joinedAt: z.coerce.date().optional(),
   profileImage: z.string().trim().optional().default(""),
   mustChangePassword: z.boolean().optional().default(true),
@@ -25,6 +26,8 @@ export const updateMemberSchema = z.object({
 
 export const changeMemberRoleSchema = z.object({
   role: z.enum(USER_ROLES),
+  // Used when transferring Admin ownership to another active member
+  previousAdminNextRole: z.enum(["CASHIER", "MEMBER"]).optional().default("CASHIER"),
 });
 
 export const deactivateMemberSchema = z

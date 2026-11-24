@@ -17,6 +17,7 @@ import { connectDB } from "../../core/db";
 import { serverEnv } from "../../core/env";
 import { getMemberBalance } from "../../shared/accounting.service";
 import { sendEmail } from "../../shared/email";
+import { buildPasswordResetOtpEmail } from "../../shared/email-templates";
 import { logActivity } from "../activity-logs/activity-log.service";
 import { IUserDocument, UserModel } from "../members/user.model";
 
@@ -271,11 +272,15 @@ export async function requestForgotPasswordOtp(email: string) {
   user.resetOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
   await user.save();
 
+  const otpEmail = buildPasswordResetOtpEmail({
+    name: user.name,
+    otp,
+    expiresInMinutes: 10,
+  });
+
   await sendEmail({
     to: user.email,
-    subject: "JomaJatra — Password Reset Verification Code",
-    text: `Your JomaJatra password reset OTP is ${otp}. It expires in 10 minutes.`,
-    html: `<p>Hello <strong>${user.name}</strong>,</p><p>Your JomaJatra password reset verification code is:</p><h2 style="letter-spacing:4px;color:#046c4e;">${otp}</h2><p>This code will expire in 10 minutes.</p>`,
+    ...otpEmail,
   });
 
   return { sent: true };
@@ -343,6 +348,11 @@ export async function resetUserPassword(
   );
   if (!user || user.isDeleted || user.status !== "ACTIVE") {
     throw notFound("Active user account not found");
+  }
+
+  // Enforce single-use reset token: resetOtp is cleared immediately once used
+  if (!user.resetOtp || !user.resetOtpExpires) {
+    throw unauthorized("Reset token has already been used or expired");
   }
 
   user.password = newPassword;

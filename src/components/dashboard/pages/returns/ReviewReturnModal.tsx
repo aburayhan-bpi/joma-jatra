@@ -28,8 +28,8 @@ function ReviewReturnContent({
   returnEntry: IDepositReturn;
   onClose: () => void;
 }) {
+  // Allow disbursing from any non-deleted account (including inactive ones holding funds)
   const { data: accountsRes } = useGetPaymentAccountsQuery({
-    isActive: true,
     limit: 100,
   });
   const [reviewReturn, { isLoading }] = useReviewReturnMutation();
@@ -85,7 +85,7 @@ function ReviewReturnContent({
       <div className="grid grid-cols-2 gap-3 p-3.5 rounded bg-muted/60 border border-border text-xs">
         <div>
           <p className="text-muted-foreground">Requested Amount</p>
-          <p className="text-base font-semibold text-secondary font-money mt-0.5">
+          <p className="text-base font-semibold text-gold-dark font-money mt-0.5">
             {formatTaka(returnEntry.amount)}
           </p>
         </div>
@@ -121,7 +121,7 @@ function ReviewReturnContent({
             placeholder="Select account..."
             options={accounts.map((acc) => ({
               value: acc.id,
-              label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)}) — ${formatTaka(acc.balance)}`,
+              label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)})${!acc.isActive ? " [Inactive]" : ""} — ${formatTaka(acc.balance)}`,
             }))}
           />
         </div>
@@ -143,6 +143,7 @@ function ReviewReturnContent({
           value={proofImage}
           onChange={setProofImage}
           label="Payout Proof Screenshot (Optional)"
+          folder="joma-jatra/returns"
         />
       </div>
 

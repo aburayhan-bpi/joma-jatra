@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createDepositSchema, reviewDepositSchema } from "../modules/deposits/deposit.validation";
-import { deactivateMemberSchema } from "../modules/members/member.validation";
+import {
+  changeMemberRoleSchema,
+  createMemberSchema,
+  deactivateMemberSchema,
+} from "../modules/members/member.validation";
 import { upsertMonthlyTargetSchema } from "../modules/monthly-targets/monthly-target.validation";
 import { createTransferSchema } from "../modules/transfers/account-transfer.validation";
 import {
@@ -145,6 +149,24 @@ describe("Domain Zod Validations", () => {
         amount: 500,
         month: "2026-11",
         paymentAccountId: "65f1a2b3c4d5e6f7a8b9c0d1",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("enforces single-admin creation rule and validates admin transfer next role", () => {
+    expect(
+      createMemberSchema.safeParse({
+        name: "Second Admin",
+        email: "second@example.com",
+        password: "password123",
+        role: "ADMIN",
+      }).success,
+    ).toBe(false);
+
+    expect(
+      changeMemberRoleSchema.safeParse({
+        role: "ADMIN",
+        previousAdminNextRole: "MEMBER",
       }).success,
     ).toBe(true);
   });

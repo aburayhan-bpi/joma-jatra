@@ -13,6 +13,8 @@ import {
   PaginationQuery,
 } from "../../shared/pagination";
 import { logActivity } from "../activity-logs/activity-log.service";
+import { DepositModel } from "../deposits/deposit.model";
+import { DepositReturnModel } from "../returns/deposit-return.model";
 import { PaymentAccountModel } from "./payment-account.model";
 
 export interface ListPaymentAccountsParams {
@@ -163,6 +165,22 @@ export async function updatePaymentAccount(
     throw notFound("Payment account not found");
   }
 
+  // Prevent changing payment method once deposits/returns exist on this account
+  if (input.method && input.method !== account.method) {
+    const [hasDeposit, hasReturn] = await Promise.all([
+      DepositModel.exists({ paymentAccountId: account._id, isDeleted: false }),
+      DepositReturnModel.exists({
+        paymentAccountId: account._id,
+        isDeleted: false,
+      }),
+    ]);
+    if (hasDeposit || hasReturn) {
+      throw badRequest(
+        `Cannot change method of "${account.accountName}" from ${account.method} to ${input.method} because it already has recorded transactions.`,
+      );
+    }
+  }
+
   const before = {
     method: account.method,
     accountName: account.accountName,
@@ -205,11 +223,30 @@ export async function softDeletePaymentAccount(actor: AuthUser, id: string) {
     throw notFound("Payment account not found");
   }
 
-  // Prevent archiving an account that still holds live group cash
-  const summary = await getAccountBalance(account._id);
-  if (summary.balance > 0) {
+  // Prevent archiving an account that holds live group cash or has pending requests
+  const [summary, pendingDepositsCount, pendingReturnsCount] = await Promise.all([
+    getAccountBalance(account._id),
+    DepositModel.countDocuments({
+      paymentAccountId: account._id,
+      status: "PENDING",
+      isDeleted: false,
+    }),
+    DepositReturnModel.countDocuments({
+      paymentAccountId: account._id,
+      status: "PENDING",
+      isDeleted: false,
+    }),
+  ]);
+
+  if (summary.balance !== 0) {
     throw badRequest(
       `Cannot delete "${account.accountName}" while it holds ৳${summary.balance}. Transfer the balance to another account first.`,
+    );
+  }
+
+  if (pendingDepositsCount > 0 || pendingReturnsCount > 0) {
+    throw badRequest(
+      `Cannot delete "${account.accountName}" while it has ${pendingDepositsCount} pending deposit(s) and ${pendingReturnsCount} pending return(s). Review them first.`,
     );
   }
 

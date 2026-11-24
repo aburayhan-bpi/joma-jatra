@@ -180,7 +180,13 @@ export async function getMonthlyMatrix(params?: {
 
   const monthSet = new Set<string>();
   const currentMonth = formatYearMonth(new Date());
-  if (!yearPrefix || currentMonth.startsWith(yearPrefix)) {
+
+  // When a specific year is selected, always render the full 12-month calendar register (Jan -> Dec)
+  if (params?.year) {
+    for (let m = 1; m <= 12; m += 1) {
+      monthSet.add(`${params.year}-${String(m).padStart(2, "0")}`);
+    }
+  } else {
     monthSet.add(currentMonth);
   }
   for (const t of targets) monthSet.add(t.month);

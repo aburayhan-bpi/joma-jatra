@@ -65,7 +65,7 @@ export default function AccountBreakdownModal({
               <span className="text-muted-foreground">
                 Approved Returns Out
               </span>
-              <span className="font-semibold font-money text-secondary">
+              <span className="font-semibold font-money text-gold-dark">
                 - {formatTaka(breakdown.totalOutReturns)}
               </span>
             </div>
@@ -73,13 +73,13 @@ export default function AccountBreakdownModal({
               <span className="text-muted-foreground">
                 Internal Transfers Out
               </span>
-              <span className="font-semibold font-money text-secondary">
+              <span className="font-semibold font-money text-gold-dark">
                 - {formatTaka(breakdown.totalTransferOut)}
               </span>
             </div>
             <div className="flex items-center justify-between px-3.5 py-2.5 text-xs">
               <span className="text-muted-foreground">Transfer / Cash-Out Fees</span>
-              <span className="font-semibold font-money text-secondary">
+              <span className="font-semibold font-money text-gold-dark">
                 - {formatTaka(breakdown.totalTransferFees)}
               </span>
             </div>
@@ -87,7 +87,7 @@ export default function AccountBreakdownModal({
               <span className="text-muted-foreground">
                 Standalone Account Charges
               </span>
-              <span className="font-semibold font-money text-secondary">
+              <span className="font-semibold font-money text-gold-dark">
                 - {formatTaka(breakdown.totalStandaloneCharges)}
               </span>
             </div>

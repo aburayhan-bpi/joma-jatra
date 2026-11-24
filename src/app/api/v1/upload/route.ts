@@ -10,6 +10,13 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
+const ALLOWED_FOLDERS = new Set([
+  "joma-jatra/proofs",
+  "joma-jatra/avatars",
+  "joma-jatra/returns",
+  "joma-jatra/transfers",
+  "joma-jatra/charges",
+]);
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 export const POST = withErrorHandler(async (req) => {
@@ -17,7 +24,10 @@ export const POST = withErrorHandler(async (req) => {
 
   const formData = await req.formData();
   const file = formData.get("file");
-  const folder = String(formData.get("folder") || "joma-jatra/proofs").trim();
+  const rawFolder = String(formData.get("folder") || "joma-jatra/proofs").trim();
+  const folder = ALLOWED_FOLDERS.has(rawFolder)
+    ? rawFolder
+    : "joma-jatra/proofs";
 
   if (!(file instanceof File)) {
     throw badRequest("Please attach an image file under the 'file' field");

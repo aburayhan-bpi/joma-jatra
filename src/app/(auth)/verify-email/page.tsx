@@ -230,7 +230,7 @@ export default function VerifyEmailPage() {
             >
               {isVerifying ? (
                 <>
-                  <span className="h-4 w-4 rounded-full border-2 border-foreground border-t-transparent animate-spin" />
+                  <span className="h-4 w-4 rounded-full border-2 border-primary-foreground border-t-transparent animate-spin" />
                   Verifying
                 </>
               ) : (

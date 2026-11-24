@@ -11,6 +11,8 @@ import {
   getAccountBalance,
   getMemberBalance,
 } from "../../shared/accounting.service";
+import { safeSendEmail } from "../../shared/email";
+import { buildDepositReceiptEmail } from "../../shared/email-templates";
 import {
   formatYearMonth,
   normalizeTrxId,
@@ -243,6 +245,26 @@ export async function createDeposit(
     performedBy: actor.id,
   });
 
+  // Send deposit confirmation receipt when recorded directly as APPROVED
+  if (status === "APPROVED" && targetMember.email) {
+    const updatedBalance = await getMemberBalance(targetMember._id);
+    await safeSendEmail({
+      to: targetMember.email,
+      ...buildDepositReceiptEmail({
+        memberName: targetMember.name,
+        status: "APPROVED",
+        amount: deposit.amount,
+        month,
+        depositDate,
+        paymentMethod: deposit.paymentMethod,
+        paymentAccountName: account.accountName,
+        trxId: deposit.trxId,
+        reviewedByName: actor.name,
+        newNetBalance: updatedBalance.netBalance,
+      }),
+    });
+  }
+
   return getDepositById(deposit._id.toString());
 }
 
@@ -411,6 +433,19 @@ export async function reviewDeposit(
     );
   }
 
+  // Ensure the destination payment account still exists and is not soft-deleted before approving
+  if (input.status === "APPROVED") {
+    const activeAccount = await PaymentAccountModel.exists({
+      _id: deposit.paymentAccountId,
+      isDeleted: false,
+    });
+    if (!activeAccount) {
+      throw badRequest(
+        "Cannot approve deposit: its payment account has been deleted. Restore the account or edit the deposit first.",
+      );
+    }
+  }
+
   deposit.status = input.status;
   deposit.rejectionReason =
     input.status === "REJECTED" ? input.rejectionReason || "Rejected" : null;
@@ -418,7 +453,12 @@ export async function reviewDeposit(
   deposit.reviewedAt = new Date();
   await deposit.save();
 
-  const member = await UserModel.findById(deposit.memberId).select("name").lean();
+  const [member, account] = await Promise.all([
+    UserModel.findById(deposit.memberId).select("name email").lean(),
+    PaymentAccountModel.findById(deposit.paymentAccountId)
+      .select("accountName")
+      .lean(),
+  ]);
 
   await logActivity({
     entityType: "DEPOSIT",
@@ -433,6 +473,29 @@ export async function reviewDeposit(
     proofImage: deposit.proofImage || null,
     performedBy: actor.id,
   });
+
+  if (member?.email) {
+    const updatedBalance =
+      input.status === "APPROVED"
+        ? await getMemberBalance(deposit.memberId)
+        : null;
+    await safeSendEmail({
+      to: member.email,
+      ...buildDepositReceiptEmail({
+        memberName: member.name,
+        status: input.status,
+        amount: deposit.amount,
+        month: deposit.month,
+        depositDate: deposit.depositDate,
+        paymentMethod: deposit.paymentMethod,
+        paymentAccountName: account?.accountName || deposit.paymentMethod,
+        trxId: deposit.trxId,
+        reviewedByName: actor.name,
+        rejectionReason: deposit.rejectionReason,
+        newNetBalance: updatedBalance?.netBalance,
+      }),
+    });
+  }
 
   return getDepositById(deposit._id.toString());
 }

@@ -123,7 +123,8 @@ function DepositForm({
           note: note.trim() || undefined,
         }).unwrap();
         toast.success(
-          isManager && memberId !== user?.id
+          user?.role === "ADMIN" ||
+            (user?.role === "CASHIER" && memberId !== user?.id)
             ? "Deposit recorded & approved"
             : "Deposit submitted for approval",
         );

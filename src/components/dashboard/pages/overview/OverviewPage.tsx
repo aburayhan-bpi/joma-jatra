@@ -33,6 +33,7 @@ import {
   Landmark,
   PiggyBank,
   Plus,
+  RotateCcw,
   Sheet,
   ShieldCheck,
   Target,
@@ -51,6 +52,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import ResetTestDataModal from "./ResetTestDataModal";
 
 /**
  * Main Dashboard Overview (/dashboard)
@@ -59,7 +61,8 @@ import { toast } from "sonner";
  */
 export default function OverviewPage() {
   const user = useAppSelector(selectCurrentUser);
-  const isManager = user?.role === "ADMIN" || user?.role === "CASHIER";
+  const isAdmin = user?.role === "ADMIN";
+  const isManager = isAdmin || user?.role === "CASHIER";
 
   const { data: summaryRes, isLoading } = useGetDashboardSummaryQuery();
   const { data: matrixRes } = useGetMonthlyMatrixQuery({
@@ -70,6 +73,7 @@ export default function OverviewPage() {
     useReviewDepositMutation();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [resetModalOpen, setResetModalOpen] = useState(false);
   const [proofPreview, setProofPreview] = useState<ProofPreviewData | null>(
     null,
   );
@@ -112,8 +116,13 @@ export default function OverviewPage() {
   const { fundSummary, currentMonth, accountBalances, counts, mySavings } =
     summary;
 
-  // Prepare last 6 months chart data from monthly matrix
-  const chartData = (matrixRes?.data?.months || []).slice(-6).map((m) => ({
+  // Prepare recent 6 months chart data up to the current month (or any month with activity)
+  const currentMonthKey = currentMonth.month;
+  const relevantMonths = (matrixRes?.data?.months || []).filter(
+    (m) =>
+      m.month <= currentMonthKey || m.collectedAmount > 0 || m.targetAmount > 0,
+  );
+  const chartData = relevantMonths.slice(-6).map((m) => ({
     month: formatMonthLabel(m.month).replace(/\s\d{4}$/, ""),
     collected: m.collectedAmount,
     target: m.targetAmount,
@@ -132,16 +141,26 @@ export default function OverviewPage() {
         subtitle={`Group savings ledger for ${formatMonthLabel(currentMonth.month)} • ${counts.activeMembersCount} active members`}
         actions={
           <>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setResetModalOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-error/40 bg-error-5 text-error text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.05)] hover:bg-error-20 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset Test DB
+              </button>
+            )}
             <Link
               href="/dashboard/monthly-sheet"
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-border bg-card text-foreground text-xs font-medium leading-none hover:bg-muted transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-[#b4cabe] bg-card text-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.05)] hover:bg-muted hover:border-[#8faea0] transition-colors cursor-pointer"
             >
               <Sheet className="w-3.5 h-3.5 text-muted-foreground" />
               Monthly Sheet
             </Link>
             <Link
               href="/dashboard/deposits?action=new"
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none hover:bg-brand-dark hover:border-brand-dark transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.08)] hover:bg-brand-dark hover:border-brand-dark transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Deposit
@@ -221,7 +240,7 @@ export default function OverviewPage() {
                 {formatTaka(mySavings.currentMonthDeposited)}
               </p>
               {mySavings.pendingDepositsCount > 0 && (
-                <p className="text-[11px] text-secondary mt-0.5">
+                <p className="text-[11px] text-gold-dark mt-0.5">
                   {mySavings.pendingDepositsCount} pending approval
                 </p>
               )}
@@ -262,7 +281,7 @@ export default function OverviewPage() {
           value={formatTaka(fundSummary.unsettledFormerMemberPayable)}
           valueClassName={
             fundSummary.unsettledFormerMemberPayable > 0
-              ? "text-secondary"
+              ? "text-gold-dark"
               : "text-foreground"
           }
           icon={<UserMinus className="w-[18px] h-[18px]" />}
@@ -542,7 +561,7 @@ export default function OverviewPage() {
                           )}
 
                           {isOwnCashierRequest ? (
-                            <span className="text-[11px] text-secondary font-medium px-2">
+                            <span className="text-[11px] text-gold-dark font-medium px-2">
                               Awaiting Admin
                             </span>
                           ) : (
@@ -576,7 +595,7 @@ export default function OverviewPage() {
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {ret.recipientAccount || ret.reason || "Return request"}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold font-money text-secondary">
+                    <td className="px-4 py-3 text-right font-semibold font-money text-gold-dark">
                       {formatTaka(ret.amount)}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -600,6 +619,14 @@ export default function OverviewPage() {
         proof={proofPreview}
         onClose={() => setProofPreview(null)}
       />
+
+      {/* Temporary Admin Test DB Reset Modal */}
+      {isAdmin && (
+        <ResetTestDataModal
+          isOpen={resetModalOpen}
+          onClose={() => setResetModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

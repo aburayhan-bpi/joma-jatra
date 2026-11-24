@@ -21,6 +21,15 @@ export function SearchBar({
   const [value, setValue] = useState(urlSearch);
   const debouncedValue = useDebounce(value, 350);
   const isFirstRender = useRef(true);
+  const prevUrlSearchRef = useRef(urlSearch);
+
+  // Sync input when URL search param is cleared or changed externally (e.g. Clear button or tab switch)
+  useEffect(() => {
+    if (prevUrlSearchRef.current !== urlSearch) {
+      prevUrlSearchRef.current = urlSearch;
+      setValue(urlSearch);
+    }
+  }, [urlSearch]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -28,6 +37,7 @@ export function SearchBar({
       return;
     }
     if (debouncedValue !== urlSearch) {
+      prevUrlSearchRef.current = debouncedValue;
       setParams({ search: debouncedValue || null, page: 1 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

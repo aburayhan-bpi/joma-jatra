@@ -2593,6 +2593,41 @@
               "body": "{\n  \"success\": true,\n  \"statusCode\": 201,\n  \"message\": \"Proof image uploaded successfully\",\n  \"data\": {\n    \"url\": \"https://res.cloudinary.com/demo/image/upload/v1/joma-jatra/proofs/slip1.jpg\",\n    \"publicId\": \"joma-jatra/proofs/slip1\",\n    \"width\": 1080,\n    \"height\": 1920,\n    \"format\": \"jpg\",\n    \"bytes\": 245120\n  }\n}"
             }
           ]
+        },
+        {
+          "name": "Reset Test Database (Admin Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirmText\": \"RESET\",\n  \"includeMembers\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/reset-test-data",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reset-test-data"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Test Database Cleaned",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Test database cleaned successfully\",\n  \"data\": {\n    \"deposits\": 4,\n    \"returns\": 1,\n    \"transfers\": 1,\n    \"charges\": 1,\n    \"monthlyTargets\": 1,\n    \"paymentAccounts\": 2,\n    \"activityLogs\": 10,\n    \"members\": 0\n  }\n}"
+            }
+          ]
         }
       ]
     }

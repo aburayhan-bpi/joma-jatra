@@ -11,6 +11,7 @@ interface ProofUploadFieldProps {
   value: string;
   onChange: (url: string) => void;
   label?: string;
+  folder?: string;
 }
 
 /**
@@ -20,6 +21,7 @@ export default function ProofUploadField({
   value,
   onChange,
   label = "Proof Screenshot (Optional)",
+  folder = "joma-jatra/proofs",
 }: ProofUploadFieldProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadProof, { isLoading }] = useUploadProofMutation();
@@ -30,7 +32,7 @@ export default function ProofUploadField({
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("folder", "joma-jatra/proofs");
+    formData.append("folder", folder);
 
     try {
       const res = await uploadProof(formData).unwrap();

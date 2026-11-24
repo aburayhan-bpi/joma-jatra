@@ -81,7 +81,7 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full bg-card max-w-sm sm:max-w-md rounded-2xl sm:rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            className="relative w-full bg-card max-w-sm sm:max-w-md rounded-2xl sm:rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)]"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-4 relative shrink-0 border-b border-border">
@@ -107,7 +107,7 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
             </div>
 
             {/* Notification List */}
-            <div className="flex flex-col p-2 sm:p-3 overflow-y-auto custom-scrollbar">
+            <div className="flex flex-col p-2 sm:p-3 min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar">
               {NOTIFICATIONS.map((notif) => (
                 <div
                   key={notif.id}

@@ -1,4 +1,5 @@
 import { useLogoutMutation } from "@/redux/api/auth/authApi";
+import baseApi from "@/redux/api/baseApi";
 import { logout } from "@/redux/features/user/authSlice";
 import { useAppDispatch } from "@/redux/hook";
 import { useRouter } from "next/navigation";
@@ -14,10 +15,11 @@ export function useLogout() {
       await logoutApi().unwrap();
       toast.success("Logout successful!");
     } catch {
-      //   toast.error("Server logout failed. Local session cleared anyway.");
+      // Clear local session even if server logout call fails
     } finally {
       dispatch(logout());
-      router.replace("/");
+      dispatch(baseApi.util.resetApiState());
+      router.replace("/login");
       router.refresh();
     }
   };

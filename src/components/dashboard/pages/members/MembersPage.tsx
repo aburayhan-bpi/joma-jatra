@@ -3,12 +3,10 @@
 import { Pagination } from "@/components/dashboard/pagination";
 import { SearchBar } from "@/components/dashboard/search-bar";
 import AppSelect from "@/components/shared/AppSelect";
-import ConfirmModal from "@/components/shared/ConfirmModal";
 import InlineLoader from "@/components/shared/InlineLoader";
 import PageHeader from "@/components/shared/PageHeader";
 import StatusPill from "@/components/shared/StatusPill";
 import {
-  useChangeMemberRoleMutation,
   useGetMembersQuery,
   useRestoreMemberMutation,
 } from "@/redux/api/members/membersApi";
@@ -31,6 +29,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import ChangeRoleModal from "./ChangeRoleModal";
 import DeactivateMemberModal from "./DeactivateMemberModal";
 import MemberFormModal from "./MemberFormModal";
 
@@ -42,6 +41,7 @@ import MemberFormModal from "./MemberFormModal";
 export default function MembersPage() {
   const user = useAppSelector(selectCurrentUser);
   const isAdmin = user?.role === "ADMIN";
+  const isManager = isAdmin || user?.role === "CASHIER";
 
   const searchParams = useSearchParams();
   const setParams = useSetParamsForPagination();
@@ -60,36 +60,16 @@ export default function MembersPage() {
     includeDeleted: tab === "former" ? true : undefined,
   });
 
-  const [changeMemberRole, { isLoading: isChangingRole }] =
-    useChangeMemberRoleMutation();
   const [restoreMember, { isLoading: isRestoring }] =
     useRestoreMemberMutation();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<IMember | null>(null);
   const [closingMember, setClosingMember] = useState<IMember | null>(null);
-  const [roleToggleMember, setRoleToggleMember] = useState<IMember | null>(
-    null,
-  );
+  const [roleModalMember, setRoleModalMember] = useState<IMember | null>(null);
 
   const members = membersRes?.data || [];
   const meta = membersRes?.meta;
-
-  const handleConfirmRoleChange = async () => {
-    if (!roleToggleMember) return;
-    const nextRole: UserRole =
-      roleToggleMember.role === "CASHIER" ? "MEMBER" : "CASHIER";
-    try {
-      await changeMemberRole({
-        id: roleToggleMember.id,
-        role: nextRole,
-      }).unwrap();
-      toast.success(`${roleToggleMember.name} is now a ${nextRole}`);
-      setRoleToggleMember(null);
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to update member role"));
-    }
-  };
 
   const handleRestore = async (member: IMember) => {
     try {
@@ -113,7 +93,7 @@ export default function MembersPage() {
                 setEditingMember(null);
                 setFormOpen(true);
               }}
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none hover:bg-brand-dark hover:border-brand-dark transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.08)] hover:bg-brand-dark hover:border-brand-dark transition-colors cursor-pointer"
             >
               <UserPlus className="w-3.5 h-3.5" />
               Add Member
@@ -127,7 +107,7 @@ export default function MembersPage() {
         <div className="inline-flex items-center p-0.5 rounded bg-muted border border-border">
           <button
             type="button"
-            onClick={() => setParams({ tab: null, page: 1 })}
+            onClick={() => setParams({ tab: null, search: null, page: 1 })}
             className={`px-3 py-1 rounded-[3px] text-xs font-medium transition-colors cursor-pointer ${
               tab === "active"
                 ? "bg-card text-foreground shadow-xs"
@@ -138,7 +118,7 @@ export default function MembersPage() {
           </button>
           <button
             type="button"
-            onClick={() => setParams({ tab: "former", page: 1 })}
+            onClick={() => setParams({ tab: "former", search: null, page: 1 })}
             className={`px-3 py-1 rounded-[3px] text-xs font-medium transition-colors cursor-pointer ${
               tab === "former"
                 ? "bg-card text-foreground shadow-xs"
@@ -243,17 +223,17 @@ export default function MembersPage() {
                         <div className="inline-flex items-center gap-1">
                           <Link
                             href={`/dashboard/members/${member.id}`}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-border text-xs font-medium text-foreground hover:bg-muted cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded border border-[#b4cabe] bg-card text-xs font-medium text-foreground hover:bg-muted cursor-pointer"
                             title="View member details & full audit trail"
                           >
                             <FileText className="w-3.5 h-3.5 text-muted-foreground" />
                             Audit
                           </Link>
 
-                          {isAdmin && member.unsettledPayable > 0 && (
+                          {isManager && member.unsettledPayable > 0 && (
                             <Link
                               href={`/dashboard/returns?settleMemberId=${member.id}`}
-                              className="inline-flex items-center px-2 py-1 rounded-md bg-secondary/15 text-secondary text-xs font-medium hover:bg-secondary/25 cursor-pointer"
+                              className="inline-flex items-center px-2 py-1 rounded border border-amber-300 bg-amber-50 text-amber-800 text-xs font-medium hover:bg-amber-100 cursor-pointer"
                             >
                               Settle
                             </Link>
@@ -267,32 +247,29 @@ export default function MembersPage() {
                                   setEditingMember(member);
                                   setFormOpen(true);
                                 }}
-                                className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
+                                className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                                 title="Edit member"
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
 
-                              {!isSelf && member.role !== "ADMIN" && (
+                              {/* Admin can change other active members' role (Member / Cashier / Transfer Admin) */}
+                              {!isSelf && (
                                 <button
                                   type="button"
-                                  onClick={() => setRoleToggleMember(member)}
-                                  className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-muted cursor-pointer"
-                                  title={
-                                    member.role === "CASHIER"
-                                      ? "Demote to Member"
-                                      : "Promote to Cashier"
-                                  }
+                                  onClick={() => setRoleModalMember(member)}
+                                  className="p-1.5 rounded text-muted-foreground hover:text-primary hover:bg-muted cursor-pointer"
+                                  title="Change role or transfer Admin"
                                 >
                                   <ShieldCheck className="w-3.5 h-3.5" />
                                 </button>
                               )}
 
-                              {!isSelf && member.role !== "ADMIN" && (
+                              {!isSelf && (
                                 <button
                                   type="button"
                                   onClick={() => setClosingMember(member)}
-                                  className="p-1.5 rounded-md text-muted-foreground hover:text-error hover:bg-error-5 cursor-pointer"
+                                  className="p-1.5 rounded text-muted-foreground hover:text-error hover:bg-error-5 cursor-pointer"
                                   title="Close / deactivate member"
                                 >
                                   <UserMinus className="w-3.5 h-3.5" />
@@ -306,7 +283,7 @@ export default function MembersPage() {
                               type="button"
                               disabled={isRestoring}
                               onClick={() => handleRestore(member)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs font-medium text-primary hover:bg-muted cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-[#b4cabe] text-xs font-medium text-primary hover:bg-muted cursor-pointer"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                               Restore
@@ -349,24 +326,9 @@ export default function MembersPage() {
         onClose={() => setClosingMember(null)}
       />
 
-      <ConfirmModal
-        open={Boolean(roleToggleMember)}
-        title={
-          roleToggleMember?.role === "CASHIER"
-            ? "Demote Cashier to Member?"
-            : "Promote Member to Cashier?"
-        }
-        description={
-          roleToggleMember
-            ? roleToggleMember.role === "CASHIER"
-              ? `${roleToggleMember.name} will lose Cashier approval privileges and become a regular Member.`
-              : `${roleToggleMember.name} will be able to verify other members' deposits/returns and manage payment accounts & monthly targets.`
-            : ""
-        }
-        confirmText="Update Role"
-        loading={isChangingRole}
-        onConfirm={handleConfirmRoleChange}
-        onClose={() => setRoleToggleMember(null)}
+      <ChangeRoleModal
+        member={roleModalMember}
+        onClose={() => setRoleModalMember(null)}
       />
     </div>
   );

@@ -144,10 +144,10 @@ export default function DepositsPage() {
                 onClick={() =>
                   setParams({ trash: onlyDeleted ? null : "1", page: 1 })
                 }
-                className={`inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border text-xs font-medium leading-none transition-colors cursor-pointer ${
+                className={`inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.05)] transition-colors cursor-pointer ${
                   onlyDeleted
                     ? "bg-muted border-primary text-primary"
-                    : "bg-card border-border text-foreground hover:bg-muted"
+                    : "bg-card border-[#b4cabe] text-foreground hover:bg-muted hover:border-[#8faea0]"
                 }`}
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -160,7 +160,7 @@ export default function DepositsPage() {
                 setEditingDeposit(null);
                 setFormOpen(true);
               }}
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none hover:bg-brand-dark hover:border-brand-dark transition-colors cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.08)] hover:bg-brand-dark hover:border-brand-dark transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               Add Deposit
@@ -282,10 +282,7 @@ export default function DepositsPage() {
                     (isAdmin || (user?.role === "CASHIER" && !isOwn));
                   const canEdit =
                     !onlyDeleted &&
-                    (isAdmin ||
-                      (user?.role === "CASHIER" &&
-                        (!isOwn || dep.status === "PENDING")) ||
-                      (isOwn && dep.status === "PENDING"));
+                    (isAdmin || (isOwn && dep.status === "PENDING"));
                   const canDelete =
                     !onlyDeleted &&
                     (isAdmin || (isOwn && dep.status === "PENDING"));
@@ -377,7 +374,7 @@ export default function DepositsPage() {
                         {user?.role === "CASHIER" &&
                           isOwn &&
                           dep.status === "PENDING" && (
-                            <p className="text-[10px] text-secondary mt-0.5">
+                            <p className="text-[10px] text-gold-dark mt-0.5">
                               Awaiting Admin
                             </p>
                           )}

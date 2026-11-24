@@ -15,6 +15,12 @@ import {
   getMemberBalance,
   getMemberBalancesMap,
 } from "../../shared/accounting.service";
+import { safeSendEmail } from "../../shared/email";
+import {
+  buildReturnReceiptEmail,
+  buildRoleChangedEmail,
+  buildWelcomeMemberEmail,
+} from "../../shared/email-templates";
 import { normalizeTrxId, toObjectId } from "../../shared/normalize";
 import {
   buildPaginationMeta,
@@ -117,6 +123,12 @@ export async function createMember(
 ) {
   await connectDB();
 
+  if (input.role === "ADMIN") {
+    throw badRequest(
+      "Only one active Admin is allowed. Add this user as Member or Cashier, or transfer Admin later.",
+    );
+  }
+
   const existing = await UserModel.findOne({
     email: input.email.toLowerCase(),
   });
@@ -144,6 +156,19 @@ export async function createMember(
     action: "CREATED",
     summary: `${actor.name} added ${member.name} as ${member.role}`,
     performedBy: actor.id,
+  });
+
+  // Send welcome email with initial credentials (non-blocking if SMTP fails)
+  await safeSendEmail({
+    to: member.email,
+    ...buildWelcomeMemberEmail({
+      name: member.name,
+      email: member.email,
+      temporaryPassword: input.password,
+      role: member.role,
+      addedByName: actor.name,
+      joinedAt: member.joinedAt,
+    }),
   });
 
   return {
@@ -242,18 +267,20 @@ export async function updateMember(
 }
 
 /**
- * Admin promotes/demotes a member's role (e.g., MEMBER <-> CASHIER <-> ADMIN).
- * Protects against removing the last active ADMIN.
+ * Admin changes a member's role (MEMBER <-> CASHIER) or atomically transfers
+ * the sole ADMIN role to another active member (demoting current Admin to CASHIER or MEMBER).
+ * Strictly enforces: exactly 1 active ADMIN exists at all times.
  */
 export async function changeMemberRole(
   actor: AuthUser,
   memberId: string,
   newRole: UserRole,
+  previousAdminNextRole: "CASHIER" | "MEMBER" = "CASHIER",
 ) {
   await connectDB();
 
   const user = await UserModel.findById(toObjectId(memberId, "memberId"));
-  if (!user || user.isDeleted) {
+  if (!user || user.isDeleted || user.status !== "ACTIVE") {
     throw notFound("Active member not found");
   }
 
@@ -261,7 +288,78 @@ export async function changeMemberRole(
     return getMemberDetails(memberId);
   }
 
-  if (user.role === "ADMIN" && newRole !== "ADMIN") {
+  // Case A: Atomic Single-Admin Transfer to another active member
+  if (newRole === "ADMIN") {
+    const previousRole = user.role;
+    const outgoingAdmins = await UserModel.find({
+      _id: { $ne: user._id },
+      role: "ADMIN",
+      isDeleted: false,
+    });
+
+    // Promote the target member to sole ADMIN
+    user.role = "ADMIN";
+    await user.save();
+
+    // Demote outgoing Admin(s) to chosen role (CASHIER or MEMBER)
+    for (const oldAdmin of outgoingAdmins) {
+      oldAdmin.role = previousAdminNextRole;
+      await oldAdmin.save();
+
+      await logActivity({
+        entityType: "USER",
+        entityId: oldAdmin._id,
+        targetMemberId: oldAdmin._id,
+        action: "ROLE_CHANGED",
+        summary: `${actor.name} transferred Admin ownership to ${user.name} and stepped down to ${previousAdminNextRole}`,
+        changes: {
+          before: { role: "ADMIN" },
+          after: { role: previousAdminNextRole },
+        },
+        performedBy: actor.id,
+      });
+
+      await safeSendEmail({
+        to: oldAdmin.email,
+        ...buildRoleChangedEmail({
+          memberName: oldAdmin.name,
+          previousRole: "ADMIN",
+          newRole: previousAdminNextRole,
+          changedByName: actor.name,
+          isAdminTransfer: true,
+        }),
+      });
+    }
+
+    await logActivity({
+      entityType: "USER",
+      entityId: user._id,
+      targetMemberId: user._id,
+      action: "ROLE_CHANGED",
+      summary: `${actor.name} transferred Admin ownership to ${user.name} (${previousRole} → ADMIN)`,
+      changes: {
+        before: { role: previousRole },
+        after: { role: "ADMIN" },
+      },
+      performedBy: actor.id,
+    });
+
+    await safeSendEmail({
+      to: user.email,
+      ...buildRoleChangedEmail({
+        memberName: user.name,
+        previousRole,
+        newRole: "ADMIN",
+        changedByName: actor.name,
+        isAdminTransfer: true,
+      }),
+    });
+
+    return getMemberDetails(memberId);
+  }
+
+  // Case B: Prevent removing the sole active Admin without transferring first
+  if (user.role === "ADMIN") {
     const activeAdminsCount = await UserModel.countDocuments({
       role: "ADMIN",
       status: "ACTIVE",
@@ -269,11 +367,12 @@ export async function changeMemberRole(
     });
     if (activeAdminsCount <= 1) {
       throw badRequest(
-        "Cannot change role of the last active Admin. Promote another Admin first.",
+        "The group must always have 1 active Admin. Transfer Admin to another active member instead.",
       );
     }
   }
 
+  // Case C: Standard MEMBER <-> CASHIER role change
   const previousRole = user.role;
   user.role = newRole;
   await user.save();
@@ -289,6 +388,16 @@ export async function changeMemberRole(
       after: { role: newRole },
     },
     performedBy: actor.id,
+  });
+
+  await safeSendEmail({
+    to: user.email,
+    ...buildRoleChangedEmail({
+      memberName: user.name,
+      previousRole,
+      newRole,
+      changedByName: actor.name,
+    }),
   });
 
   return getMemberDetails(memberId);
@@ -412,6 +521,23 @@ export async function deactivateMember(
         proofImage: input.proofImage || null,
         performedBy: actor.id,
       });
+
+      await safeSendEmail({
+        to: user.email,
+        ...buildReturnReceiptEmail({
+          memberName: user.name,
+          status: "APPROVED",
+          amount: balance.netBalance,
+          returnType: "FULL_SETTLEMENT",
+          returnDate: now,
+          paymentAccountName: account.accountName,
+          paymentMethod: account.method,
+          recipientAccount: input.recipientAccount || user.phone || "",
+          trxId: settlementReturn.trxId,
+          reviewedByName: actor.name,
+          newNetBalance: 0,
+        }),
+      });
     } else if (input.action === "DONATE_AND_CLOSE") {
       settlementReturn = await DepositReturnModel.create({
         memberId: memberObjectId,
@@ -437,6 +563,19 @@ export async function deactivateMember(
         summary: `${user.name}'s remaining ৳${balance.netBalance} was waived/donated to the group fund on leaving`,
         amount: balance.netBalance,
         performedBy: actor.id,
+      });
+
+      await safeSendEmail({
+        to: user.email,
+        ...buildReturnReceiptEmail({
+          memberName: user.name,
+          status: "APPROVED",
+          amount: balance.netBalance,
+          returnType: "DONATED_WAIVER",
+          returnDate: now,
+          reviewedByName: actor.name,
+          newNetBalance: 0,
+        }),
       });
     }
   }
@@ -492,6 +631,21 @@ export async function restoreMember(actor: AuthUser, memberId: string) {
     throw notFound("Member not found");
   }
 
+  // Preserve strictly-1-active-Admin invariant if a former Admin is restored
+  let demotedFromAdmin = false;
+  if (user.role === "ADMIN") {
+    const otherActiveAdmin = await UserModel.exists({
+      _id: { $ne: user._id },
+      role: "ADMIN",
+      status: "ACTIVE",
+      isDeleted: false,
+    });
+    if (otherActiveAdmin) {
+      user.role = "MEMBER";
+      demotedFromAdmin = true;
+    }
+  }
+
   user.status = "ACTIVE";
   user.isDeleted = false;
   user.leftAt = null;
@@ -504,7 +658,9 @@ export async function restoreMember(actor: AuthUser, memberId: string) {
     entityId: user._id,
     targetMemberId: user._id,
     action: "RESTORED",
-    summary: `${actor.name} restored and reactivated ${user.name}`,
+    summary: demotedFromAdmin
+      ? `${actor.name} restored and reactivated ${user.name} as MEMBER (another active Admin already exists)`
+      : `${actor.name} restored and reactivated ${user.name}`,
     performedBy: actor.id,
   });
 

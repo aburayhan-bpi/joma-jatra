@@ -47,9 +47,15 @@ export function Header({
   }, []);
 
   const isManager = user?.role === "ADMIN" || user?.role === "CASHIER";
-  const pendingTotal =
-    (summaryRes?.data?.counts?.pendingDepositsCount || 0) +
-    (summaryRes?.data?.counts?.pendingReturnsCount || 0);
+  const pendingDepositsCount =
+    summaryRes?.data?.counts?.pendingDepositsCount || 0;
+  const pendingReturnsCount =
+    summaryRes?.data?.counts?.pendingReturnsCount || 0;
+  const pendingTotal = pendingDepositsCount + pendingReturnsCount;
+  const pendingHref =
+    pendingDepositsCount > 0
+      ? "/dashboard/deposits?status=PENDING"
+      : "/dashboard/returns?status=PENDING";
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-card border-b border-border px-4 lg:px-6">
@@ -97,8 +103,8 @@ export function Header({
         {/* Pending approvals shortcut for Admin / Cashier */}
         {isManager && pendingTotal > 0 && (
           <Link
-            href="/dashboard/deposits?status=PENDING"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-medium hover:bg-amber-100/70 transition-colors cursor-pointer"
+            href={pendingHref}
+            className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 rounded border border-amber-300 bg-amber-50 text-amber-800 text-xs font-medium leading-none hover:bg-amber-100/80 transition-colors cursor-pointer"
           >
             <Clock className="w-3.5 h-3.5" />
             <span>{pendingTotal} Pending</span>
@@ -108,7 +114,7 @@ export function Header({
         {/* Quick Deposit CTA */}
         <Link
           href="/dashboard/deposits?action=new"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary text-primary-foreground text-xs font-medium hover:bg-brand-dark transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none hover:bg-brand-dark hover:border-brand-dark transition-colors cursor-pointer"
         >
           <Plus className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Add Deposit</span>

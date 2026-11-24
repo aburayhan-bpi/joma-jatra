@@ -131,6 +131,7 @@ function ProfileDetailsForm({ profile }: { profile: IUserProfile }) {
         value={profileImage}
         onChange={setProfileImage}
         label="Profile Photo (Optional)"
+        folder="joma-jatra/avatars"
       />
 
       <div className="pt-2">
@@ -198,7 +199,7 @@ export default function ProfilePage() {
           profile?.id && (
             <Link
               href={`/dashboard/members/${profile.id}`}
-              className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-border bg-card text-foreground text-xs font-medium leading-none hover:bg-muted cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-[#b4cabe] bg-card text-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.05)] hover:bg-muted hover:border-[#8faea0] cursor-pointer"
             >
               My Full Audit Trail
               <ArrowRight className="w-3.5 h-3.5" />
@@ -208,8 +209,8 @@ export default function ProfilePage() {
       />
 
       {profile?.mustChangePassword && (
-        <div className="rounded-md bg-secondary/10 border border-secondary/30 px-4 py-3 text-xs text-foreground">
-          <strong className="text-secondary">Action Recommended: </strong>
+        <div className="rounded-md bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-foreground">
+          <strong className="text-amber-800">Action Recommended: </strong>
           You are currently using a temporary password created by Admin. Please
           set a personal password below.
         </div>

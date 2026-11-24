@@ -57,15 +57,15 @@ const ConfirmModal = ({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-100 flex items-center justify-center px-4 py-6">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <button
         type="button"
         aria-label="Close confirm dialog"
-        className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
+        className="fixed inset-0 bg-black/45 backdrop-blur-[1px]"
         onClick={onClose}
       />
 
-      <div className="relative z-101 w-full max-w-md rounded-md border border-border bg-card p-5 shadow-[0_14px_38px_rgba(7,42,31,0.16)] sm:p-6">
+      <div className="relative z-101 w-full max-w-md max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-md border border-border bg-card p-5 shadow-[0_14px_38px_rgba(7,42,31,0.16)] sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-base font-semibold text-foreground">{title}</h3>

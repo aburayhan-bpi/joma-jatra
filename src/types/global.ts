@@ -225,6 +225,7 @@ export interface IUpdateMemberPayload {
 export interface IChangeMemberRolePayload {
   id: string;
   role: UserRole;
+  previousAdminNextRole?: "CASHIER" | "MEMBER";
 }
 
 export interface IDeactivateMemberPayload {
@@ -699,3 +700,21 @@ export interface IMonthlyMatrixQuery {
 }
 
 export type IMonthlyMatrixResponse = IBaseResponse<IMonthlyMatrixData>;
+
+export interface IResetTestDataPayload {
+  confirmText: string;
+  includeMembers?: boolean;
+}
+
+export interface IResetTestDataResult {
+  deposits: number;
+  returns: number;
+  transfers: number;
+  charges: number;
+  monthlyTargets: number;
+  paymentAccounts: number;
+  activityLogs: number;
+  members: number;
+}
+
+export type IResetTestDataResponse = IBaseResponse<IResetTestDataResult>;

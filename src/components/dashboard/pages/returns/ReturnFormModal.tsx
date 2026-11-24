@@ -40,12 +40,14 @@ function ReturnForm({
   const isEditing = Boolean(editingReturn);
 
   const { data: meRes } = useGetMeQuery();
+  // Include inactive/former members so Admin/Cashier can settle unsettled former balances
   const { data: membersRes } = useGetMembersQuery(
-    { limit: 100 },
+    { limit: 100, includeDeleted: true },
     { skip: !isManager || isEditing },
   );
+  // Include non-deleted accounts (even if inactive for new deposits) so held funds can be paid out
   const { data: accountsRes } = useGetPaymentAccountsQuery(
-    { isActive: true, limit: 100 },
+    { limit: 100 },
     { skip: !isManager },
   );
 
@@ -87,10 +89,11 @@ function ReturnForm({
 
   const targetMemberId = isManager ? memberId || user?.id || "" : user?.id || "";
   const isDirectPayout =
-    isManager &&
     !isEditing &&
-    Boolean(targetMemberId) &&
-    targetMemberId !== user?.id;
+    (user?.role === "ADMIN" ||
+      (user?.role === "CASHIER" &&
+        Boolean(targetMemberId) &&
+        targetMemberId !== user?.id));
   const requiresPayoutAccount = isDirectPayout && returnType !== "DONATED_WAIVER";
 
   const activeAccountId = paymentAccountId || accounts[0]?.id || "";
@@ -118,13 +121,16 @@ function ReturnForm({
 
     try {
       if (isEditing && editingReturn) {
+        const chosenAccount = paymentAccountId
+          ? accounts.find((a) => a.id === paymentAccountId)
+          : undefined;
         await updateReturn({
           id: editingReturn.id,
           amount: numericAmount,
           recipientAccount: recipientAccount.trim() || undefined,
           reason: reason.trim() || undefined,
           paymentAccountId: paymentAccountId || undefined,
-          paymentMethod: selectedAccount?.method,
+          paymentMethod: chosenAccount?.method,
           trxId: trxId.trim() || undefined,
           proofImage: proofImage || undefined,
         }).unwrap();
@@ -259,7 +265,7 @@ function ReturnForm({
               placeholder="Select account..."
               options={accounts.map((acc) => ({
                 value: acc.id,
-                label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)}) — ${formatTaka(acc.balance)}`,
+                label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)})${!acc.isActive ? " [Inactive]" : ""} — ${formatTaka(acc.balance)}`,
               }))}
             />
           </div>
@@ -312,6 +318,7 @@ function ReturnForm({
             value={proofImage}
             onChange={setProofImage}
             label="Payout Proof Screenshot (Optional)"
+            folder="joma-jatra/returns"
           />
         </>
       )}

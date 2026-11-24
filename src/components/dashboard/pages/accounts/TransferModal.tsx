@@ -22,8 +22,8 @@ interface TransferModalProps {
 }
 
 function TransferForm({ onClose }: { onClose: () => void }) {
+  // Include non-deleted accounts (including inactive ones) so funds can be transferred out
   const { data: accountsRes } = useGetPaymentAccountsQuery({
-    isActive: true,
     limit: 100,
   });
   const [createTransfer, { isLoading }] = useCreateTransferMutation();
@@ -96,7 +96,7 @@ function TransferForm({ onClose }: { onClose: () => void }) {
             placeholder="Select source..."
             options={accounts.map((acc) => ({
               value: acc.id,
-              label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)}) — ${formatTaka(acc.balance)}`,
+              label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)})${!acc.isActive ? " [Inactive]" : ""} — ${formatTaka(acc.balance)}`,
             }))}
           />
         </div>
@@ -179,6 +179,7 @@ function TransferForm({ onClose }: { onClose: () => void }) {
         value={proofImage}
         onChange={setProofImage}
         label="Transfer Receipt / Screenshot (Optional)"
+        folder="joma-jatra/transfers"
       />
 
       <div className="space-y-1.5">

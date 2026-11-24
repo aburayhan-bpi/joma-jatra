@@ -22,8 +22,8 @@ interface ChargeModalProps {
 }
 
 function ChargeForm({ onClose }: { onClose: () => void }) {
+  // Include non-deleted accounts (including inactive ones) so bank charges can be logged
   const { data: accountsRes } = useGetPaymentAccountsQuery({
-    isActive: true,
     limit: 100,
   });
   const [createCharge, { isLoading }] = useCreateChargeMutation();
@@ -85,7 +85,7 @@ function ChargeForm({ onClose }: { onClose: () => void }) {
           placeholder="Select account..."
           options={accounts.map((acc) => ({
             value: acc.id,
-            label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)}) — ${formatTaka(acc.balance)}`,
+            label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)})${!acc.isActive ? " [Inactive]" : ""} — ${formatTaka(acc.balance)}`,
           }))}
         />
       </div>
@@ -138,6 +138,7 @@ function ChargeForm({ onClose }: { onClose: () => void }) {
         value={proofImage}
         onChange={setProofImage}
         label="Statement / SMS Proof (Optional)"
+        folder="joma-jatra/charges"
       />
 
       <div className="space-y-1.5">

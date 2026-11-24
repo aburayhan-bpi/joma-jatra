@@ -72,7 +72,7 @@ function formatChangeLines(changes?: {
  */
 export default function MemberDetailsPage({ memberId }: { memberId: string }) {
   const user = useAppSelector(selectCurrentUser);
-  const isAdmin = user?.role === "ADMIN";
+  const isManager = user?.role === "ADMIN" || user?.role === "CASHIER";
 
   const searchParams = useSearchParams();
   const setParams = useSetParamsForPagination();
@@ -177,7 +177,7 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
               {formatDate(member.joinedAt)}
             </p>
             {member.leftAt && (
-              <p className="text-xs text-secondary mt-1">
+              <p className="text-xs text-gold-dark mt-1">
                 Closed on {formatDate(member.leftAt)}
                 {member.leaveNote ? ` — ${member.leaveNote}` : ""}
               </p>
@@ -186,10 +186,10 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {isAdmin && member.unsettledPayable > 0 && (
+          {isManager && member.unsettledPayable > 0 && (
             <Link
               href={`/dashboard/returns?settleMemberId=${member.id}`}
-              className="inline-flex items-center justify-center h-9 px-3.5 rounded border border-secondary bg-secondary text-white text-xs font-medium leading-none hover:opacity-90 cursor-pointer"
+              className="inline-flex items-center justify-center h-9 min-h-9 px-3.5 rounded border border-gold-dark bg-gold-dark text-white text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.08)] hover:opacity-90 cursor-pointer"
             >
               Settle {formatTaka(member.unsettledPayable)}
             </Link>
@@ -198,7 +198,7 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
             type="button"
             disabled={isExporting}
             onClick={() => handleExport("excel")}
-            className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-border bg-card text-foreground text-xs font-medium leading-none hover:bg-muted cursor-pointer disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-[#b4cabe] bg-card text-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.05)] hover:bg-muted hover:border-[#8faea0] cursor-pointer disabled:opacity-60"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />
             Excel
@@ -207,7 +207,7 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
             type="button"
             disabled={isExporting}
             onClick={() => handleExport("pdf")}
-            className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-border bg-card text-foreground text-xs font-medium leading-none hover:bg-muted cursor-pointer disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-[#b4cabe] bg-card text-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.05)] hover:bg-muted hover:border-[#8faea0] cursor-pointer disabled:opacity-60"
           >
             <Download className="w-3.5 h-3.5 text-muted-foreground" />
             PDF
@@ -244,7 +244,7 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
           subtext={
             member.financialSummary.pendingDepositsCount > 0 ||
             member.financialSummary.pendingReturnsCount > 0 ? (
-              <span className="text-secondary">
+              <span className="text-gold-dark">
                 {member.financialSummary.pendingDepositsCount} pending
                 deposit(s), {member.financialSummary.pendingReturnsCount}{" "}
                 return(s)
@@ -402,7 +402,7 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
                           <span
                             className={
                               entry.direction === "DEBIT"
-                                ? "text-secondary"
+                                ? "text-gold-dark"
                                 : "text-primary"
                             }
                           >

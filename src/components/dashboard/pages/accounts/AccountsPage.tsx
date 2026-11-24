@@ -185,10 +185,10 @@ export default function AccountsPage() {
                 onClick={() =>
                   setParams({ trash: onlyDeleted ? null : "1", page: 1 })
                 }
-                className={`inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border text-xs font-medium leading-none transition-colors cursor-pointer ${
+                className={`inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.05)] transition-colors cursor-pointer ${
                   onlyDeleted
                     ? "bg-muted border-primary text-primary"
-                    : "bg-card border-border text-foreground hover:bg-muted"
+                    : "bg-card border-[#b4cabe] text-foreground hover:bg-muted hover:border-[#8faea0]"
                 }`}
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -203,7 +203,7 @@ export default function AccountsPage() {
                   setEditingAccount(null);
                   setAccountModalOpen(true);
                 }}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none hover:bg-brand-dark hover:border-brand-dark cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.08)] hover:bg-brand-dark hover:border-brand-dark cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add Account
@@ -214,7 +214,7 @@ export default function AccountsPage() {
               <button
                 type="button"
                 onClick={() => setTransferModalOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none hover:bg-brand-dark hover:border-brand-dark cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.08)] hover:bg-brand-dark hover:border-brand-dark cursor-pointer"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5" />
                 Record Transfer
@@ -225,7 +225,7 @@ export default function AccountsPage() {
               <button
                 type="button"
                 onClick={() => setChargeModalOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none hover:bg-brand-dark hover:border-brand-dark cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 h-9 min-h-9 px-3.5 rounded border border-primary bg-primary text-primary-foreground text-xs font-medium leading-none shadow-[0_1px_2px_rgba(7,42,31,0.08)] hover:bg-brand-dark hover:border-brand-dark cursor-pointer"
               >
                 <Receipt className="w-3.5 h-3.5" />
                 Record Charge
@@ -251,6 +251,7 @@ export default function AccountsPage() {
               onClick={() =>
                 setParams({
                   tab: item.key === "accounts" ? null : item.key,
+                  search: null,
                   page: 1,
                 })
               }
@@ -472,7 +473,7 @@ export default function AccountsPage() {
                       <td className="px-4 py-3 text-right font-semibold font-money text-foreground whitespace-nowrap">
                         {formatTaka(trf.amount)}
                       </td>
-                      <td className="px-4 py-3 text-right font-money text-secondary whitespace-nowrap">
+                      <td className="px-4 py-3 text-right font-money text-gold-dark whitespace-nowrap">
                         {trf.transferFee > 0 ? formatTaka(trf.transferFee) : "—"}
                       </td>
                       <td className="px-4 py-3">
@@ -578,7 +579,7 @@ export default function AccountsPage() {
                           </p>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold font-money text-secondary whitespace-nowrap">
+                      <td className="px-4 py-3 text-right font-semibold font-money text-gold-dark whitespace-nowrap">
                         {formatTaka(chg.amount)}
                       </td>
                       <td className="px-4 py-3">

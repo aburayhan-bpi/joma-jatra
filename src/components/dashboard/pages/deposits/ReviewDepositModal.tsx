@@ -54,10 +54,15 @@ export default function ReviewDepositModal({
     }
   };
 
+  const handleClose = () => {
+    setRejectionReason("");
+    onClose();
+  };
+
   return (
     <CustomModal
       isOpen={Boolean(deposit)}
-      onClose={onClose}
+      onClose={handleClose}
       title="Review Deposit Request"
       subtitle={deposit ? `Submitted by ${deposit.memberId?.name}` : undefined}
       className="max-w-lg"

@@ -4,6 +4,8 @@ import {
   IDashboardSummaryResponse,
   IMonthlyMatrixQuery,
   IMonthlyMatrixResponse,
+  IResetTestDataPayload,
+  IResetTestDataResponse,
 } from "@/types/global";
 import baseApi from "../baseApi";
 
@@ -39,6 +41,28 @@ const dashboardApi = baseApi.injectEndpoints({
       }),
       providesTags: ["ActivityLogs"],
     }),
+    resetTestData: builder.mutation<
+      IResetTestDataResponse,
+      IResetTestDataPayload
+    >({
+      query: (body) => ({
+        url: "/admin/reset-test-data",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [
+        "Dashboard",
+        "Deposits",
+        "Returns",
+        "Members",
+        "PaymentAccounts",
+        "MonthlyTargets",
+        "Transfers",
+        "Charges",
+        "ActivityLogs",
+        "User",
+      ],
+    }),
   }),
 });
 
@@ -46,4 +70,5 @@ export const {
   useGetDashboardSummaryQuery,
   useGetMonthlyMatrixQuery,
   useGetActivityLogsQuery,
+  useResetTestDataMutation,
 } = dashboardApi;

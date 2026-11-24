@@ -8,13 +8,25 @@ import type {
 } from "@reduxjs/toolkit/query";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import Cookies from "js-cookie";
-import { logout, setTokens } from "../features/user/authSlice";
+import { logout, setTokens, setUser } from "../features/user/authSlice";
 import type { RootState } from "../store";
+import type { IAuthUser } from "@/types/global";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
+const PUBLIC_AUTH_PATHS = [
+  "/auth/login",
+  "/auth/refresh",
+  "/auth/forgot-password",
+  "/auth/resend-otp/forgot-password",
+  "/auth/verify-forgot-password-otp",
+  "/auth/reset-password",
+  "/auth/bootstrap-admin",
+];
+
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL,
+  credentials: "include",
   prepareHeaders: (headers, { getState }) => {
     const state = getState() as RootState;
     const token = state.auth.accessToken || Cookies.get("accessToken");
@@ -52,42 +64,48 @@ const baseQueryWithReauth: BaseQueryFn<
   let result = await rawBaseQuery(args, api, extraOptions);
 
   if (result.error && result.error.status === 401) {
-    const isLoginRequest =
-      typeof args === "string"
-        ? args.includes("/auth/login")
-        : args.url?.includes("/auth/login");
+    const requestUrl = typeof args === "string" ? args : args.url || "";
+    const isPublicAuthRequest = PUBLIC_AUTH_PATHS.some((path) =>
+      requestUrl.includes(path),
+    );
 
-    if (isLoginRequest || hasHeader(args, "x-skip-auth-logout")) {
+    if (isPublicAuthRequest || hasHeader(args, "x-skip-auth-logout")) {
       return result;
     }
 
     const state = api.getState() as RootState;
     const refreshToken = state.auth.refreshToken || Cookies.get("refreshToken");
 
-    if (refreshToken) {
-      const refreshResult = await rawBaseQuery(
-        { url: "/auth/refresh", method: "POST", body: { refreshToken } },
-        api,
-        extraOptions,
-      );
+    // Always attempt refresh because httpOnly refreshToken cookie is sent automatically
+    const refreshResult = await rawBaseQuery(
+      {
+        url: "/auth/refresh",
+        method: "POST",
+        body: refreshToken ? { refreshToken } : {},
+      },
+      api,
+      extraOptions,
+    );
 
-      if (refreshResult.data) {
-        const responseData = refreshResult.data as { data: { accessToken: string; refreshToken?: string } };
-        
-        if (responseData.data && responseData.data.accessToken) {
-          api.dispatch(setTokens(responseData.data));
-          // Retry original
-          result = await rawBaseQuery(args, api, extraOptions);
-        } else {
-          api.dispatch(logout());
-          if (typeof window !== "undefined") window.location.href = "/login";
-        }
-      } else {
-        api.dispatch(logout());
-        if (typeof window !== "undefined") window.location.href = "/login";
+    const responseData = refreshResult.data as
+      | { data?: { accessToken?: string; refreshToken?: string; user?: IAuthUser } }
+      | undefined;
+
+    if (responseData?.data?.accessToken) {
+      api.dispatch(
+        setTokens({
+          accessToken: responseData.data.accessToken,
+          refreshToken: responseData.data.refreshToken,
+        }),
+      );
+      if (responseData.data.user) {
+        api.dispatch(setUser(responseData.data.user));
       }
+      // Retry original request with refreshed access token
+      result = await rawBaseQuery(args, api, extraOptions);
     } else {
       api.dispatch(logout());
+      api.dispatch(baseApi.util.resetApiState());
       if (typeof window !== "undefined") window.location.href = "/login";
     }
   }
