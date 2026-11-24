@@ -149,5 +149,13 @@ userSchema.methods.comparePassword = async function comparePassword(
   return bcrypt.compare(candidatePassword, this.password);
 };
 
+// Refresh cached Mongoose model during Next.js dev hot-reload if schema gained new fields
+if (
+  mongoose.models.User &&
+  !mongoose.models.User.schema.path("personalMonthlyGoal")
+) {
+  mongoose.deleteModel("User");
+}
+
 export const UserModel: Model<IUserDocument> =
   mongoose.models.User || mongoose.model<IUserDocument>("User", userSchema);
