@@ -163,7 +163,7 @@ function PaymentAccountForm({
             type="text"
             required
             placeholder={
-              method === "CASH" ? "e.g. CASH-BOX-01" : "e.g. 01719857898"
+              method === "CASH" ? "e.g. CASH-BOX-01" : "e.g. 017XXXXXXXX"
             }
             value={accountNumber}
             onChange={(e) => setAccountNumber(e.target.value)}
