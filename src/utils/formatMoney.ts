@@ -10,10 +10,36 @@ export function formatTaka(amount?: number | null): string {
 }
 
 export function getCurrentYearMonth(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const bd = new Date(Date.now() + 6 * 60 * 60 * 1000);
+  const y = bd.getUTCFullYear();
+  const m = String(bd.getUTCMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
+}
+
+/**
+ * Formats any ISO date string (or current time when omitted) as YYYY-MM-DD
+ * in Bangladesh Standard Time (Asia/Dhaka) for <input type="date" /> fields.
+ */
+export function toDateInputValue(iso?: string | Date | null): string {
+  const d = iso ? new Date(iso) : new Date();
+  if (Number.isNaN(d.getTime())) return getTodayDateInputValue();
+  const bd = new Date(d.getTime() + 6 * 60 * 60 * 1000);
+  const y = bd.getUTCFullYear();
+  const m = String(bd.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(bd.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Returns today's date as YYYY-MM-DD in Bangladesh Standard Time (Asia/Dhaka)
+ * (avoids UTC off-by-one-day issues between 12:00 AM and 6:00 AM BDT).
+ */
+export function getTodayDateInputValue(): string {
+  const bd = new Date(Date.now() + 6 * 60 * 60 * 1000);
+  const y = bd.getUTCFullYear();
+  const m = String(bd.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(bd.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export function formatMonthLabel(yearMonth?: string | null): string {

@@ -17,6 +17,7 @@ import {
   getApiErrorMessage,
   getCurrentYearMonth,
   getPaymentMethodLabel,
+  toDateInputValue,
 } from "@/utils/formatMoney";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -59,9 +60,7 @@ function DepositForm({
     editingDeposit?.month || getCurrentYearMonth(),
   );
   const [depositDate, setDepositDate] = useState(
-    editingDeposit?.depositDate
-      ? new Date(editingDeposit.depositDate).toISOString().slice(0, 10)
-      : new Date().toISOString().slice(0, 10),
+    toDateInputValue(editingDeposit?.depositDate),
   );
   const [paymentAccountId, setPaymentAccountId] = useState(
     editingDeposit

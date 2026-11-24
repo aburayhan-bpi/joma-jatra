@@ -30,6 +30,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -472,8 +473,18 @@ export default function MonthlySheetPage() {
                     <tr key={row.id} className="hover:bg-muted/25 group">
                       <td className="sticky left-0 z-10 bg-card group-hover:bg-muted/25 px-4 py-3 border-r border-border">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded bg-[#e9f4ef] border border-[#cce3d8] text-[#046c4e] text-[11px] font-semibold flex items-center justify-center shrink-0">
-                            {initials}
+                          <div className="relative w-7 h-7 rounded bg-[#e9f4ef] border border-[#cce3d8] text-[#046c4e] text-[11px] font-semibold flex items-center justify-center shrink-0 overflow-hidden">
+                            {row.profileImage ? (
+                              <Image
+                                src={row.profileImage}
+                                alt={row.name}
+                                fill
+                                sizes="28px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              initials
+                            )}
                           </div>
                           <div className="min-w-0">
                             <Link

@@ -17,7 +17,12 @@ import {
 } from "../../shared/accounting.service";
 import { safeSendEmail } from "../../shared/email";
 import { buildReturnReceiptEmail } from "../../shared/email-templates";
-import { normalizeTrxId, roundMoney, toObjectId } from "../../shared/normalize";
+import {
+  normalizeTrxId,
+  resolveTransactionDate,
+  roundMoney,
+  toObjectId,
+} from "../../shared/normalize";
 import {
   buildPaginationMeta,
   buildSearchFilter,
@@ -256,8 +261,9 @@ export async function createReturn(
   const record = await DepositReturnModel.create({
     memberId: targetMember._id,
     amount: input.amount,
-    returnDate:
-      canEnterForOthers && input.returnDate ? input.returnDate : new Date(),
+    returnDate: canEnterForOthers
+      ? resolveTransactionDate(input.returnDate)
+      : new Date(),
     paymentMethod: resolvedMethod,
     paymentAccountId: paymentAccountObjectId,
     recipientAccount: input.recipientAccount || targetMember.phone || "",

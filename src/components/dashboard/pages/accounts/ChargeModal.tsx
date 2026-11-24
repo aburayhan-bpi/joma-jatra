@@ -12,6 +12,7 @@ import {
   formatTaka,
   getApiErrorMessage,
   getPaymentMethodLabel,
+  getTodayDateInputValue,
 } from "@/utils/formatMoney";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,9 +32,7 @@ function ChargeForm({ onClose }: { onClose: () => void }) {
   const [paymentAccountId, setPaymentAccountId] = useState("");
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
-  const [chargeDate, setChargeDate] = useState(
-    new Date().toISOString().slice(0, 10),
-  );
+  const [chargeDate, setChargeDate] = useState(getTodayDateInputValue());
   const [proofImage, setProofImage] = useState("");
   const [note, setNote] = useState("");
 

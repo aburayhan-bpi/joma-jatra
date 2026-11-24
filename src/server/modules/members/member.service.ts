@@ -21,7 +21,12 @@ import {
   buildRoleChangedEmail,
   buildWelcomeMemberEmail,
 } from "../../shared/email-templates";
-import { normalizeTrxId, toObjectId } from "../../shared/normalize";
+import {
+  formatYearMonth,
+  normalizeTrxId,
+  resolveTransactionDate,
+  toObjectId,
+} from "../../shared/normalize";
 import {
   buildPaginationMeta,
   buildSearchFilter,
@@ -120,6 +125,7 @@ export async function createMember(
     profileImage?: string;
     mustChangePassword?: boolean;
   },
+  appBaseUrl?: string,
 ) {
   await connectDB();
 
@@ -143,7 +149,7 @@ export async function createMember(
     password: input.password,
     role: input.role,
     status: "ACTIVE",
-    joinedAt: input.joinedAt ?? new Date(),
+    joinedAt: resolveTransactionDate(input.joinedAt),
     profileImage: input.profileImage || "",
     mustChangePassword: input.mustChangePassword ?? true,
     createdBy: toObjectId(actor.id, "actorId"),
@@ -168,6 +174,7 @@ export async function createMember(
       role: member.role,
       addedByName: actor.name,
       joinedAt: member.joinedAt,
+      appBaseUrl,
     }),
   });
 
@@ -242,7 +249,9 @@ export async function updateMember(
   if (input.name !== undefined) user.name = input.name;
   if (input.phone !== undefined) user.phone = input.phone;
   if (input.profileImage !== undefined) user.profileImage = input.profileImage;
-  if (input.joinedAt !== undefined) user.joinedAt = input.joinedAt;
+  if (input.joinedAt !== undefined) {
+    user.joinedAt = resolveTransactionDate(input.joinedAt);
+  }
 
   await user.save();
 
@@ -764,7 +773,8 @@ export async function getMemberAuditTrail(
       summary:
         dep.note ||
         `Deposit for ${dep.month} via ${dep.paymentMethod}`,
-      date: dep.depositDate || dep.createdAt,
+      // Use exact createdAt timestamp for true chronological ordering in the audit trail
+      date: dep.createdAt || dep.depositDate,
       month: dep.month,
       amount: dep.amount,
       direction: "CREDIT",
@@ -784,8 +794,9 @@ export async function getMemberAuditTrail(
     const acc = ret.paymentAccountId as unknown as
       | { accountName?: string; method?: string }
       | null;
-    const retDate = ret.returnDate || ret.createdAt;
-    const retMonth = `${retDate.getUTCFullYear()}-${String(retDate.getUTCMonth() + 1).padStart(2, "0")}`;
+    // Use exact createdAt timestamp for true chronological ordering in the audit trail
+    const retDate = ret.createdAt || ret.returnDate;
+    const retMonth = formatYearMonth(retDate);
 
     timeline.push({
       id: ret._id.toString(),
@@ -817,7 +828,7 @@ export async function getMemberAuditTrail(
 
   for (const log of userLogs) {
     const logDate = log.createdAt;
-    const logMonth = `${logDate.getUTCFullYear()}-${String(logDate.getUTCMonth() + 1).padStart(2, "0")}`;
+    const logMonth = formatYearMonth(logDate);
     timeline.push({
       id: log._id.toString(),
       eventCategory: "LIFECYCLE",

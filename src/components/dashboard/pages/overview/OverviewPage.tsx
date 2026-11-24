@@ -31,6 +31,8 @@ import {
   Eye,
   HandCoins,
   Landmark,
+  Lock,
+  Pencil,
   PiggyBank,
   Plus,
   RotateCcw,
@@ -52,6 +54,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import PersonalGoalModal from "./PersonalGoalModal";
 import ResetTestDataModal from "./ResetTestDataModal";
 
 /**
@@ -74,6 +77,7 @@ export default function OverviewPage() {
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [personalGoalModalOpen, setPersonalGoalModalOpen] = useState(false);
   const [proofPreview, setProofPreview] = useState<ProofPreviewData | null>(
     null,
   );
@@ -246,6 +250,107 @@ export default function OverviewPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Private Personal Monthly Goal Tracker (Self-Only Motivation Strip) */}
+        <div className="mt-4 pt-3.5 border-t border-border">
+          {mySavings.personalMonthlyGoal > 0 ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="font-medium text-foreground">
+                    My {formatMonthLabel(currentMonth.month)} Personal Goal
+                  </span>
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    Private
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <span className="font-money text-foreground">
+                    <strong>{formatTaka(mySavings.currentMonthDeposited)}</strong>{" "}
+                    <span className="text-muted-foreground">
+                      / {formatTaka(mySavings.personalMonthlyGoal)}
+                    </span>
+                  </span>
+                  {mySavings.personalGoalProgressPercent >= 100 ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Goal Reached ({mySavings.personalGoalProgressPercent}%)
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-primary font-money">
+                      {mySavings.personalGoalProgressPercent}%
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setPersonalGoalModalOpen(true)}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    Edit
+                  </button>
+                </div>
+              </div>
+
+              <div className="w-full h-2 bg-muted rounded-xs overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    mySavings.personalGoalProgressPercent >= 100
+                      ? "bg-success"
+                      : "bg-primary"
+                  }`}
+                  style={{
+                    width: `${Math.min(mySavings.personalGoalProgressPercent, 100)}%`,
+                  }}
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                <span>
+                  {mySavings.personalGoalRemaining > 0 ? (
+                    <>
+                      <strong className="text-foreground font-money">
+                        {formatTaka(mySavings.personalGoalRemaining)}
+                      </strong>{" "}
+                      more to reach your personal goal this month
+                    </>
+                  ) : (
+                    "Great job! You hit your personal savings goal for this month."
+                  )}
+                  {mySavings.pendingDepositsCount > 0 && (
+                    <span className="text-gold-dark ml-1.5">
+                      • {mySavings.pendingDepositsCount} deposit pending approval
+                    </span>
+                  )}
+                </span>
+                <span>Visible only to you</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Lock className="w-3.5 h-3.5 text-muted-foreground/80 shrink-0" />
+                <span>
+                  Want to stay motivated? Set a{" "}
+                  <strong className="text-foreground">
+                    private personal monthly goal
+                  </strong>{" "}
+                  (visible only to you).
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPersonalGoalModalOpen(true)}
+                className="inline-flex items-center gap-1 font-medium text-primary hover:text-brand-dark cursor-pointer"
+              >
+                <Target className="w-3.5 h-3.5" />
+                Set Personal Goal
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -618,6 +723,14 @@ export default function OverviewPage() {
       <ProofPreviewModal
         proof={proofPreview}
         onClose={() => setProofPreview(null)}
+      />
+
+      {/* Private Personal Monthly Goal Modal */}
+      <PersonalGoalModal
+        isOpen={personalGoalModalOpen}
+        onClose={() => setPersonalGoalModalOpen(false)}
+        currentGoal={mySavings.personalMonthlyGoal || 0}
+        currentMonthLabel={formatMonthLabel(currentMonth.month)}
       />
 
       {/* Temporary Admin Test DB Reset Modal */}

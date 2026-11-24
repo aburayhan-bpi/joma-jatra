@@ -20,7 +20,7 @@ const getMeApi = baseApi.injectEndpoints({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: ["User", "Members", "ActivityLogs"],
+      invalidatesTags: ["User", "Members", "ActivityLogs", "Dashboard"],
     }),
   }),
 });

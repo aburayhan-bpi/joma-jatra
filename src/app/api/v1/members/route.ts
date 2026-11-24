@@ -32,7 +32,15 @@ export const GET = withErrorHandler(async (req) => {
 export const POST = withErrorHandler(async (req) => {
   const actor = await requireAuth(req, ["ADMIN"]);
   const body = createMemberSchema.parse(await req.json());
-  const data = await createMember(actor, body);
+
+  // Derive live origin dynamically from request headers (works across Vercel/custom domains)
+  const forwardedHost = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const forwardedProto = req.headers.get("x-forwarded-proto") || "https";
+  const requestOrigin = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : req.nextUrl.origin;
+
+  const data = await createMember(actor, body, requestOrigin);
 
   return sendResponse({
     statusCode: 201,

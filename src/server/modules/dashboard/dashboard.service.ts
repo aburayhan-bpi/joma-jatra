@@ -39,6 +39,7 @@ export async function getDashboardSummary(actor: AuthUser, monthParam?: string) 
     pendingReturnsCount,
     myBalance,
     myCurrentMonthAgg,
+    myPrivateGoalDoc,
   ] = await Promise.all([
     getGroupFundSummary(),
     getMonthlyTargetByMonth(currentMonth),
@@ -64,6 +65,7 @@ export async function getDashboardSummary(actor: AuthUser, monthParam?: string) 
       },
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]),
+    UserModel.findById(actorObjectId).select("+personalMonthlyGoal").lean(),
   ]);
 
   // Build account-wise and method-wise breakdown
@@ -115,6 +117,18 @@ export async function getDashboardSummary(actor: AuthUser, monthParam?: string) 
     };
   }
 
+  const myCurrentMonthDeposited = roundMoney(myCurrentMonthAgg[0]?.total || 0);
+  const personalMonthlyGoal = roundMoney(
+    myPrivateGoalDoc?.personalMonthlyGoal || 0,
+  );
+  const personalGoalRemaining = roundMoney(
+    Math.max(0, personalMonthlyGoal - myCurrentMonthDeposited),
+  );
+  const personalGoalProgressPercent =
+    personalMonthlyGoal > 0
+      ? Math.round((myCurrentMonthDeposited / personalMonthlyGoal) * 100)
+      : 0;
+
   return {
     fundSummary,
     currentMonth: currentMonthStats,
@@ -128,7 +142,10 @@ export async function getDashboardSummary(actor: AuthUser, monthParam?: string) 
     },
     mySavings: {
       ...myBalance,
-      currentMonthDeposited: roundMoney(myCurrentMonthAgg[0]?.total || 0),
+      currentMonthDeposited: myCurrentMonthDeposited,
+      personalMonthlyGoal,
+      personalGoalRemaining,
+      personalGoalProgressPercent,
     },
     pendingQueue,
   };
@@ -275,6 +292,7 @@ export async function getMonthlyMatrix(params?: {
       id: userId,
       name: u.name,
       email: u.email,
+      profileImage: u.profileImage || "",
       role: u.role,
       status: u.status,
       isDeleted: u.isDeleted,

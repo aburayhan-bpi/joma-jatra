@@ -2,7 +2,12 @@ import { badRequest, notFound } from "../../core/app-error";
 import { AuthUser } from "../../core/auth-guard";
 import { connectDB } from "../../core/db";
 import { getAccountBalance } from "../../shared/accounting.service";
-import { normalizeTrxId, roundMoney, toObjectId } from "../../shared/normalize";
+import {
+  normalizeTrxId,
+  resolveTransactionDate,
+  roundMoney,
+  toObjectId,
+} from "../../shared/normalize";
 import {
   buildPaginationMeta,
   buildSearchFilter,
@@ -118,7 +123,7 @@ export async function createTransfer(
     toAccountId: toAccount._id,
     amount: input.amount,
     transferFee: fee,
-    transferDate: input.transferDate ?? new Date(),
+    transferDate: resolveTransactionDate(input.transferDate),
     trxId: normalizeTrxId(input.trxId),
     proofImage: input.proofImage || "",
     note: input.note || "",

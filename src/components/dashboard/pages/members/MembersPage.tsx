@@ -25,6 +25,7 @@ import {
   UserMinus,
   UserPlus,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -176,16 +177,33 @@ export default function MembersPage() {
                   return (
                     <tr key={member.id} className="hover:bg-muted/30">
                       <td className="px-4 py-3">
-                        <Link
-                          href={`/dashboard/members/${member.id}`}
-                          className="font-medium text-foreground hover:text-primary transition-colors cursor-pointer"
-                        >
-                          {member.name}
-                        </Link>
-                        <p className="text-[11px] text-muted-foreground">
-                          {member.email}
-                          {member.phone ? ` • ${member.phone}` : ""}
-                        </p>
+                        <div className="flex items-center gap-2.5">
+                          <div className="relative w-8 h-8 rounded bg-[#e9f4ef] border border-[#cce3d8] text-[#046c4e] text-xs font-semibold flex items-center justify-center shrink-0 overflow-hidden">
+                            {member.profileImage ? (
+                              <Image
+                                src={member.profileImage}
+                                alt={member.name}
+                                fill
+                                sizes="32px"
+                                className="object-cover"
+                              />
+                            ) : (
+                              member.name.slice(0, 2).toUpperCase()
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <Link
+                              href={`/dashboard/members/${member.id}`}
+                              className="font-medium text-foreground hover:text-primary transition-colors cursor-pointer block truncate"
+                            >
+                              {member.name}
+                            </Link>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {member.email}
+                              {member.phone ? ` • ${member.phone}` : ""}
+                            </p>
+                          </div>
+                        </div>
                       </td>
 
                       <td className="px-4 py-3">

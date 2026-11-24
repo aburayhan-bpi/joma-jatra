@@ -45,4 +45,9 @@ export const updateSelfProfileSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100).optional(),
   phone: z.string().trim().max(25).optional(),
   profileImage: z.string().trim().optional(),
+  personalMonthlyGoal: z
+    .number()
+    .min(0, "Personal monthly goal cannot be negative")
+    .max(100000000, "Personal monthly goal is too large")
+    .optional(),
 });

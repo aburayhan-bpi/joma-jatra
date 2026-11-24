@@ -21,6 +21,7 @@ export interface IUserDocument extends Document {
   leftAt?: Date | null;
   leaveNote?: string | null;
   mustChangePassword: boolean;
+  personalMonthlyGoal?: number;
   resetOtp?: string | null;
   resetOtpExpires?: Date | null;
   isDeleted: boolean;
@@ -89,6 +90,13 @@ const userSchema = new Schema<IUserDocument>(
     mustChangePassword: {
       type: Boolean,
       default: false,
+    },
+    // Strictly private to the user — excluded from all default/member queries
+    personalMonthlyGoal: {
+      type: Number,
+      default: 0,
+      min: 0,
+      select: false,
     },
     resetOtp: {
       type: String,

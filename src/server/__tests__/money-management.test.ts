@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { updateSelfProfileSchema } from "../modules/auth/auth.validation";
 import { createDepositSchema, reviewDepositSchema } from "../modules/deposits/deposit.validation";
 import {
   changeMemberRoleSchema,
@@ -14,6 +15,7 @@ import {
 import {
   formatYearMonth,
   normalizeTrxId,
+  resolveTransactionDate,
   roundMoney,
 } from "../shared/normalize";
 import {
@@ -62,9 +64,15 @@ describe("Normalization & Pagination Helpers", () => {
     expect(normalizeTrxId(null)).toBeUndefined();
   });
 
-  it("formats YYYY-MM and rounds money properly", () => {
+  it("formats YYYY-MM in Asia/Dhaka (UTC+6) and resolves date-only inputs safely", () => {
     expect(formatYearMonth(new Date("2026-11-23T00:00:00Z"))).toBe("2026-11");
+    // 2026-11-30 19:30 UTC === 2026-12-01 01:30 AM BDT -> must group into December!
+    expect(formatYearMonth(new Date("2026-11-30T19:30:00Z"))).toBe("2026-12");
     expect(roundMoney(100.1 + 200.2)).toBe(300.3);
+
+    // Backdated date-only input (UTC midnight) pins to midday BDT (06:00 UTC), never 6:00 AM BDT
+    const backdated = resolveTransactionDate(new Date("2025-05-10T00:00:00.000Z"));
+    expect(backdated.toISOString()).toBe("2025-05-10T06:00:00.000Z");
   });
 
   it("parses URL pagination query safely and caps excessive limits", () => {
@@ -169,5 +177,17 @@ describe("Domain Zod Validations", () => {
         previousAdminNextRole: "MEMBER",
       }).success,
     ).toBe(true);
+  });
+
+  it("validates private personalMonthlyGoal in self profile update", () => {
+    expect(
+      updateSelfProfileSchema.safeParse({ personalMonthlyGoal: 2000 }).success,
+    ).toBe(true);
+    expect(
+      updateSelfProfileSchema.safeParse({ personalMonthlyGoal: 0 }).success,
+    ).toBe(true);
+    expect(
+      updateSelfProfileSchema.safeParse({ personalMonthlyGoal: -500 }).success,
+    ).toBe(false);
   });
 });

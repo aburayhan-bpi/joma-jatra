@@ -7,10 +7,15 @@ import { useGetDashboardSummaryQuery } from "@/redux/api/dashboard/dashboardApi"
 import { selectUser } from "@/redux/features/user/authSlice";
 import { useAppSelector } from "@/redux/hook";
 import { Icons } from "@/utils/icons";
-import { Clock, Plus, User } from "lucide-react";
+import { Clock, Download, Plus, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -30,7 +35,35 @@ export function Header({
   const { data: summaryRes } = useGetDashboardSummaryQuery();
 
   const [showDropdown, setShowDropdown] = useState(false);
+  const [installPrompt, setInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Capture browser PWA install prompt when available (hidden once installed)
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+    const handleAppInstalled = () => {
+      setInstallPrompt(null);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("appinstalled", handleAppInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice.outcome === "accepted") {
+      setInstallPrompt(null);
+    }
+  };
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -100,6 +133,19 @@ export function Header({
 
       {/* Right Actions */}
       <div className="flex items-center gap-2.5">
+        {/* Subtle PWA Install App button (shown only when browser supports install prompt) */}
+        {installPrompt && (
+          <button
+            type="button"
+            onClick={handleInstallApp}
+            className="inline-flex items-center justify-center gap-1.5 h-8 px-2.5 rounded border border-[#b4cabe] bg-card text-foreground text-xs font-medium leading-none hover:bg-muted hover:border-[#8faea0] transition-colors cursor-pointer"
+            title="Install JomaJatra on your device"
+          >
+            <Download className="w-3.5 h-3.5 text-primary" />
+            <span className="hidden sm:inline">Install App</span>
+          </button>
+        )}
+
         {/* Pending approvals shortcut for Admin / Cashier */}
         {isManager && pendingTotal > 0 && (
           <Link

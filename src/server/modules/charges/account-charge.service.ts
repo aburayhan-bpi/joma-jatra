@@ -2,7 +2,7 @@ import { badRequest, notFound } from "../../core/app-error";
 import { AuthUser } from "../../core/auth-guard";
 import { connectDB } from "../../core/db";
 import { getAccountBalance } from "../../shared/accounting.service";
-import { toObjectId } from "../../shared/normalize";
+import { resolveTransactionDate, toObjectId } from "../../shared/normalize";
 import {
   buildPaginationMeta,
   buildSearchFilter,
@@ -93,7 +93,7 @@ export async function createCharge(
     paymentAccountId: account._id,
     amount: input.amount,
     title: input.title,
-    chargeDate: input.chargeDate ?? new Date(),
+    chargeDate: resolveTransactionDate(input.chargeDate),
     proofImage: input.proofImage || "",
     note: input.note || "",
     createdBy: toObjectId(actor.id, "actorId"),

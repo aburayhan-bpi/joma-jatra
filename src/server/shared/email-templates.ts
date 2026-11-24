@@ -38,6 +38,7 @@ function formatShortDate(date: Date | string): string {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: "Asia/Dhaka",
   });
 }
 
@@ -94,15 +95,41 @@ const FONT_STACK =
   "'Plus Jakarta Sans','Inter','Helvetica Neue',Arial,sans-serif";
 const MONO_STACK = "'JetBrains Mono',SFMono-Regular,Menlo,Consolas,monospace";
 
-function getAppBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL || DEFAULT_APP_URL).replace(
-    /\/+$/,
-    "",
+function isLocalOrigin(url: string): boolean {
+  return /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?(\/|$)/i.test(
+    url,
   );
 }
 
-function renderLogoImg(height = 34): string {
-  const logoUrl = `${getAppBaseUrl()}/joma-jatra.png`;
+/**
+ * Dynamically resolves the public website base URL for emails (links & logo).
+ * Priority: live non-local request origin -> APP_URL -> NEXT_PUBLIC_APP_URL ->
+ * Vercel production/deployment URL -> fallback production URL.
+ * Always skips localhost so Gmail images and member login links never break.
+ */
+export function getAppBaseUrl(requestOrigin?: string): string {
+  const candidates = [
+    requestOrigin,
+    process.env.APP_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : undefined,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  ];
+
+  for (const raw of candidates) {
+    const cleaned = raw?.trim().replace(/\/+$/, "");
+    if (cleaned && /^https?:\/\//i.test(cleaned) && !isLocalOrigin(cleaned)) {
+      return cleaned;
+    }
+  }
+
+  return DEFAULT_APP_URL;
+}
+
+function renderLogoImg(height = 34, baseUrl?: string): string {
+  const logoUrl = `${getAppBaseUrl(baseUrl)}/joma-jatra.png`;
   return `<img src="${escapeHtml(logoUrl)}" alt="JomaJatra" height="${height}" style="display:block;height:${height}px;width:auto;border:0;outline:none;text-decoration:none;" />`;
 }
 
@@ -183,8 +210,10 @@ export function buildWelcomeMemberEmail(params: {
   role: string;
   addedByName: string;
   joinedAt: Date | string;
+  appBaseUrl?: string;
 }): EmailTemplatePayload {
-  const loginUrl = `${getAppBaseUrl()}/login`;
+  const resolvedBaseUrl = getAppBaseUrl(params.appBaseUrl);
+  const loginUrl = `${resolvedBaseUrl}/login`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -203,7 +232,7 @@ export function buildWelcomeMemberEmail(params: {
             <td style="padding:20px 28px;border-bottom:1px solid #e6efe9;background:#ffffff;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td>${renderLogoImg(36)}</td>
+                  <td>${renderLogoImg(36, resolvedBaseUrl)}</td>
                   <td align="right" valign="middle" style="font-size:11px;font-weight:600;color:#557066;text-transform:uppercase;letter-spacing:0.6px;">
                     Member Invitation
                   </td>

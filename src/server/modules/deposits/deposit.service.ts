@@ -16,6 +16,7 @@ import { buildDepositReceiptEmail } from "../../shared/email-templates";
 import {
   formatYearMonth,
   normalizeTrxId,
+  resolveTransactionDate,
   roundMoney,
   toObjectId,
 } from "../../shared/normalize";
@@ -191,8 +192,9 @@ export async function createDeposit(
   const normalizedTrx = normalizeTrxId(input.trxId);
   await ensureUniqueTrxId(normalizedTrx);
 
-  const depositDate =
-    canEnterForOthers && input.depositDate ? input.depositDate : new Date();
+  const depositDate = canEnterForOthers
+    ? resolveTransactionDate(input.depositDate)
+    : new Date();
   const month = input.month || formatYearMonth(depositDate);
 
   // Determine approval status & entrySource
@@ -373,7 +375,9 @@ export async function updateDeposit(
 
   if (input.amount !== undefined) deposit.amount = input.amount;
   if (input.month !== undefined) deposit.month = input.month;
-  if (input.depositDate !== undefined) deposit.depositDate = input.depositDate;
+  if (input.depositDate !== undefined) {
+    deposit.depositDate = resolveTransactionDate(input.depositDate);
+  }
   if (input.proofImage !== undefined) deposit.proofImage = input.proofImage;
   if (input.note !== undefined) deposit.note = input.note;
 

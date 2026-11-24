@@ -16,6 +16,7 @@ import {
 import { connectDB } from "../../core/db";
 import { serverEnv } from "../../core/env";
 import { getMemberBalance } from "../../shared/accounting.service";
+import { roundMoney } from "../../shared/normalize";
 import { sendEmail } from "../../shared/email";
 import { buildPasswordResetOtpEmail } from "../../shared/email-templates";
 import { logActivity } from "../activity-logs/activity-log.service";
@@ -155,26 +156,40 @@ export async function refreshAuthTokens(refreshToken: string) {
 }
 
 /**
- * Returns the authenticated user profile along with live personal savings balance.
+ * Returns the authenticated user profile along with live personal savings balance
+ * and private personal monthly goal.
  */
 export async function getAuthenticatedProfile(authUser: AuthUser) {
-  const balance = await getMemberBalance(authUser.id);
+  const [balance, privateFields] = await Promise.all([
+    getMemberBalance(authUser.id),
+    UserModel.findById(authUser.id).select("+personalMonthlyGoal").lean(),
+  ]);
+
   return {
     ...formatAuthUser(authUser.doc),
+    personalMonthlyGoal: roundMoney(privateFields?.personalMonthlyGoal || 0),
     financialSummary: balance,
   };
 }
 
 /**
- * Allows an authenticated user to update their own name, phone, or profileImage.
+ * Allows an authenticated user to update their own name, phone, profileImage,
+ * or private personalMonthlyGoal (never logged to public group Activity Logs).
  */
 export async function updateAuthenticatedProfile(
   authUser: AuthUser,
-  input: { name?: string; phone?: string; profileImage?: string },
+  input: {
+    name?: string;
+    phone?: string;
+    profileImage?: string;
+    personalMonthlyGoal?: number;
+  },
 ) {
   await connectDB();
 
-  const user = await UserModel.findById(authUser.id);
+  const user = await UserModel.findById(authUser.id).select(
+    "+personalMonthlyGoal",
+  );
   if (!user || user.isDeleted || user.status !== "ACTIVE") {
     throw notFound("Active user account not found");
   }
@@ -185,31 +200,51 @@ export async function updateAuthenticatedProfile(
     profileImage: user.profileImage || "",
   };
 
-  if (input.name !== undefined) user.name = input.name;
-  if (input.phone !== undefined) user.phone = input.phone;
-  if (input.profileImage !== undefined) user.profileImage = input.profileImage;
+  let publicProfileChanged = false;
+  if (input.name !== undefined && input.name !== user.name) {
+    user.name = input.name;
+    publicProfileChanged = true;
+  }
+  if (input.phone !== undefined && input.phone !== (user.phone || "")) {
+    user.phone = input.phone;
+    publicProfileChanged = true;
+  }
+  if (
+    input.profileImage !== undefined &&
+    input.profileImage !== (user.profileImage || "")
+  ) {
+    user.profileImage = input.profileImage;
+    publicProfileChanged = true;
+  }
+  if (input.personalMonthlyGoal !== undefined) {
+    user.personalMonthlyGoal = roundMoney(input.personalMonthlyGoal);
+  }
   await user.save();
 
-  await logActivity({
-    entityType: "USER",
-    entityId: user._id,
-    targetMemberId: user._id,
-    action: "UPDATED",
-    summary: `${user.name} updated their own profile`,
-    changes: {
-      before,
-      after: {
-        name: user.name,
-        phone: user.phone || "",
-        profileImage: user.profileImage || "",
+  // Only log public profile changes so private personalMonthlyGoal stays 100% private
+  if (publicProfileChanged) {
+    await logActivity({
+      entityType: "USER",
+      entityId: user._id,
+      targetMemberId: user._id,
+      action: "UPDATED",
+      summary: `${user.name} updated their own profile`,
+      changes: {
+        before,
+        after: {
+          name: user.name,
+          phone: user.phone || "",
+          profileImage: user.profileImage || "",
+        },
       },
-    },
-    performedBy: user._id,
-  });
+      performedBy: user._id,
+    });
+  }
 
   const balance = await getMemberBalance(user._id);
   return {
     ...formatAuthUser(user),
+    personalMonthlyGoal: roundMoney(user.personalMonthlyGoal || 0),
     financialSummary: balance,
   };
 }

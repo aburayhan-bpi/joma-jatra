@@ -12,6 +12,7 @@ import {
   formatTaka,
   getApiErrorMessage,
   getPaymentMethodLabel,
+  getTodayDateInputValue,
 } from "@/utils/formatMoney";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -32,9 +33,7 @@ function TransferForm({ onClose }: { onClose: () => void }) {
   const [toAccountId, setToAccountId] = useState("");
   const [amount, setAmount] = useState("");
   const [transferFee, setTransferFee] = useState("0");
-  const [transferDate, setTransferDate] = useState(
-    new Date().toISOString().slice(0, 10),
-  );
+  const [transferDate, setTransferDate] = useState(getTodayDateInputValue());
   const [trxId, setTrxId] = useState("");
   const [proofImage, setProofImage] = useState("");
   const [note, setNote] = useState("");

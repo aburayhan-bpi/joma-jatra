@@ -1,8 +1,9 @@
 import { Providers } from "@/components/providers";
+import PwaRegister from "@/components/shared/PwaRegister";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WEBSITE_DETAILS } from "@/lib/constants";
 import ReduxProvider from "@/redux/ReduxProvider";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Hind_Siliguri,
   JetBrains_Mono,
@@ -35,6 +36,31 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: WEBSITE_DETAILS.SITE_NAME,
   description: WEBSITE_DETAILS.SITE_DESCRIPTION,
+  applicationName: WEBSITE_DETAILS.SITE_ONLY_NAME,
+  appleWebApp: {
+    capable: true,
+    title: WEBSITE_DETAILS.SITE_ONLY_NAME,
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      {
+        url: "/icons/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#046c4e",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -69,6 +95,7 @@ export default function RootLayout({
               </defs>
             </svg>
             <Providers>{children}</Providers>
+            <PwaRegister />
           </TooltipProvider>
         </ReduxProvider>
       </body>

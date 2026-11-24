@@ -9,7 +9,7 @@ import {
 } from "@/redux/api/members/membersApi";
 import { UserRole } from "@/types/backend";
 import { IMember } from "@/types/global";
-import { getApiErrorMessage } from "@/utils/formatMoney";
+import { getApiErrorMessage, toDateInputValue } from "@/utils/formatMoney";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -34,9 +34,7 @@ function MemberForm({
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>(editingMember?.role || "MEMBER");
   const [joinedAt, setJoinedAt] = useState(
-    editingMember?.joinedAt
-      ? new Date(editingMember.joinedAt).toISOString().slice(0, 10)
-      : new Date().toISOString().slice(0, 10),
+    toDateInputValue(editingMember?.joinedAt),
   );
 
   const handleSubmit = async (e: React.FormEvent) => {

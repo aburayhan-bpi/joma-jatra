@@ -89,6 +89,7 @@ export interface IAuthUser {
   status: UserStatus;
   joinedAt?: string;
   mustChangePassword?: boolean;
+  personalMonthlyGoal?: number;
 }
 
 export interface IUserProfile extends IAuthUser {
@@ -124,6 +125,7 @@ export interface IUpdateSelfProfilePayload {
   name?: string;
   phone?: string;
   profileImage?: string;
+  personalMonthlyGoal?: number;
 }
 
 export type IUpdateSelfProfileResponse = IBaseResponse<IUserProfile>;
@@ -657,6 +659,9 @@ export interface IDashboardSummary {
   };
   mySavings: IMemberFinancialSummary & {
     currentMonthDeposited: number;
+    personalMonthlyGoal: number;
+    personalGoalRemaining: number;
+    personalGoalProgressPercent: number;
   };
   pendingQueue: {
     deposits: IDeposit[];
@@ -679,6 +684,7 @@ export interface IMonthlyMatrixRow {
   id: string;
   name: string;
   email: string;
+  profileImage?: string;
   role: UserRole;
   status: UserStatus;
   isDeleted: boolean;

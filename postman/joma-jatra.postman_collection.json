@@ -343,7 +343,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Profile fetched successfully\",\n  \"data\": {\n    \"id\": \"6b0416d166c353cb8a822fbb\",\n    \"name\": \"Abu Rayhan\",\n    \"email\": \"aburayhan.bpi@gmail.com\",\n    \"phone\": \"01719857898\",\n    \"profileImage\": \"\",\n    \"role\": \"ADMIN\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-23T10:34:57.708Z\",\n    \"mustChangePassword\": false,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 0,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 5000,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    }\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Profile fetched successfully\",\n  \"data\": {\n    \"id\": \"6b0416d166c353cb8a822fbb\",\n    \"name\": \"Abu Rayhan\",\n    \"email\": \"aburayhan.bpi@gmail.com\",\n    \"phone\": \"01719857898\",\n    \"profileImage\": \"\",\n    \"role\": \"ADMIN\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-23T10:34:57.708Z\",\n    \"mustChangePassword\": false,\n    \"personalMonthlyGoal\": 2000,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 0,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 5000,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    }\n  }\n}"
             }
           ]
         },
@@ -360,7 +360,7 @@
             "url": "{{baseUrl}}/auth/me",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Abu Rayhan\",\n  \"phone\": \"01719857898\",\n  \"profileImage\": \"\"\n}"
+              "raw": "{\n  \"name\": \"Abu Rayhan\",\n  \"phone\": \"01719857898\",\n  \"profileImage\": \"\",\n  \"personalMonthlyGoal\": 2000\n}"
             }
           },
           "response": [
@@ -377,7 +377,7 @@
                 "url": "{{baseUrl}}/auth/me",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Abu Rayhan\",\n  \"phone\": \"01719857898\",\n  \"profileImage\": \"\"\n}"
+                  "raw": "{\n  \"name\": \"Abu Rayhan\",\n  \"phone\": \"01719857898\",\n  \"profileImage\": \"\",\n  \"personalMonthlyGoal\": 2000\n}"
                 }
               },
               "status": "OK",
@@ -389,7 +389,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Profile updated successfully\",\n  \"data\": {\n    \"id\": \"6b0416d166c353cb8a822fbb\",\n    \"name\": \"Abu Rayhan\",\n    \"email\": \"aburayhan.bpi@gmail.com\",\n    \"phone\": \"01719857898\",\n    \"profileImage\": \"\",\n    \"role\": \"ADMIN\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-23T10:34:57.708Z\",\n    \"mustChangePassword\": false,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 0,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 5000,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    }\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Profile updated successfully\",\n  \"data\": {\n    \"id\": \"6b0416d166c353cb8a822fbb\",\n    \"name\": \"Abu Rayhan\",\n    \"email\": \"aburayhan.bpi@gmail.com\",\n    \"phone\": \"01719857898\",\n    \"profileImage\": \"\",\n    \"role\": \"ADMIN\",\n    \"status\": \"ACTIVE\",\n    \"joinedAt\": \"2026-11-23T10:34:57.708Z\",\n    \"mustChangePassword\": false,\n    \"personalMonthlyGoal\": 2000,\n    \"financialSummary\": {\n      \"totalDeposited\": 5000,\n      \"totalReturned\": 0,\n      \"totalDonatedWaived\": 0,\n      \"netBalance\": 5000,\n      \"pendingDepositsCount\": 0,\n      \"pendingReturnsCount\": 0\n    }\n  }\n}"
             }
           ]
         },

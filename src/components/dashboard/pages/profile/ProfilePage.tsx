@@ -41,6 +41,11 @@ function ProfileDetailsForm({ profile }: { profile: IUserProfile }) {
   const [name, setName] = useState(profile.name || "");
   const [phone, setPhone] = useState(profile.phone || "");
   const [profileImage, setProfileImage] = useState(profile.profileImage || "");
+  const [personalMonthlyGoal, setPersonalMonthlyGoal] = useState(
+    profile.personalMonthlyGoal && profile.personalMonthlyGoal > 0
+      ? String(profile.personalMonthlyGoal)
+      : "",
+  );
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,11 +54,19 @@ function ProfileDetailsForm({ profile }: { profile: IUserProfile }) {
       return;
     }
 
+    const parsedGoal =
+      personalMonthlyGoal.trim() === "" ? 0 : Number(personalMonthlyGoal);
+    if (Number.isNaN(parsedGoal) || parsedGoal < 0) {
+      toast.error("Personal monthly goal cannot be negative");
+      return;
+    }
+
     try {
       const res = await updateProfile({
         name: name.trim(),
-        phone: phone.trim() || undefined,
-        profileImage: profileImage || undefined,
+        phone: phone.trim(),
+        profileImage: profileImage.trim(),
+        personalMonthlyGoal: parsedGoal,
       }).unwrap();
 
       if (res.data) {
@@ -68,6 +81,7 @@ function ProfileDetailsForm({ profile }: { profile: IUserProfile }) {
             status: res.data.status,
             joinedAt: res.data.joinedAt,
             mustChangePassword: res.data.mustChangePassword,
+            personalMonthlyGoal: res.data.personalMonthlyGoal,
           }),
         );
       }
@@ -125,6 +139,25 @@ function ProfileDetailsForm({ profile }: { profile: IUserProfile }) {
           onChange={(e) => setPhone(e.target.value)}
           className="w-full h-9 px-3 rounded border border-input bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium text-text-description">
+          Personal Monthly Savings Goal (Private — BDT)
+        </label>
+        <input
+          type="number"
+          min={0}
+          step="any"
+          placeholder="e.g. 2000 (optional, 0 to turn off)"
+          value={personalMonthlyGoal}
+          onChange={(e) => setPersonalMonthlyGoal(e.target.value)}
+          className="w-full h-9 px-3 rounded border border-input bg-card text-sm font-money text-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
+        />
+        <p className="text-[11px] text-muted-foreground">
+          Only visible to you on your Overview dashboard. Other members and
+          Admin cannot see this.
+        </p>
       </div>
 
       <ProofUploadField
@@ -255,7 +288,7 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {profile && (
           <ProfileDetailsForm
-            key={`${profile.id}-${profile.name}-${profile.phone || ""}`}
+            key={`${profile.id}-${profile.name}-${profile.phone || ""}-${profile.personalMonthlyGoal || 0}`}
             profile={profile}
           />
         )}

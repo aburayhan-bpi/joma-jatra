@@ -19,6 +19,7 @@ import {
   formatTaka,
   getApiErrorMessage,
   getPaymentMethodLabel,
+  toDateInputValue,
 } from "@/utils/formatMoney";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -66,9 +67,7 @@ function ReturnForm({
     editingReturn?.returnType || "PARTIAL",
   );
   const [returnDate, setReturnDate] = useState(
-    editingReturn?.returnDate
-      ? new Date(editingReturn.returnDate).toISOString().slice(0, 10)
-      : new Date().toISOString().slice(0, 10),
+    toDateInputValue(editingReturn?.returnDate),
   );
   const [paymentAccountId, setPaymentAccountId] = useState(
     editingReturn

@@ -38,6 +38,7 @@ import {
   PiggyBank,
   Wallet,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -160,8 +161,18 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
       {/* Profile Header & Export Actions */}
       <div className="bg-card border border-border rounded-md p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-start gap-3.5">
-          <div className="w-11 h-11 rounded bg-[#e9f4ef] border border-[#cce3d8] text-[#046c4e] flex items-center justify-center text-sm font-semibold shrink-0">
-            {member.name.slice(0, 2).toUpperCase()}
+          <div className="relative w-12 h-12 rounded bg-[#e9f4ef] border border-[#cce3d8] text-[#046c4e] flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden">
+            {member.profileImage ? (
+              <Image
+                src={member.profileImage}
+                alt={member.name}
+                fill
+                sizes="48px"
+                className="object-cover"
+              />
+            ) : (
+              member.name.slice(0, 2).toUpperCase()
+            )}
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
