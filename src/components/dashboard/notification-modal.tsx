@@ -66,13 +66,18 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
   return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-100 flex items-start justify-center p-4 sm:p-6 overflow-y-auto modal-scroll-body"
+        >
           {/* Backdrop Blur Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={onClose}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm cursor-pointer"
           />
 
           {/* Centered Modal Content */}
@@ -81,7 +86,7 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full bg-card max-w-sm sm:max-w-md rounded-2xl sm:rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)]"
+            className="relative z-10 my-auto w-full bg-card max-w-sm sm:max-w-md rounded-2xl sm:rounded-3xl border border-border shadow-2xl overflow-hidden flex flex-col modal-panel"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-4 relative shrink-0 border-b border-border">
@@ -107,7 +112,7 @@ export function NotificationModal({ isOpen, onClose }: NotificationModalProps) {
             </div>
 
             {/* Notification List */}
-            <div className="flex flex-col p-2 sm:p-3 min-h-0 flex-1 overflow-y-auto overscroll-contain custom-scrollbar">
+            <div className="flex flex-col p-2 sm:p-3 min-h-0 flex-auto overflow-y-auto overscroll-contain custom-scrollbar modal-scroll-body">
               {NOTIFICATIONS.map((notif) => (
                 <div
                   key={notif.id}

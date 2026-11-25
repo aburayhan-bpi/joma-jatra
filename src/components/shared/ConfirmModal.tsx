@@ -60,7 +60,7 @@ const ConfirmModal = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 z-100 flex items-start justify-center p-3 sm:p-4 overflow-y-auto modal-scroll-body"
     >
       <button
         type="button"
@@ -69,7 +69,7 @@ const ConfirmModal = ({
         onClick={onClose}
       />
 
-      <div className="relative z-101 w-full max-w-md max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-md border border-border bg-card p-5 shadow-[0_14px_38px_rgba(7,42,31,0.16)] sm:p-6">
+      <div className="relative z-101 my-auto w-full max-w-md modal-panel overflow-y-auto overscroll-contain modal-scroll-body rounded-md border border-border bg-card p-5 shadow-[0_14px_38px_rgba(7,42,31,0.16)] sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-base font-semibold text-foreground">{title}</h3>

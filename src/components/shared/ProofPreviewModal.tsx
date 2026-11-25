@@ -67,7 +67,7 @@ export default function ProofPreviewModal({
           </div>
 
           {/* Screenshot viewer using Next.js optimized Image */}
-          <div className="relative w-full h-96 rounded-md border border-border bg-background overflow-hidden">
+          <div className="relative w-full h-64 sm:h-96 rounded-md border border-border bg-background overflow-hidden">
             <Image
               src={proof.imageUrl}
               alt={proof.title}

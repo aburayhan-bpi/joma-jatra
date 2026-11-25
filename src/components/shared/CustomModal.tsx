@@ -43,13 +43,15 @@ const CustomModal = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 bg-foreground/35 backdrop-blur-[2px] overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-100 flex items-start justify-center p-3 sm:p-4 bg-foreground/35 backdrop-blur-[2px] overflow-y-auto modal-scroll-body"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className={`bg-card border border-border rounded-md shadow-[0_14px_38px_rgba(7,42,31,0.14)] w-full max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden ${className}`}
+        className={`my-auto bg-card border border-border rounded-md shadow-[0_14px_38px_rgba(7,42,31,0.14)] w-full modal-panel flex flex-col overflow-hidden ${className}`}
       >
         <div className="flex items-start justify-between gap-4 px-5 py-3.5 border-b border-border bg-card shrink-0">
           <div className="min-w-0">
@@ -67,7 +69,8 @@ const CustomModal = ({
             <X className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-5 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        {/* flex-auto + min-h-0 ensures scrolling works reliably on older Safari & Android WebViews */}
+        <div className="p-5 pb-6 sm:pb-5 min-h-0 flex-auto overflow-y-auto overscroll-contain modal-scroll-body">
           {children}
         </div>
       </div>
