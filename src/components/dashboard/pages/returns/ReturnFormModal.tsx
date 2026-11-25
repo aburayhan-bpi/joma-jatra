@@ -115,6 +115,12 @@ function ReturnForm({
         ? meRes?.data?.financialSummary.netBalance ?? 0
         : 0)
     : meRes?.data?.financialSummary.netBalance ?? 0;
+  const pendingReturnsCount = isManager
+    ? selectedMember?.financialSummary.pendingReturnsCount ??
+      (targetMemberId === user?.id
+        ? meRes?.data?.financialSummary.pendingReturnsCount ?? 0
+        : 0)
+    : meRes?.data?.financialSummary.pendingReturnsCount ?? 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,7 +222,7 @@ function ReturnForm({
       )}
 
       <div className="rounded bg-muted/60 border border-border px-3.5 py-2.5 flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">Available Net Balance</span>
+        <span className="text-muted-foreground">Member Net Balance</span>
         <div className="flex items-center gap-2">
           <span className="font-semibold text-primary font-money text-sm">
             {formatTaka(availableBalance)}
@@ -235,6 +241,20 @@ function ReturnForm({
           )}
         </div>
       </div>
+      {pendingReturnsCount > 0 && (
+        <p className="-mt-2 text-[11px] text-muted-foreground">
+          {pendingReturnsCount} pending return request
+          {pendingReturnsCount === 1 ? "" : "s"} exist; the amount available to
+          return may be lower than this balance.
+        </p>
+      )}
+      {!isEditing && user?.role === "CASHIER" && (
+        <p className="-mt-2 text-[11px] text-muted-foreground">
+          {isDirectPayout
+            ? "A return for another member is recorded as a payout immediately."
+            : "Your own return is submitted for Admin approval; you cannot approve your own payout."}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <div className="space-y-1.5">
@@ -402,7 +422,7 @@ export default function ReturnFormModal({
       isOpen={isOpen}
       onClose={onClose}
       title={editingReturn ? "Edit Return Request" : "Return / Settlement"}
-      subtitle="Cannot exceed the member's verified net balance"
+      subtitle="Payouts are limited by the member's net balance and any pending return requests."
       className="max-w-lg"
     >
       {isOpen && (
