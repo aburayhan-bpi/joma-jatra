@@ -55,6 +55,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import MonthlyDepositBreakdownModal from "./MonthlyDepositBreakdownModal";
 import PersonalGoalModal from "./PersonalGoalModal";
 import ResetTestDataModal from "./ResetTestDataModal";
 
@@ -79,6 +80,7 @@ export default function OverviewPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [personalGoalModalOpen, setPersonalGoalModalOpen] = useState(false);
+  const [cashBreakdownOpen, setCashBreakdownOpen] = useState(false);
   const [proofPreview, setProofPreview] = useState<ProofPreviewData | null>(
     null,
   );
@@ -378,7 +380,22 @@ export default function OverviewPage() {
               </span>
             )
           }
-          subtext={`Sum of ${accountBalances.length} payment account${accountBalances.length === 1 ? "" : "s"}`}
+          subtext={
+            <div className="flex items-center justify-between gap-2">
+              <span>
+                Sum of {accountBalances.length} payment account
+                {accountBalances.length === 1 ? "" : "s"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCashBreakdownOpen(true)}
+                className="inline-flex items-center gap-0.5 text-primary hover:text-brand-dark font-medium whitespace-nowrap cursor-pointer"
+              >
+                See more
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          }
         />
 
         <LedgerStatCard
@@ -732,6 +749,13 @@ export default function OverviewPage() {
       <ProofPreviewModal
         proof={proofPreview}
         onClose={() => setProofPreview(null)}
+      />
+
+      {/* Month-wise Total Deposits Breakdown Modal */}
+      <MonthlyDepositBreakdownModal
+        isOpen={cashBreakdownOpen}
+        onClose={() => setCashBreakdownOpen(false)}
+        fundSummary={fundSummary}
       />
 
       {/* Private Personal Monthly Goal Modal */}
