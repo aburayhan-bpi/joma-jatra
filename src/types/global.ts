@@ -135,7 +135,11 @@ export interface IChangePasswordPayload {
   newPassword: string;
 }
 
-export type IChangePasswordResponse = IBaseResponse<{ updated: boolean }>;
+export type IChangePasswordResponse = IBaseResponse<{
+  updated: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+}>;
 
 export interface IForgotPasswordPayload {
   email: string;

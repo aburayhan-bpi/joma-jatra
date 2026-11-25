@@ -36,7 +36,7 @@ export default function NotFoundPage() {
             size="lg"
             className="bg-primary hover:bg-brand-dark text-primary-foreground rounded-lg px-8 py-6 shadow-lg shadow-brand/20 transition-all hover:scale-105 cursor-pointer"
           >
-            <Link href="/dashboard/admin">
+            <Link href="/dashboard">
               <ArrowLeft className="mr-2 h-5 w-5" /> Back to Dashboard
             </Link>
           </Button>

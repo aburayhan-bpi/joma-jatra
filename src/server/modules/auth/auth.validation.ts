@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { safeImageUrlSchema } from "../../shared/validation-helpers";
 
 export const bootstrapAdminSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -44,7 +45,7 @@ export const resetPasswordSchema = z.object({
 export const updateSelfProfileSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100).optional(),
   phone: z.string().trim().max(25).optional(),
-  profileImage: z.string().trim().optional(),
+  profileImage: safeImageUrlSchema.optional(),
   personalMonthlyGoal: z
     .number()
     .min(0, "Personal monthly goal cannot be negative")

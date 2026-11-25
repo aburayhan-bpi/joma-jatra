@@ -13,8 +13,10 @@ import {
   PaginationQuery,
 } from "../../shared/pagination";
 import { logActivity } from "../activity-logs/activity-log.service";
+import { AccountChargeModel } from "../charges/account-charge.model";
 import { DepositModel } from "../deposits/deposit.model";
 import { DepositReturnModel } from "../returns/deposit-return.model";
+import { AccountTransferModel } from "../transfers/account-transfer.model";
 import { PaymentAccountModel } from "./payment-account.model";
 
 export interface ListPaymentAccountsParams {
@@ -85,12 +87,20 @@ export async function listPaymentAccounts({
   };
 }
 
-export async function getPaymentAccountById(id: string) {
+export async function getPaymentAccountById(
+  id: string,
+  options?: { includeDeleted?: boolean },
+) {
   await connectDB();
 
-  const account = await PaymentAccountModel.findById(
-    toObjectId(id, "paymentAccountId"),
-  )
+  const filter: Record<string, unknown> = {
+    _id: toObjectId(id, "paymentAccountId"),
+  };
+  if (!options?.includeDeleted) {
+    filter.isDeleted = false;
+  }
+
+  const account = await PaymentAccountModel.findOne(filter)
     .populate("createdBy", "name email role")
     .lean();
 
@@ -165,16 +175,17 @@ export async function updatePaymentAccount(
     throw notFound("Payment account not found");
   }
 
-  // Prevent changing payment method once deposits/returns exist on this account
+  // Prevent changing payment method once ANY transaction (including Trash) references this account
   if (input.method && input.method !== account.method) {
-    const [hasDeposit, hasReturn] = await Promise.all([
-      DepositModel.exists({ paymentAccountId: account._id, isDeleted: false }),
-      DepositReturnModel.exists({
-        paymentAccountId: account._id,
-        isDeleted: false,
+    const [hasDeposit, hasReturn, hasTransfer, hasCharge] = await Promise.all([
+      DepositModel.exists({ paymentAccountId: account._id }),
+      DepositReturnModel.exists({ paymentAccountId: account._id }),
+      AccountTransferModel.exists({
+        $or: [{ fromAccountId: account._id }, { toAccountId: account._id }],
       }),
+      AccountChargeModel.exists({ paymentAccountId: account._id }),
     ]);
-    if (hasDeposit || hasReturn) {
+    if (hasDeposit || hasReturn || hasTransfer || hasCharge) {
       throw badRequest(
         `Cannot change method of "${account.accountName}" from ${account.method} to ${input.method} because it already has recorded transactions.`,
       );
@@ -188,7 +199,12 @@ export async function updatePaymentAccount(
     isActive: account.isActive,
   };
 
-  Object.assign(account, input);
+  // Assign only explicitly provided fields so partial PATCH never wipes omitted values
+  for (const [key, value] of Object.entries(input)) {
+    if (value !== undefined) {
+      account.set(key, value);
+    }
+  }
   await account.save();
 
   await logActivity({

@@ -22,8 +22,12 @@ export interface IUserDocument extends Document {
   leaveNote?: string | null;
   mustChangePassword: boolean;
   personalMonthlyGoal?: number;
+  tokenVersion: number;
   resetOtp?: string | null;
   resetOtpExpires?: Date | null;
+  resetOtpAttempts?: number;
+  resetOtpSentAt?: Date | null;
+  resetTokenId?: string | null;
   isDeleted: boolean;
   deletedAt?: Date | null;
   deletedBy?: mongoose.Types.ObjectId | null;
@@ -98,6 +102,11 @@ const userSchema = new Schema<IUserDocument>(
       min: 0,
       select: false,
     },
+    // Incremented on logout / password change / reset to immediately revoke old JWTs
+    tokenVersion: {
+      type: Number,
+      default: 0,
+    },
     resetOtp: {
       type: String,
       select: false,
@@ -105,6 +114,21 @@ const userSchema = new Schema<IUserDocument>(
     },
     resetOtpExpires: {
       type: Date,
+      select: false,
+      default: null,
+    },
+    resetOtpAttempts: {
+      type: Number,
+      select: false,
+      default: 0,
+    },
+    resetOtpSentAt: {
+      type: Date,
+      select: false,
+      default: null,
+    },
+    resetTokenId: {
+      type: String,
       select: false,
       default: null,
     },
@@ -152,7 +176,10 @@ userSchema.methods.comparePassword = async function comparePassword(
 // Refresh cached Mongoose model during Next.js dev hot-reload if schema gained new fields
 if (
   mongoose.models.User &&
-  !mongoose.models.User.schema.path("personalMonthlyGoal")
+  (!mongoose.models.User.schema.path("personalMonthlyGoal") ||
+    !mongoose.models.User.schema.path("tokenVersion") ||
+    !mongoose.models.User.schema.path("resetOtpAttempts") ||
+    !mongoose.models.User.schema.path("resetTokenId"))
 ) {
   mongoose.deleteModel("User");
 }

@@ -50,7 +50,8 @@ function MemberForm({
         await updateMember({
           id: editingMember.id,
           name: name.trim(),
-          phone: phone.trim() || undefined,
+          // Send empty string explicitly so clearing phone persists
+          phone: phone.trim(),
           joinedAt,
         }).unwrap();
         toast.success("Member details updated");

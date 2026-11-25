@@ -22,6 +22,7 @@ import {
   getPaymentMethodLabel,
 } from "@/utils/formatMoney";
 import {
+  AlertTriangle,
   ArrowRight,
   Banknote,
   CalendarCheck2,
@@ -367,7 +368,15 @@ export default function OverviewPage() {
                 <CheckCircle2 className="w-3 h-3" />
                 Balanced
               </span>
-            ) : null
+            ) : (
+              <span
+                className="inline-flex items-center gap-0.5 text-[11px] text-error font-medium"
+                title="Total cash in hand differs from the sum of payment accounts"
+              >
+                <AlertTriangle className="w-3 h-3" />
+                Diff {formatTaka(fundSummary.reconciliationDifference)}
+              </span>
+            )
           }
           subtext={`Sum of ${accountBalances.length} payment account${accountBalances.length === 1 ? "" : "s"}`}
         />

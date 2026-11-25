@@ -248,8 +248,8 @@ export default function ReturnsPage() {
                     (isAdmin || (user?.role === "CASHIER" && !isOwn));
                   const canEdit =
                     !onlyDeleted &&
-                    ret.status === "PENDING" &&
-                    (isAdmin || isOwn);
+                    ((ret.status === "PENDING" && (isAdmin || isOwn)) ||
+                      (ret.status === "APPROVED" && isAdmin));
                   const canDelete =
                     !onlyDeleted &&
                     (isAdmin || (isOwn && ret.status === "PENDING"));

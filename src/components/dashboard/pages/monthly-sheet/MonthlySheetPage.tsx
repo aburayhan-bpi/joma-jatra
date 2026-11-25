@@ -182,11 +182,11 @@ export default function MonthlySheetPage() {
       {!isLoading && matrix && (
         <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <LedgerStatCard
-            label="Total Saved"
+            label="All-Time Saved"
             value={formatTaka(grandDeposited)}
             icon={<PiggyBank className="w-[18px] h-[18px]" />}
             tone="steel"
-            subtext={`${totalMembersCount} member${totalMembersCount === 1 ? "" : "s"} in ${isSingleYear ? year : "all years"}`}
+            subtext={`All-time verified total · ${totalMembersCount} member${totalMembersCount === 1 ? "" : "s"}`}
           />
 
           <LedgerStatCard
@@ -448,14 +448,14 @@ export default function MonthlySheetPage() {
                     );
                   })}
 
-                  <th className="px-3.5 py-3 text-right w-[122px] min-w-[114px] border-l-2 border-border border-r border-border/60 whitespace-nowrap">
-                    Total Saved
+                  <th className="px-3.5 py-3 text-right w-[128px] min-w-[118px] border-l-2 border-border border-r border-border/60 whitespace-nowrap">
+                    All-Time Saved
                   </th>
-                  <th className="px-3.5 py-3 text-right w-[110px] min-w-[100px] border-r border-border/60 whitespace-nowrap">
-                    Returned
+                  <th className="px-3.5 py-3 text-right w-[126px] min-w-[116px] border-r border-border/60 whitespace-nowrap">
+                    All-Time Returned
                   </th>
                   <th className="px-3.5 py-3 text-right w-[126px] min-w-[118px] bg-emerald-50/45 text-foreground whitespace-nowrap">
-                    Net Balance
+                    All-Time Net
                   </th>
                 </tr>
               </thead>

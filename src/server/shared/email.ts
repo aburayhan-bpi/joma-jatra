@@ -8,6 +8,28 @@ export interface SendEmailOptions {
   text?: string;
 }
 
+let cachedTransporter: nodemailer.Transporter | null = null;
+let cachedTransportKey = "";
+
+function getTransporter(): nodemailer.Transporter {
+  const key = `${serverEnv.smtpHost}:${serverEnv.smtpPort}:${serverEnv.smtpUser}`;
+  if (cachedTransporter && cachedTransportKey === key) {
+    return cachedTransporter;
+  }
+
+  cachedTransporter = nodemailer.createTransport({
+    host: serverEnv.smtpHost,
+    port: serverEnv.smtpPort,
+    secure: serverEnv.smtpPort === 465,
+    auth: {
+      user: serverEnv.smtpUser,
+      pass: serverEnv.smtpPass,
+    },
+  });
+  cachedTransportKey = key;
+  return cachedTransporter;
+}
+
 /**
  * Sends transactional email via SMTP when configured.
  * In development without SMTP credentials, logs a clear fallback notice so auth flows remain testable.
@@ -18,19 +40,15 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
       console.info(
         `[EMAIL_DEV_FALLBACK] To: ${options.to} | Subject: ${options.subject}\n${options.text || ""}`,
       );
+    } else {
+      console.error(
+        `[EMAIL_UNCONFIGURED] SMTP credentials missing; skipped "${options.subject}" to ${options.to}`,
+      );
     }
     return false;
   }
 
-  const transporter = nodemailer.createTransport({
-    host: serverEnv.smtpHost,
-    port: serverEnv.smtpPort,
-    secure: serverEnv.smtpPort === 465,
-    auth: {
-      user: serverEnv.smtpUser,
-      pass: serverEnv.smtpPass,
-    },
-  });
+  const transporter = getTransporter();
 
   await transporter.sendMail({
     from: serverEnv.smtpFrom,

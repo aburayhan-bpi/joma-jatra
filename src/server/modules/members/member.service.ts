@@ -502,6 +502,20 @@ export async function deactivateMember(
         );
       }
 
+      const normalizedTrx = normalizeTrxId(input.trxId);
+      if (normalizedTrx) {
+        const duplicateTrx = await DepositReturnModel.exists({
+          trxId: normalizedTrx,
+          isDeleted: false,
+          status: { $ne: "REJECTED" },
+        });
+        if (duplicateTrx) {
+          throw conflict(
+            `Duplicate TrxID "${normalizedTrx}" already exists on an existing return record.`,
+          );
+        }
+      }
+
       settlementReturn = await DepositReturnModel.create({
         memberId: memberObjectId,
         amount: balance.netBalance,
@@ -509,7 +523,7 @@ export async function deactivateMember(
         paymentMethod: account.method,
         paymentAccountId: account._id,
         recipientAccount: input.recipientAccount || user.phone || "",
-        trxId: normalizeTrxId(input.trxId),
+        trxId: normalizedTrx,
         proofImage: input.proofImage || "",
         reason: input.leaveNote || "Full settlement on leaving group",
         returnType: "FULL_SETTLEMENT",

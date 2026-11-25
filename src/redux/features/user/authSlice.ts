@@ -38,7 +38,6 @@ const authSlice = createSlice({
       }
 
       let accessExpires: Date | undefined;
-      let refreshExpires: Date | undefined;
 
       try {
         const decodedAccess = decodeJWT<{ exp?: number }>(accessToken);
@@ -49,23 +48,8 @@ const authSlice = createSlice({
         console.error("Error decoding access token:", e);
       }
 
-      if (refreshToken) {
-        try {
-          const decodedRefresh = decodeJWT<{ exp?: number }>(refreshToken);
-          if (decodedRefresh?.exp) {
-            refreshExpires = new Date(decodedRefresh.exp * 1000);
-          }
-        } catch (e) {
-          console.error("Error decoding refresh token:", e);
-        }
-      }
-
+      // Only mirror accessToken for Next.js proxy.ts; refreshToken is managed server-side as HttpOnly cookie
       Cookies.set("accessToken", accessToken, { expires: accessExpires || 7 });
-      if (refreshToken) {
-        Cookies.set("refreshToken", refreshToken, {
-          expires: refreshExpires || 30,
-        });
-      }
     },
 
     setResetPassToken: (state, action: PayloadAction<string>) => {

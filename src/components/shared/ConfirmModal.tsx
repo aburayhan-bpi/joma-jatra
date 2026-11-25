@@ -57,11 +57,15 @@ const ConfirmModal = ({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-100 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+    >
       <button
         type="button"
         aria-label="Close confirm dialog"
-        className="fixed inset-0 bg-black/45 backdrop-blur-[1px]"
+        className="fixed inset-0 bg-black/45 backdrop-blur-[1px] cursor-pointer"
         onClick={onClose}
       />
 

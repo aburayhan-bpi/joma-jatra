@@ -7,9 +7,11 @@ import {
 } from "@/server/modules/charges/account-charge.service";
 
 export const GET = withErrorHandler<{ id: string }>(async (req, context) => {
-  await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
+  const actor = await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
   const { id } = await context.params;
-  const data = await getChargeById(id);
+  const data = await getChargeById(id, {
+    includeDeleted: actor.role === "ADMIN",
+  });
 
   return sendResponse({
     statusCode: 200,

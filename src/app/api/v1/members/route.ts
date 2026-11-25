@@ -9,7 +9,7 @@ import { createMemberSchema } from "@/server/modules/members/member.validation";
 import { parsePaginationQuery } from "@/server/shared/pagination";
 
 export const GET = withErrorHandler(async (req) => {
-  await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
+  const actor = await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
   const pagination = parsePaginationQuery(req);
   const { searchParams } = new URL(req.url);
 
@@ -17,7 +17,9 @@ export const GET = withErrorHandler(async (req) => {
     pagination,
     status: searchParams.get("status") || undefined,
     role: searchParams.get("role") || undefined,
-    onlyDeleted: searchParams.get("onlyDeleted") === "true",
+    // Restrict raw Trash-only query to Admin (Former/Inactive tab uses includeDeleted=true)
+    onlyDeleted:
+      actor.role === "ADMIN" && searchParams.get("onlyDeleted") === "true",
     includeDeleted: searchParams.get("includeDeleted") === "true",
   });
 

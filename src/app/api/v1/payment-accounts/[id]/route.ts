@@ -9,9 +9,11 @@ import {
 import { updatePaymentAccountSchema } from "@/server/modules/payment-accounts/payment-account.validation";
 
 export const GET = withErrorHandler<{ id: string }>(async (req, context) => {
-  await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
+  const actor = await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
   const { id } = await context.params;
-  const data = await getPaymentAccountById(id);
+  const data = await getPaymentAccountById(id, {
+    includeDeleted: actor.role === "ADMIN",
+  });
 
   return sendResponse({
     statusCode: 200,

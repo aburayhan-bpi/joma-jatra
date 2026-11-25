@@ -229,25 +229,17 @@ const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProps>(
     /* 👉 Link version (same shadcn style) */
     if (btnLink) {
       return (
-        // <Link
-        //   href={btnLink}
-        //   onClick={props.onClick}
-        //   className={cn(
-        //     buttonVariants({ variant, size }),
-        //     loading && "pointer-events-none",
-        //     className
-        //   )}
-        // >
-        //   {content}
-        // </Link>
         <Link
           href={btnLink}
           className={cn(
             buttonVariants({ variant, size }),
+            "cursor-pointer",
             loading && "pointer-events-none",
             className,
           )}
-        />
+        >
+          {content}
+        </Link>
       );
     }
 
@@ -255,7 +247,11 @@ const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProps>(
     return (
       <button
         ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
+        className={cn(
+          buttonVariants({ variant, size }),
+          "cursor-pointer",
+          className,
+        )}
         disabled={disabled || loading}
         {...props}
       >

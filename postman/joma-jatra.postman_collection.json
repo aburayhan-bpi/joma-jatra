@@ -395,6 +395,19 @@
         },
         {
           "name": "Change Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res?.data?.accessToken) pm.collectionVariables.set('accessToken', res.data.accessToken);",
+                  "if (res?.data?.refreshToken) pm.collectionVariables.set('refreshToken', res.data.refreshToken);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -435,7 +448,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Password changed successfully\",\n  \"data\": {\n    \"updated\": true\n  }\n}"
+              "body": "{\n  \"success\": true,\n  \"statusCode\": 200,\n  \"message\": \"Password changed successfully\",\n  \"data\": {\n    \"updated\": true,\n    \"accessToken\": \"<new-jwt-access-token>\",\n    \"refreshToken\": \"<new-jwt-refresh-token>\"\n  }\n}"
             }
           ]
         },

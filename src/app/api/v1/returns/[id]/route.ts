@@ -9,9 +9,11 @@ import {
 import { updateReturnSchema } from "@/server/modules/returns/deposit-return.validation";
 
 export const GET = withErrorHandler<{ id: string }>(async (req, context) => {
-  await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
+  const actor = await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
   const { id } = await context.params;
-  const data = await getReturnById(id);
+  const data = await getReturnById(id, {
+    includeDeleted: actor.role === "ADMIN",
+  });
 
   return sendResponse({
     statusCode: 200,

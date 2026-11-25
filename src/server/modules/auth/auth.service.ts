@@ -5,6 +5,7 @@ import {
   badRequest,
   conflict,
   notFound,
+  tooManyRequests,
   unauthorized,
 } from "../../core/app-error";
 import {
@@ -41,12 +42,21 @@ function issueTokens(user: IUserDocument) {
     userId: user._id.toString(),
     email: user.email,
     role: user.role,
+    tokenVersion: user.tokenVersion ?? 0,
   };
 
   return {
     accessToken: signAccessToken(payload),
     refreshToken: signRefreshToken(payload),
   };
+}
+
+/**
+ * Increments tokenVersion on the user so all existing JWT access & refresh tokens are revoked server-side.
+ */
+export async function revokeUserSessions(userId: string) {
+  await connectDB();
+  await UserModel.updateOne({ _id: userId }, { $inc: { tokenVersion: 1 } });
 }
 
 /**
@@ -146,6 +156,10 @@ export async function refreshAuthTokens(refreshToken: string) {
 
   if (!user || user.isDeleted || user.status !== "ACTIVE") {
     throw unauthorized("Your account is no longer active");
+  }
+
+  if ((decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+    throw unauthorized("Session has been revoked. Please log in again.");
   }
 
   const tokens = issueTokens(user);
@@ -270,6 +284,8 @@ export async function changeUserPassword(
 
   user.password = input.newPassword;
   user.mustChangePassword = false;
+  // Bump tokenVersion to invalidate all other sessions, then issue fresh tokens for current caller
+  user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   await user.save();
 
   await logActivity({
@@ -281,8 +297,15 @@ export async function changeUserPassword(
     performedBy: user._id,
   });
 
-  return { updated: true };
+  const tokens = issueTokens(user);
+  return {
+    updated: true,
+    ...tokens,
+  };
 }
+
+const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
+const MAX_OTP_VERIFY_ATTEMPTS = 5;
 
 /**
  * Generates a 6-digit password reset OTP and emails it to an active user.
@@ -294,17 +317,38 @@ export async function requestForgotPasswordOtp(email: string) {
     email: email.toLowerCase(),
     isDeleted: false,
     status: "ACTIVE",
-  }).select("+resetOtp +resetOtpExpires");
+  }).select("+resetOtp +resetOtpExpires +resetOtpAttempts +resetOtpSentAt +resetTokenId");
 
   // Always return a generic success response to prevent email enumeration
   if (!user) {
     return { sent: true };
   }
 
-  const otp = String(crypto.randomInt(100000, 999999));
+  // Enforce a 60-second resend cooldown per account to protect SMTP quota
+  if (
+    user.resetOtpSentAt &&
+    Date.now() - user.resetOtpSentAt.getTime() < OTP_RESEND_COOLDOWN_MS
+  ) {
+    const waitSec = Math.max(
+      1,
+      Math.ceil(
+        (OTP_RESEND_COOLDOWN_MS - (Date.now() - user.resetOtpSentAt.getTime())) /
+          1000,
+      ),
+    );
+    throw tooManyRequests(
+      `Please wait ${waitSec} second(s) before requesting another verification code.`,
+    );
+  }
+
+  // crypto.randomInt upper bound is exclusive, so 1000000 covers full 100000..999999
+  const otp = String(crypto.randomInt(100000, 1000000));
   const salt = await bcrypt.genSalt(8);
   user.resetOtp = await bcrypt.hash(otp, salt);
   user.resetOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
+  user.resetOtpAttempts = 0;
+  user.resetOtpSentAt = new Date();
+  user.resetTokenId = null;
   await user.save();
 
   const otpEmail = buildPasswordResetOtpEmail({
@@ -322,7 +366,7 @@ export async function requestForgotPasswordOtp(email: string) {
 }
 
 /**
- * Verifies forgot-password OTP and issues a short-lived password reset token.
+ * Verifies forgot-password OTP and issues a short-lived, single-use password reset token.
  */
 export async function verifyForgotPasswordOtp(email: string, otp: string) {
   await connectDB();
@@ -331,7 +375,7 @@ export async function verifyForgotPasswordOtp(email: string, otp: string) {
     email: email.toLowerCase(),
     isDeleted: false,
     status: "ACTIVE",
-  }).select("+resetOtp +resetOtpExpires");
+  }).select("+resetOtp +resetOtpExpires +resetOtpAttempts +resetTokenId");
 
   if (!user || !user.resetOtp || !user.resetOtpExpires) {
     throw badRequest("Invalid or expired verification code");
@@ -343,11 +387,37 @@ export async function verifyForgotPasswordOtp(email: string, otp: string) {
 
   const isValid = await bcrypt.compare(otp, user.resetOtp);
   if (!isValid) {
+    const attempts = (user.resetOtpAttempts ?? 0) + 1;
+    if (attempts >= MAX_OTP_VERIFY_ATTEMPTS) {
+      // Invalidate OTP after too many wrong guesses to stop brute-force attacks
+      user.resetOtp = null;
+      user.resetOtpExpires = null;
+      user.resetOtpAttempts = 0;
+      user.resetTokenId = null;
+      await user.save();
+      throw tooManyRequests(
+        "Too many invalid attempts. This verification code has been invalidated — please request a new one.",
+      );
+    }
+    user.resetOtpAttempts = attempts;
+    await user.save();
     throw badRequest("Invalid verification code");
   }
 
+  // Clear OTP so it cannot be re-verified, bind reset JWT to a one-time nonce, and align expiry to 15m
+  const resetTokenId = crypto.randomBytes(16).toString("hex");
+  user.resetOtp = null;
+  user.resetTokenId = resetTokenId;
+  user.resetOtpExpires = new Date(Date.now() + 15 * 60 * 1000);
+  user.resetOtpAttempts = 0;
+  await user.save();
+
   const resetToken = jwt.sign(
-    { userId: user._id.toString(), purpose: "PASSWORD_RESET" },
+    {
+      userId: user._id.toString(),
+      purpose: "PASSWORD_RESET",
+      jti: resetTokenId,
+    },
     serverEnv.jwtAccessSecret,
     { expiresIn: "15m" },
   );
@@ -356,7 +426,7 @@ export async function verifyForgotPasswordOtp(email: string, otp: string) {
 }
 
 /**
- * Resets password using a verified short-lived reset token.
+ * Resets password using a verified short-lived single-use reset token.
  */
 export async function resetUserPassword(
   resetToken: string,
@@ -364,36 +434,49 @@ export async function resetUserPassword(
 ) {
   await connectDB();
 
-  let decoded: { userId: string; purpose?: string };
+  let decoded: { userId: string; purpose?: string; jti?: string };
   try {
     decoded = jwt.verify(resetToken, serverEnv.jwtAccessSecret) as {
       userId: string;
       purpose?: string;
+      jti?: string;
     };
   } catch {
     throw unauthorized("Reset token is invalid or expired");
   }
 
-  if (decoded.purpose !== "PASSWORD_RESET") {
+  if (decoded.purpose !== "PASSWORD_RESET" || !decoded.jti) {
     throw unauthorized("Invalid reset token purpose");
   }
 
-  const user = await UserModel.findById(decoded.userId).select(
-    "+password +resetOtp +resetOtpExpires",
-  );
-  if (!user || user.isDeleted || user.status !== "ACTIVE") {
-    throw notFound("Active user account not found");
-  }
+  // Atomically consume the one-time resetTokenId so concurrent replays cannot succeed
+  const user = await UserModel.findOneAndUpdate(
+    {
+      _id: decoded.userId,
+      isDeleted: false,
+      status: "ACTIVE",
+      resetTokenId: decoded.jti,
+      resetOtpExpires: { $gt: new Date() },
+    },
+    {
+      $set: {
+        resetOtp: null,
+        resetOtpExpires: null,
+        resetOtpAttempts: 0,
+        resetTokenId: null,
+      },
+    },
+    { new: true },
+  ).select("+password");
 
-  // Enforce single-use reset token: resetOtp is cleared immediately once used
-  if (!user.resetOtp || !user.resetOtpExpires) {
+  if (!user) {
     throw unauthorized("Reset token has already been used or expired");
   }
 
   user.password = newPassword;
   user.mustChangePassword = false;
-  user.resetOtp = null;
-  user.resetOtpExpires = null;
+  // Invalidate all previous sessions across devices upon password reset
+  user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   await user.save();
 
   await logActivity({

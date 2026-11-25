@@ -122,10 +122,18 @@ export async function listDeposits({
   };
 }
 
-export async function getDepositById(id: string) {
+export async function getDepositById(
+  id: string,
+  options?: { includeDeleted?: boolean },
+) {
   await connectDB();
 
-  const deposit = await DepositModel.findById(toObjectId(id, "depositId"))
+  const filter: Record<string, unknown> = { _id: toObjectId(id, "depositId") };
+  if (!options?.includeDeleted) {
+    filter.isDeleted = false;
+  }
+
+  const deposit = await DepositModel.findOne(filter)
     .populate("memberId", "name email phone role status")
     .populate("paymentAccountId", "accountName accountNumber method")
     .populate("createdBy", "name role")
@@ -192,7 +200,12 @@ export async function createDeposit(
   const normalizedTrx = normalizeTrxId(input.trxId);
   await ensureUniqueTrxId(normalizedTrx);
 
-  const depositDate = canEnterForOthers
+  const isSelfEntry = targetMember._id.toString() === actor.id;
+  // Cashiers entering their own deposit follow regular member rules (cannot backdate or self-approve)
+  const canAutoApproveAndBackdate =
+    actor.role === "ADMIN" || (actor.role === "CASHIER" && !isSelfEntry);
+
+  const depositDate = canAutoApproveAndBackdate
     ? resolveTransactionDate(input.depositDate)
     : new Date();
   const month = input.month || formatYearMonth(depositDate);
@@ -203,7 +216,6 @@ export async function createDeposit(
   let reviewedBy = null;
   let reviewedAt = null;
 
-  const isSelfEntry = targetMember._id.toString() === actor.id;
   if (actor.role === "ADMIN") {
     status = "APPROVED";
     entrySource = "ADMIN_MANUAL";
@@ -218,7 +230,7 @@ export async function createDeposit(
 
   const deposit = await DepositModel.create({
     memberId: targetMember._id,
-    amount: input.amount,
+    amount: roundMoney(input.amount),
     month,
     depositDate,
     paymentMethod: account.method,
@@ -349,11 +361,21 @@ export async function updateDeposit(
   }
 
   if (input.paymentAccountId) {
+    const isAccountChanged =
+      input.paymentAccountId !== deposit.paymentAccountId.toString();
     const account = await PaymentAccountModel.findOne({
       _id: toObjectId(input.paymentAccountId, "paymentAccountId"),
       isDeleted: false,
+      // Reassigning a deposit to a different account requires an active account
+      ...(isAccountChanged ? { isActive: true } : {}),
     });
-    if (!account) throw notFound("Payment account not found");
+    if (!account) {
+      throw notFound(
+        isAccountChanged
+          ? "Active payment account not found"
+          : "Payment account not found",
+      );
+    }
     if (input.paymentMethod && input.paymentMethod !== account.method) {
       throw badRequest(
         `Payment method (${input.paymentMethod}) does not match selected account "${account.accountName}" (${account.method}).`,
@@ -373,9 +395,10 @@ export async function updateDeposit(
     deposit.trxId = normalizedTrx;
   }
 
-  if (input.amount !== undefined) deposit.amount = input.amount;
+  if (input.amount !== undefined) deposit.amount = roundMoney(input.amount);
   if (input.month !== undefined) deposit.month = input.month;
-  if (input.depositDate !== undefined) {
+  // Only Admin can backdate or override depositDate on edit
+  if (input.depositDate !== undefined && actor.role === "ADMIN") {
     deposit.depositDate = resolveTransactionDate(input.depositDate);
   }
   if (input.proofImage !== undefined) deposit.proofImage = input.proofImage;
@@ -450,58 +473,71 @@ export async function reviewDeposit(
     }
   }
 
-  deposit.status = input.status;
-  deposit.rejectionReason =
+  // Atomic conditional status transition prevents concurrent double-approval / duplicate emails
+  const rejectionReason =
     input.status === "REJECTED" ? input.rejectionReason || "Rejected" : null;
-  deposit.reviewedBy = toObjectId(actor.id, "actorId");
-  deposit.reviewedAt = new Date();
-  await deposit.save();
+  const updatedDeposit = await DepositModel.findOneAndUpdate(
+    { _id: deposit._id, status: "PENDING", isDeleted: false },
+    {
+      $set: {
+        status: input.status,
+        rejectionReason,
+        reviewedBy: toObjectId(actor.id, "actorId"),
+        reviewedAt: new Date(),
+      },
+    },
+    { new: true },
+  );
+
+  if (!updatedDeposit) {
+    throw badRequest("This deposit has already been reviewed by another manager");
+  }
 
   const [member, account] = await Promise.all([
-    UserModel.findById(deposit.memberId).select("name email").lean(),
-    PaymentAccountModel.findById(deposit.paymentAccountId)
+    UserModel.findById(updatedDeposit.memberId).select("name email").lean(),
+    PaymentAccountModel.findById(updatedDeposit.paymentAccountId)
       .select("accountName")
       .lean(),
   ]);
 
   await logActivity({
     entityType: "DEPOSIT",
-    entityId: deposit._id,
-    targetMemberId: deposit.memberId,
+    entityId: updatedDeposit._id,
+    targetMemberId: updatedDeposit.memberId,
     action: input.status,
     summary:
       input.status === "APPROVED"
-        ? `${actor.name} approved ৳${deposit.amount} deposit from ${member?.name || "Member"} (${deposit.month})`
-        : `${actor.name} rejected ৳${deposit.amount} deposit from ${member?.name || "Member"} — ${deposit.rejectionReason}`,
-    amount: deposit.amount,
-    proofImage: deposit.proofImage || null,
+        ? `${actor.name} approved ৳${updatedDeposit.amount} deposit from ${member?.name || "Member"} (${updatedDeposit.month})`
+        : `${actor.name} rejected ৳${updatedDeposit.amount} deposit from ${member?.name || "Member"} — ${updatedDeposit.rejectionReason}`,
+    amount: updatedDeposit.amount,
+    proofImage: updatedDeposit.proofImage || null,
     performedBy: actor.id,
   });
 
   if (member?.email) {
     const updatedBalance =
       input.status === "APPROVED"
-        ? await getMemberBalance(deposit.memberId)
+        ? await getMemberBalance(updatedDeposit.memberId)
         : null;
     await safeSendEmail({
       to: member.email,
       ...buildDepositReceiptEmail({
         memberName: member.name,
         status: input.status,
-        amount: deposit.amount,
-        month: deposit.month,
-        depositDate: deposit.depositDate,
-        paymentMethod: deposit.paymentMethod,
-        paymentAccountName: account?.accountName || deposit.paymentMethod,
-        trxId: deposit.trxId,
+        amount: updatedDeposit.amount,
+        month: updatedDeposit.month,
+        depositDate: updatedDeposit.depositDate,
+        paymentMethod: updatedDeposit.paymentMethod,
+        paymentAccountName: account?.accountName || updatedDeposit.paymentMethod,
+        trxId: updatedDeposit.trxId,
         reviewedByName: actor.name,
-        rejectionReason: deposit.rejectionReason,
+        rejectionReason: updatedDeposit.rejectionReason,
         newNetBalance: updatedBalance?.netBalance,
       }),
     });
   }
 
-  return getDepositById(deposit._id.toString());
+  return getDepositById(updatedDeposit._id.toString());
 }
 
 /**
@@ -575,6 +611,31 @@ export async function restoreDeposit(actor: AuthUser, id: string) {
   });
   if (!deposit) {
     throw notFound("Deleted deposit not found");
+  }
+
+  // Ensure the destination payment account is not soft-deleted (prevents dashboard reconciliation mismatch)
+  const accountActive = await PaymentAccountModel.exists({
+    _id: deposit.paymentAccountId,
+    isDeleted: false,
+  });
+  if (!accountActive) {
+    throw badRequest(
+      "Cannot restore deposit: its payment account is currently in Trash. Restore the payment account first.",
+    );
+  }
+
+  // Prevent restoring a PENDING deposit onto a deactivated/former member
+  if (deposit.status === "PENDING") {
+    const memberActive = await UserModel.exists({
+      _id: deposit.memberId,
+      isDeleted: false,
+      status: "ACTIVE",
+    });
+    if (!memberActive) {
+      throw badRequest(
+        "Cannot restore a pending deposit for a deactivated member. Restore the member first.",
+      );
+    }
   }
 
   if (deposit.trxId && deposit.status !== "REJECTED") {

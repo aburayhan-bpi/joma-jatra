@@ -382,8 +382,11 @@ export async function getAccountBalance(
 
 /**
  * Single Source of Truth for Group Fund Reconciliation.
+ * Accepts an optional precomputed account balances map to avoid duplicate DB aggregations.
  */
-export async function getGroupFundSummary(): Promise<GroupFundSummary> {
+export async function getGroupFundSummary(
+  precomputedAccountBalances?: Map<string, AccountBalanceSummary>,
+): Promise<GroupFundSummary> {
   const [
     depositAgg,
     returnAgg,
@@ -415,7 +418,9 @@ export async function getGroupFundSummary(): Promise<GroupFundSummary> {
       .select("_id")
       .lean(),
     PaymentAccountModel.find({}).select("_id").lean(),
-    getAllAccountBalances(),
+    precomputedAccountBalances
+      ? Promise.resolve(precomputedAccountBalances)
+      : getAllAccountBalances(),
   ]);
 
   const totalApprovedDeposits = roundMoney(depositAgg[0]?.total || 0);

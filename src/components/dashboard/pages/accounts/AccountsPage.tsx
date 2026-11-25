@@ -91,15 +91,18 @@ export default function AccountsPage() {
 
   const [deleteAccount, { isLoading: isDeletingAccount }] =
     useDeletePaymentAccountMutation();
-  const [restoreAccount] = useRestorePaymentAccountMutation();
+  const [restoreAccount, { isLoading: isRestoringAccount }] =
+    useRestorePaymentAccountMutation();
 
   const [deleteTransfer, { isLoading: isDeletingTransfer }] =
     useDeleteTransferMutation();
-  const [restoreTransfer] = useRestoreTransferMutation();
+  const [restoreTransfer, { isLoading: isRestoringTransfer }] =
+    useRestoreTransferMutation();
 
   const [deleteCharge, { isLoading: isDeletingCharge }] =
     useDeleteChargeMutation();
-  const [restoreCharge] = useRestoreChargeMutation();
+  const [restoreCharge, { isLoading: isRestoringCharge }] =
+    useRestoreChargeMutation();
 
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [accountModalOpen, setAccountModalOpen] = useState(false);
@@ -374,8 +377,9 @@ export default function AccountsPage() {
                           {onlyDeleted && isAdmin && (
                             <button
                               type="button"
+                              disabled={isRestoringAccount}
                               onClick={() => handleRestore("accounts", acc.id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-border text-xs font-medium text-primary hover:bg-muted cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded border border-border text-xs font-medium text-primary hover:bg-muted disabled:opacity-50 cursor-pointer"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                               Restore
@@ -504,8 +508,9 @@ export default function AccountsPage() {
                           {onlyDeleted ? (
                             <button
                               type="button"
+                              disabled={isRestoringTransfer}
                               onClick={() => handleRestore("transfers", trf.id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs font-medium text-primary hover:bg-muted cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs font-medium text-primary hover:bg-muted disabled:opacity-50 cursor-pointer"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                               Restore
@@ -609,8 +614,9 @@ export default function AccountsPage() {
                           {onlyDeleted ? (
                             <button
                               type="button"
+                              disabled={isRestoringCharge}
                               onClick={() => handleRestore("charges", chg.id)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs font-medium text-primary hover:bg-muted cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-border text-xs font-medium text-primary hover:bg-muted disabled:opacity-50 cursor-pointer"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                               Restore

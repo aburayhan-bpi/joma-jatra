@@ -82,15 +82,10 @@ function PaymentAccountForm({
       accountName: accountName.trim(),
       accountNumber: accountNumber.trim(),
       accountType,
-      bankName:
-        method === "BANK_TRANSFER" ? bankName.trim() || undefined : undefined,
-      branchName:
-        method === "BANK_TRANSFER" ? branchName.trim() || undefined : undefined,
-      routingNumber:
-        method === "BANK_TRANSFER"
-          ? routingNumber.trim() || undefined
-          : undefined,
-      note: note.trim() || undefined,
+      bankName: method === "BANK_TRANSFER" ? bankName.trim() : "",
+      branchName: method === "BANK_TRANSFER" ? branchName.trim() : "",
+      routingNumber: method === "BANK_TRANSFER" ? routingNumber.trim() : "",
+      note: note.trim(),
       isActive,
     };
 

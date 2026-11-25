@@ -41,10 +41,10 @@ function ReturnForm({
   const isEditing = Boolean(editingReturn);
 
   const { data: meRes } = useGetMeQuery();
-  // Include inactive/former members so Admin/Cashier can settle unsettled former balances
+  // Include inactive/former members so Admin/Cashier can settle or edit any member's return with accurate balance
   const { data: membersRes } = useGetMembersQuery(
     { limit: 100, includeDeleted: true },
-    { skip: !isManager || isEditing },
+    { skip: !isManager },
   );
   // Include non-deleted accounts (even if inactive for new deposits) so held funds can be paid out
   const { data: accountsRes } = useGetPaymentAccountsQuery(
@@ -86,6 +86,7 @@ function ReturnForm({
   const members = membersRes?.data || [];
   const accounts = accountsRes?.data || [];
 
+  const isEditingApproved = isEditing && editingReturn?.status === "APPROVED";
   const targetMemberId = isManager ? memberId || user?.id || "" : user?.id || "";
   const isDirectPayout =
     !isEditing &&
@@ -93,7 +94,16 @@ function ReturnForm({
       (user?.role === "CASHIER" &&
         Boolean(targetMemberId) &&
         targetMemberId !== user?.id));
-  const requiresPayoutAccount = isDirectPayout && returnType !== "DONATED_WAIVER";
+  // Self return requests cannot be DONATED_WAIVER; coerce safely if Cashier switches back to self
+  const effectiveReturnType: ReturnType =
+    !isEditing && !isDirectPayout && returnType === "DONATED_WAIVER"
+      ? "PARTIAL"
+      : returnType;
+  const requiresPayoutAccount =
+    isDirectPayout && effectiveReturnType !== "DONATED_WAIVER";
+  const showPayoutMetadataFields =
+    requiresPayoutAccount ||
+    (isEditingApproved && effectiveReturnType !== "DONATED_WAIVER");
 
   const activeAccountId = paymentAccountId || accounts[0]?.id || "";
   const selectedAccount = accounts.find((a) => a.id === activeAccountId);
@@ -101,16 +111,17 @@ function ReturnForm({
   const selectedMember = members.find((m) => m.id === targetMemberId);
   const availableBalance = isManager
     ? selectedMember?.financialSummary.netBalance ??
-      meRes?.data?.financialSummary.netBalance ??
-      0
+      (targetMemberId === user?.id
+        ? meRes?.data?.financialSummary.netBalance ?? 0
+        : 0)
     : meRes?.data?.financialSummary.netBalance ?? 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const numericAmount = Number(amount);
 
-    if (!numericAmount || numericAmount <= 0) {
-      toast.error("Please enter a valid return amount");
+    if (!isEditingApproved && (!numericAmount || numericAmount < 1)) {
+      toast.error("Return amount must be at least ৳1");
       return;
     }
     if (requiresPayoutAccount && !activeAccountId) {
@@ -120,32 +131,39 @@ function ReturnForm({
 
     try {
       if (isEditing && editingReturn) {
-        const chosenAccount = paymentAccountId
-          ? accounts.find((a) => a.id === paymentAccountId)
-          : undefined;
+        const chosenAccount =
+          returnType !== "DONATED_WAIVER" && paymentAccountId
+            ? accounts.find((a) => a.id === paymentAccountId)
+            : undefined;
         await updateReturn({
           id: editingReturn.id,
-          amount: numericAmount,
-          recipientAccount: recipientAccount.trim() || undefined,
-          reason: reason.trim() || undefined,
-          paymentAccountId: paymentAccountId || undefined,
-          paymentMethod: chosenAccount?.method,
-          trxId: trxId.trim() || undefined,
-          proofImage: proofImage || undefined,
+          // Amount is locked once a return is approved; only metadata can be updated
+          ...(isEditingApproved ? {} : { amount: numericAmount }),
+          recipientAccount:
+            returnType === "DONATED_WAIVER" ? undefined : recipientAccount.trim(),
+          reason: reason.trim(),
+          paymentAccountId:
+            returnType === "DONATED_WAIVER"
+              ? undefined
+              : paymentAccountId || undefined,
+          paymentMethod:
+            returnType === "DONATED_WAIVER" ? undefined : chosenAccount?.method,
+          trxId: trxId.trim(),
+          proofImage: proofImage.trim(),
         }).unwrap();
         toast.success("Return updated");
       } else {
         await createReturn({
           memberId: isManager && targetMemberId ? targetMemberId : undefined,
           amount: numericAmount,
-          returnType,
+          returnType: effectiveReturnType,
           returnDate,
           paymentAccountId: requiresPayoutAccount ? activeAccountId : undefined,
           paymentMethod: requiresPayoutAccount
             ? selectedAccount?.method
             : undefined,
           recipientAccount:
-            returnType === "DONATED_WAIVER"
+            effectiveReturnType === "DONATED_WAIVER"
               ? undefined
               : recipientAccount.trim() || undefined,
           trxId: requiresPayoutAccount ? trxId.trim() || undefined : undefined,
@@ -155,7 +173,7 @@ function ReturnForm({
           reason: reason.trim() || undefined,
         }).unwrap();
         toast.success(
-          returnType === "DONATED_WAIVER"
+          effectiveReturnType === "DONATED_WAIVER"
             ? "Balance donation/waiver recorded"
             : isDirectPayout
               ? "Return processed & approved"
@@ -177,7 +195,17 @@ function ReturnForm({
           </label>
           <AppSelect
             value={memberId}
-            onChange={setMemberId}
+            onChange={(nextMemberId) => {
+              setMemberId(nextMemberId);
+              // Reset DONATED_WAIVER when Cashier switches target back to themselves
+              if (
+                user?.role === "CASHIER" &&
+                nextMemberId === user.id &&
+                returnType === "DONATED_WAIVER"
+              ) {
+                setReturnType("PARTIAL");
+              }
+            }}
             placeholder="Select member..."
             options={members.map((m) => ({
               value: m.id,
@@ -218,11 +246,17 @@ function ReturnForm({
             min={1}
             step="any"
             required
+            disabled={isEditingApproved}
             placeholder="e.g. 5000"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full h-9 px-3 rounded border border-input bg-card text-sm text-foreground font-money focus:outline-none focus:ring-2 focus:ring-primary/15"
+            className="w-full h-9 px-3 rounded border border-input bg-card text-sm text-foreground font-money disabled:bg-muted/60 disabled:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
           />
+          {isEditingApproved && (
+            <p className="text-[11px] text-muted-foreground">
+              Approved return amount is locked. You can still update payout metadata below.
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -230,7 +264,7 @@ function ReturnForm({
             Return Type
           </label>
           <AppSelect
-            value={returnType}
+            value={effectiveReturnType}
             onChange={(val) => setReturnType(val as ReturnType)}
             disabled={isEditing}
             options={
@@ -252,8 +286,10 @@ function ReturnForm({
         </div>
       </div>
 
-      {requiresPayoutAccount && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      {showPayoutMetadataFields && (
+        <div
+          className={`grid grid-cols-1 ${isEditingApproved ? "" : "sm:grid-cols-2"} gap-3.5`}
+        >
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-text-description">
               Pay From Account
@@ -269,21 +305,23 @@ function ReturnForm({
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-text-description">
-              Payout Date
-            </label>
-            <input
-              type="date"
-              value={returnDate}
-              onChange={(e) => setReturnDate(e.target.value)}
-              className="w-full h-9 px-3 rounded border border-input bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
-            />
-          </div>
+          {!isEditingApproved && (
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-text-description">
+                Payout Date
+              </label>
+              <input
+                type="date"
+                value={returnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+                className="w-full h-9 px-3 rounded border border-input bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
+              />
+            </div>
+          )}
         </div>
       )}
 
-      {returnType !== "DONATED_WAIVER" && (
+      {effectiveReturnType !== "DONATED_WAIVER" && (
         <div className="space-y-1.5">
           <label className="block text-xs font-medium text-text-description">
             Recipient Number / Account (e.g. Member&apos;s bKash / Bank)
@@ -298,7 +336,7 @@ function ReturnForm({
         </div>
       )}
 
-      {requiresPayoutAccount && (
+      {showPayoutMetadataFields && (
         <>
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-text-description">

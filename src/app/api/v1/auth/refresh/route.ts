@@ -7,15 +7,27 @@ import { refreshTokenSchema } from "@/server/modules/auth/auth.validation";
 export const POST = withErrorHandler(async (req) => {
   const rawBody = await req.json().catch(() => ({}));
   const cookieRefresh = req.cookies.get("refreshToken")?.value;
-  const parsed = refreshTokenSchema.safeParse({
-    refreshToken: rawBody?.refreshToken || cookieRefresh || "",
-  });
+  const bodyRefresh =
+    typeof rawBody?.refreshToken === "string" ? rawBody.refreshToken.trim() : "";
+
+  const primaryToken = bodyRefresh || cookieRefresh || "";
+  const parsed = refreshTokenSchema.safeParse({ refreshToken: primaryToken });
 
   if (!parsed.success) {
     throw unauthorized("Refresh token is missing");
   }
 
-  const data = await refreshAuthTokens(parsed.data.refreshToken);
+  let data;
+  try {
+    data = await refreshAuthTokens(parsed.data.refreshToken);
+  } catch (err) {
+    // If client sent a stale body token while a newer HttpOnly cookie exists, try the cookie before failing
+    if (bodyRefresh && cookieRefresh && cookieRefresh !== bodyRefresh) {
+      data = await refreshAuthTokens(cookieRefresh);
+    } else {
+      throw err;
+    }
+  }
   const response = sendResponse({
     statusCode: 200,
     message: "Session refreshed successfully",

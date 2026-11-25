@@ -77,15 +77,24 @@ function formatPlainEmailHtml(email: string): string {
     .replace(/\./g, "&#8203;.");
 }
 
-function makeReceiptRef(
+export function makeReceiptRef(
   prefix: string,
   date: Date | string,
   trxId?: string | null,
 ): string {
   if (trxId) return `${prefix}-${trxId.slice(-6).toUpperCase()}`;
   const d = typeof date === "string" ? new Date(date) : date;
-  const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-  return `${prefix}-${stamp}`;
+  // Format date parts explicitly in Asia/Dhaka so receipt refs never shift by 1 day on UTC servers
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Dhaka",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const year = parts.find((p) => p.type === "year")?.value ?? "0000";
+  const month = parts.find((p) => p.type === "month")?.value ?? "00";
+  const day = parts.find((p) => p.type === "day")?.value ?? "00";
+  return `${prefix}-${year}${month}${day}`;
 }
 
 const DEFAULT_APP_URL = "https://joma-jatra.vercel.app";

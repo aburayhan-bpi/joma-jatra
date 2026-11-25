@@ -80,6 +80,7 @@ export function Pagination({
 
       <div className="flex items-center gap-1.5">
         <button
+          type="button"
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
           className="w-8 h-8 flex items-center justify-center rounded border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"
@@ -91,6 +92,7 @@ export function Pagination({
         <div className="flex items-center gap-1">
           {getPageNumbers().map((page, index) => (
             <button
+              type="button"
               key={index}
               onClick={() => typeof page === "number" && handlePageChange(page)}
               disabled={page === "..." || page === currentPage}
@@ -110,6 +112,7 @@ export function Pagination({
         </div>
 
         <button
+          type="button"
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           className="w-8 h-8 flex items-center justify-center rounded border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 transition-colors shrink-0 hover:cursor-pointer disabled:hover:cursor-default"

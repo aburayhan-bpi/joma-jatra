@@ -7,9 +7,11 @@ import {
 } from "@/server/modules/transfers/account-transfer.service";
 
 export const GET = withErrorHandler<{ id: string }>(async (req, context) => {
-  await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
+  const actor = await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
   const { id } = await context.params;
-  const data = await getTransferById(id);
+  const data = await getTransferById(id, {
+    includeDeleted: actor.role === "ADMIN",
+  });
 
   return sendResponse({
     statusCode: 200,

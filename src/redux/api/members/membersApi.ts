@@ -49,7 +49,14 @@ const membersApi = baseApi.injectEndpoints({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: ["Members", "Dashboard", "ActivityLogs"],
+      invalidatesTags: [
+        "Members",
+        "User",
+        "Deposits",
+        "Returns",
+        "Dashboard",
+        "ActivityLogs",
+      ],
     }),
     changeMemberRole: builder.mutation<
       IMemberResponse,
@@ -84,7 +91,14 @@ const membersApi = baseApi.injectEndpoints({
         url: `/members/${id}/restore`,
         method: "PATCH",
       }),
-      invalidatesTags: ["Members", "Dashboard", "ActivityLogs"],
+      invalidatesTags: [
+        "Members",
+        "User",
+        "Deposits",
+        "Returns",
+        "Dashboard",
+        "ActivityLogs",
+      ],
     }),
   }),
 });

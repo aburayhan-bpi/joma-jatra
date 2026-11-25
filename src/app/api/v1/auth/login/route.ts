@@ -2,8 +2,16 @@ import { sendResponse } from "@/server/core/api-response";
 import { withErrorHandler } from "@/server/core/route-handler";
 import { loginUser } from "@/server/modules/auth/auth.service";
 import { loginSchema } from "@/server/modules/auth/auth.validation";
+import { enforceRateLimit } from "@/server/shared/rate-limit";
 
 export const POST = withErrorHandler(async (req) => {
+  enforceRateLimit(req, {
+    namespace: "auth:login",
+    max: 15,
+    windowMs: 15 * 60 * 1000,
+    message: "Too many login attempts. Please wait a few minutes and try again.",
+  });
+
   const body = loginSchema.parse(await req.json());
   const data = await loginUser(body);
 

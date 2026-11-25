@@ -9,9 +9,11 @@ import {
 import { updateDepositSchema } from "@/server/modules/deposits/deposit.validation";
 
 export const GET = withErrorHandler<{ id: string }>(async (req, context) => {
-  await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
+  const actor = await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
   const { id } = await context.params;
-  const data = await getDepositById(id);
+  const data = await getDepositById(id, {
+    includeDeleted: actor.role === "ADMIN",
+  });
 
   return sendResponse({
     statusCode: 200,

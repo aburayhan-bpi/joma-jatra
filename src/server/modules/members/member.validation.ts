@@ -4,23 +4,27 @@ import {
   USER_ROLES,
 } from "@/types/backend";
 import { z } from "zod";
+import { safeImageUrlSchema } from "../../shared/validation-helpers";
 
 export const createMemberSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
   email: z.string().trim().email("Please enter a valid email address"),
   phone: z.string().trim().max(25).optional().default(""),
-  password: z.string().min(6, "Temporary password must be at least 6 characters"),
+  password: z
+    .string()
+    .min(6, "Temporary password must be at least 6 characters")
+    .max(100, "Password must not exceed 100 characters"),
   // Strictly 1 active Admin is allowed — new members start as MEMBER or CASHIER
   role: z.enum(["MEMBER", "CASHIER"]).optional().default("MEMBER"),
   joinedAt: z.coerce.date().optional(),
-  profileImage: z.string().trim().optional().default(""),
+  profileImage: safeImageUrlSchema.optional().default(""),
   mustChangePassword: z.boolean().optional().default(true),
 });
 
 export const updateMemberSchema = z.object({
   name: z.string().trim().min(2).max(100).optional(),
   phone: z.string().trim().max(25).optional(),
-  profileImage: z.string().trim().optional(),
+  profileImage: safeImageUrlSchema.optional(),
   joinedAt: z.coerce.date().optional(),
 });
 
@@ -39,7 +43,7 @@ export const deactivateMemberSchema = z
     paymentMethod: z.enum(PAYMENT_METHODS).optional(),
     recipientAccount: z.string().trim().max(100).optional().default(""),
     trxId: z.string().trim().max(80).optional(),
-    proofImage: z.string().trim().optional().default(""),
+    proofImage: safeImageUrlSchema.optional().default(""),
   })
   .superRefine((data, ctx) => {
     if (data.action === "SETTLE_AND_CLOSE" && !data.paymentAccountId) {

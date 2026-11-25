@@ -1,4 +1,4 @@
-import { badRequest, notFound } from "../../core/app-error";
+import { badRequest, conflict, notFound } from "../../core/app-error";
 import { AuthUser } from "../../core/auth-guard";
 import { connectDB } from "../../core/db";
 import { getAccountBalance } from "../../shared/accounting.service";
@@ -60,12 +60,37 @@ export async function listTransfers({
   };
 }
 
-export async function getTransferById(id: string) {
+/**
+ * Prevents duplicate TrxID across active (non-deleted) internal transfers.
+ */
+async function ensureUniqueTransferTrxId(trxId?: string, excludeId?: string) {
+  if (!trxId) return;
+  const query: Record<string, unknown> = { trxId, isDeleted: false };
+  if (excludeId) {
+    query._id = { $ne: toObjectId(excludeId, "transferId") };
+  }
+  const existing = await AccountTransferModel.findOne(query)
+    .select("_id")
+    .lean();
+  if (existing) {
+    throw conflict(
+      `Duplicate TrxID "${trxId}" already exists on an existing transfer record.`,
+    );
+  }
+}
+
+export async function getTransferById(
+  id: string,
+  options?: { includeDeleted?: boolean },
+) {
   await connectDB();
 
-  const transfer = await AccountTransferModel.findById(
-    toObjectId(id, "transferId"),
-  )
+  const filter: Record<string, unknown> = { _id: toObjectId(id, "transferId") };
+  if (!options?.includeDeleted) {
+    filter.isDeleted = false;
+  }
+
+  const transfer = await AccountTransferModel.findOne(filter)
     .populate("fromAccountId", "accountName accountNumber method")
     .populate("toAccountId", "accountName accountNumber method")
     .populate("createdBy", "name role")
@@ -108,8 +133,9 @@ export async function createTransfer(
   if (!fromAccount) throw notFound("Source payment account not found");
   if (!toAccount) throw notFound("Destination payment account not found");
 
+  const amount = roundMoney(input.amount);
   const fee = roundMoney(input.transferFee || 0);
-  const totalDeduction = roundMoney(input.amount + fee);
+  const totalDeduction = roundMoney(amount + fee);
   const fromBalance = await getAccountBalance(fromAccount._id);
 
   if (fromBalance.balance < totalDeduction) {
@@ -118,13 +144,16 @@ export async function createTransfer(
     );
   }
 
+  const normalizedTrx = normalizeTrxId(input.trxId);
+  await ensureUniqueTransferTrxId(normalizedTrx);
+
   const transfer = await AccountTransferModel.create({
     fromAccountId: fromAccount._id,
     toAccountId: toAccount._id,
-    amount: input.amount,
+    amount,
     transferFee: fee,
     transferDate: resolveTransactionDate(input.transferDate),
-    trxId: normalizeTrxId(input.trxId),
+    trxId: normalizedTrx,
     proofImage: input.proofImage || "",
     note: input.note || "",
     createdBy: toObjectId(actor.id, "actorId"),
@@ -185,6 +214,27 @@ export async function restoreTransfer(actor: AuthUser, id: string) {
     isDeleted: true,
   });
   if (!transfer) throw notFound("Deleted transfer record not found");
+
+  // Ensure both payment accounts are not soft-deleted before restoring
+  const [fromExists, toExists] = await Promise.all([
+    PaymentAccountModel.exists({
+      _id: transfer.fromAccountId,
+      isDeleted: false,
+    }),
+    PaymentAccountModel.exists({
+      _id: transfer.toAccountId,
+      isDeleted: false,
+    }),
+  ]);
+  if (!fromExists || !toExists) {
+    throw badRequest(
+      "Cannot restore transfer: one or both linked payment accounts are currently in Trash. Restore the account(s) first.",
+    );
+  }
+
+  if (transfer.trxId) {
+    await ensureUniqueTransferTrxId(transfer.trxId, transfer._id.toString());
+  }
 
   const totalDeduction = roundMoney(transfer.amount + transfer.transferFee);
   const fromBalance = await getAccountBalance(transfer.fromAccountId);

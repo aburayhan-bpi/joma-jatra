@@ -11,7 +11,7 @@ import {
   useGetMeQuery,
   useUpdateProfileMutation,
 } from "@/redux/api/getMe/getMeApi";
-import { setUser } from "@/redux/features/user/authSlice";
+import { setTokens, setUser } from "@/redux/features/user/authSlice";
 import { useAppDispatch } from "@/redux/hooks";
 import { IUserProfile } from "@/types/global";
 import { formatDate } from "@/utils/formatDate";
@@ -183,6 +183,7 @@ function ProfileDetailsForm({ profile }: { profile: IUserProfile }) {
  * Self Profile & Password Security Page (/dashboard/profile)
  */
 export default function ProfilePage() {
+  const dispatch = useAppDispatch();
   const { data: meRes, isLoading } = useGetMeQuery();
   const [changePassword, { isLoading: isChangingPassword }] =
     useChangePasswordMutation();
@@ -206,10 +207,19 @@ export default function ProfilePage() {
     }
 
     try {
-      await changePassword({
+      const res = await changePassword({
         currentPassword,
         newPassword,
       }).unwrap();
+      // Rotate stored session tokens so the current browser stays signed in after revoking other sessions
+      if (res?.data?.accessToken) {
+        dispatch(
+          setTokens({
+            accessToken: res.data.accessToken,
+            refreshToken: res.data.refreshToken,
+          }),
+        );
+      }
       toast.success("Password changed successfully");
       setCurrentPassword("");
       setNewPassword("");

@@ -37,6 +37,10 @@ export const POST = withErrorHandler(async (req) => {
     throw badRequest("Only JPG, PNG, and WEBP image files are allowed");
   }
 
+  if (file.size === 0) {
+    throw badRequest("Uploaded image file is empty");
+  }
+
   if (file.size > MAX_FILE_SIZE_BYTES) {
     throw badRequest("Image file size must not exceed 5 MB");
   }

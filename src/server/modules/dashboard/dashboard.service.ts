@@ -28,11 +28,13 @@ export async function getDashboardSummary(actor: AuthUser, monthParam?: string) 
   const currentMonth = monthParam || formatYearMonth(new Date());
   const actorObjectId = toObjectId(actor.id, "actorId");
 
+  // Compute account balances once and reuse inside getGroupFundSummary
+  const accountBalancesMap = await getAllAccountBalances();
+
   const [
     fundSummary,
     currentMonthStats,
     accounts,
-    accountBalancesMap,
     activeMembersCount,
     inactiveMembersCount,
     pendingDepositsCount,
@@ -41,12 +43,11 @@ export async function getDashboardSummary(actor: AuthUser, monthParam?: string) 
     myCurrentMonthAgg,
     myPrivateGoalDoc,
   ] = await Promise.all([
-    getGroupFundSummary(),
+    getGroupFundSummary(accountBalancesMap),
     getMonthlyTargetByMonth(currentMonth),
     PaymentAccountModel.find({ isDeleted: false })
       .sort({ method: 1, createdAt: 1 })
       .lean(),
-    getAllAccountBalances(),
     UserModel.countDocuments({ status: "ACTIVE", isDeleted: false }),
     UserModel.countDocuments({
       $or: [{ status: "INACTIVE" }, { isDeleted: true }],
@@ -212,7 +213,8 @@ export async function getMonthlyMatrix(params?: {
   const sortedMonths = Array.from(monthSet).sort();
   const targetMap = new Map(targets.map((t) => [t.month, t]));
 
-  // Aggregate per-month group totals + per-member-month breakdown
+  // Aggregate per-month group totals (scoped to displayed members so column sums match footer totals)
+  const includedMemberIds = new Set(users.map((u) => u._id.toString()));
   const monthCollectedMap = new Map<
     string,
     { collectedAmount: number; depositCount: number }
@@ -221,6 +223,7 @@ export async function getMonthlyMatrix(params?: {
 
   for (const row of monthlyDepositsAgg) {
     const memberKey = String(row._id.memberId);
+    if (!includedMemberIds.has(memberKey)) continue;
     const monthKey = row._id.month;
 
     memberMonthMap.set(`${memberKey}::${monthKey}`, {

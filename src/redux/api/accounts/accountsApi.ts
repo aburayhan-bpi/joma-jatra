@@ -53,21 +53,45 @@ const accountsApi = baseApi.injectEndpoints({
         method: "PATCH",
         body,
       }),
-      invalidatesTags: ["PaymentAccounts", "Dashboard", "ActivityLogs"],
+      invalidatesTags: [
+        "PaymentAccounts",
+        "Deposits",
+        "Returns",
+        "Transfers",
+        "Charges",
+        "Dashboard",
+        "ActivityLogs",
+      ],
     }),
     deletePaymentAccount: builder.mutation<ISoftDeleteResponse, string>({
       query: (id) => ({
         url: `/payment-accounts/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["PaymentAccounts", "Dashboard", "ActivityLogs"],
+      invalidatesTags: [
+        "PaymentAccounts",
+        "Deposits",
+        "Returns",
+        "Transfers",
+        "Charges",
+        "Dashboard",
+        "ActivityLogs",
+      ],
     }),
     restorePaymentAccount: builder.mutation<IPaymentAccountResponse, string>({
       query: (id) => ({
         url: `/payment-accounts/${id}/restore`,
         method: "PATCH",
       }),
-      invalidatesTags: ["PaymentAccounts", "Dashboard", "ActivityLogs"],
+      invalidatesTags: [
+        "PaymentAccounts",
+        "Deposits",
+        "Returns",
+        "Transfers",
+        "Charges",
+        "Dashboard",
+        "ActivityLogs",
+      ],
     }),
 
     // Internal Transfers

@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  moneyAmountSchema,
+  safeImageUrlSchema,
+} from "../../shared/validation-helpers";
 
 export const createTransferSchema = z
   .object({
@@ -7,10 +11,7 @@ export const createTransferSchema = z
       .string()
       .trim()
       .min(1, "Destination payment account is required"),
-    amount: z
-      .number()
-      .positive("Transfer amount must be greater than 0")
-      .max(100000000),
+    amount: moneyAmountSchema("Transfer amount"),
     transferFee: z
       .number()
       .min(0, "Transfer fee cannot be negative")
@@ -19,7 +20,7 @@ export const createTransferSchema = z
       .default(0),
     transferDate: z.coerce.date().optional(),
     trxId: z.string().trim().max(80).optional(),
-    proofImage: z.string().trim().optional().default(""),
+    proofImage: safeImageUrlSchema.optional().default(""),
     note: z.string().trim().max(400).optional().default(""),
   })
   .refine((data) => data.fromAccountId !== data.toAccountId, {

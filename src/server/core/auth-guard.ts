@@ -10,6 +10,7 @@ export interface JwtPayload {
   userId: string;
   email: string;
   role: UserRole;
+  tokenVersion?: number;
 }
 
 export interface AuthUser {
@@ -44,7 +45,7 @@ export function verifyRefreshToken(token: string): JwtPayload {
 /**
  * Extracts Bearer token from Authorization header or accessToken/auth_token cookie.
  */
-function extractToken(req: NextRequest): string | null {
+export function extractAccessToken(req: NextRequest): string | null {
   const authHeader = req.headers.get("authorization");
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7).trim();
@@ -59,13 +60,13 @@ function extractToken(req: NextRequest): string | null {
 }
 
 /**
- * Authenticates the request, verifies live DB active status, and enforces RBAC roles.
+ * Authenticates the request, verifies live DB active status and tokenVersion, and enforces RBAC roles.
  */
 export async function requireAuth(
   req: NextRequest,
   allowedRoles?: UserRole[],
 ): Promise<AuthUser> {
-  const token = extractToken(req);
+  const token = extractAccessToken(req);
   if (!token) {
     throw unauthorized("Authentication token is missing");
   }
@@ -76,6 +77,11 @@ export async function requireAuth(
   const user = await UserModel.findById(decoded.userId);
   if (!user || user.isDeleted || user.status !== "ACTIVE") {
     throw unauthorized("Your account is inactive or no longer accessible");
+  }
+
+  // Enforce server-side token revocation (logout / password change / password reset)
+  if ((decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+    throw unauthorized("Session has been revoked. Please log in again.");
   }
 
   if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {

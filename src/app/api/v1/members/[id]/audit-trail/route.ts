@@ -7,7 +7,7 @@ import { parsePaginationQuery } from "@/server/shared/pagination";
 export const GET = withErrorHandler<{ id: string }>(async (req, context) => {
   await requireAuth(req, ["ADMIN", "CASHIER", "MEMBER"]);
   const { id } = await context.params;
-  const pagination = parsePaginationQuery(req);
+  const pagination = parsePaginationQuery(req, 25, 1000);
   const { searchParams } = new URL(req.url);
 
   const result = await getMemberAuditTrail(id, {

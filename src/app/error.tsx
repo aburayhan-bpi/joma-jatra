@@ -55,7 +55,7 @@ export default function GlobalError({
             size="lg"
             className="rounded-lg border-border bg-card text-title hover:bg-muted cursor-pointer"
           >
-            <Link href="/dashboard/admin">
+            <Link href="/dashboard">
               <Home className="mr-2 h-5 w-5" />
               Dashboard
             </Link>

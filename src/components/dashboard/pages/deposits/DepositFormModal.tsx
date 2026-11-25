@@ -36,10 +36,10 @@ function DepositForm({
   const isManager = user?.role === "ADMIN" || user?.role === "CASHIER";
   const isEditing = Boolean(editingDeposit);
 
-  const { data: accountsRes } = useGetPaymentAccountsQuery({
-    isActive: true,
-    limit: 100,
-  });
+  // When editing, include inactive accounts so a deposit linked to a deactivated account remains selectable
+  const { data: accountsRes } = useGetPaymentAccountsQuery(
+    isEditing ? { limit: 100 } : { isActive: true, limit: 100 },
+  );
   const { data: membersRes } = useGetMembersQuery(
     { status: "ACTIVE", limit: 100 },
     { skip: !isManager || isEditing },
@@ -74,8 +74,21 @@ function DepositForm({
   const [note, setNote] = useState(editingDeposit?.note || "");
   const [editReason, setEditReason] = useState("");
 
-  const accounts = accountsRes?.data || [];
+  const allAccounts = accountsRes?.data || [];
+  const originalAccountId =
+    editingDeposit?.paymentAccountId?._id ||
+    editingDeposit?.paymentAccountId?.id ||
+    "";
+  // Allow all active accounts plus the deposit's currently linked inactive account while editing
+  const accounts = isEditing
+    ? allAccounts.filter((acc) => acc.isActive || acc.id === originalAccountId)
+    : allAccounts;
   const members = membersRes?.data || [];
+
+  // Only Admin, or Cashier recording for another member, can backdate a deposit
+  const canCustomDate =
+    user?.role === "ADMIN" ||
+    (user?.role === "CASHIER" && !isEditing && memberId !== user?.id);
 
   // Default to the first active account cleanly without useEffect
   const activeAccountId = paymentAccountId || accounts[0]?.id || "";
@@ -85,8 +98,8 @@ function DepositForm({
     e.preventDefault();
     const numericAmount = Number(amount);
 
-    if (!numericAmount || numericAmount <= 0) {
-      toast.error("Please enter a valid deposit amount");
+    if (!numericAmount || numericAmount < 1) {
+      toast.error("Deposit amount must be at least ৳1");
       return;
     }
     if (!activeAccountId) {
@@ -100,12 +113,13 @@ function DepositForm({
           id: editingDeposit.id,
           amount: numericAmount,
           month,
-          depositDate,
+          depositDate: canCustomDate ? depositDate : undefined,
           paymentAccountId: activeAccountId,
           paymentMethod: selectedAccount?.method,
-          trxId: trxId.trim() || undefined,
-          proofImage: proofImage || undefined,
-          note: note.trim() || undefined,
+          // Send empty string explicitly so clearing optional fields persists
+          trxId: trxId.trim(),
+          proofImage: proofImage.trim(),
+          note: note.trim(),
           editReason: editReason.trim() || undefined,
         }).unwrap();
         toast.success("Deposit updated successfully");
@@ -114,7 +128,7 @@ function DepositForm({
           memberId: isManager && memberId ? memberId : undefined,
           amount: numericAmount,
           month,
-          depositDate,
+          depositDate: canCustomDate ? depositDate : undefined,
           paymentAccountId: activeAccountId,
           paymentMethod: selectedAccount?.method,
           trxId: trxId.trim() || undefined,
@@ -195,7 +209,7 @@ function DepositForm({
             placeholder="Select account..."
             options={accounts.map((acc) => ({
               value: acc.id,
-              label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)})`,
+              label: `${acc.accountName} (${getPaymentMethodLabel(acc.method)})${!acc.isActive ? " [Inactive]" : ""}`,
             }))}
           />
         </div>
@@ -207,10 +221,16 @@ function DepositForm({
           <input
             type="date"
             required
+            disabled={!canCustomDate}
             value={depositDate}
             onChange={(e) => setDepositDate(e.target.value)}
-            className="w-full h-9 px-3 rounded border border-input bg-card text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
+            className="w-full h-9 px-3 rounded border border-input bg-card text-sm text-foreground disabled:bg-muted/60 disabled:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/15"
           />
+          {!canCustomDate && (
+            <p className="text-[11px] text-muted-foreground">
+              Member deposits are automatically timestamped with today&apos;s date.
+            </p>
+          )}
         </div>
       </div>
 

@@ -18,6 +18,7 @@ import {
   IVerifyOTPPayload,
   IVerifyOTPResponse,
 } from "@/types/global";
+import { setTokens } from "@/redux/features/user/authSlice";
 import baseApi from "../baseApi";
 
 const authApi = baseApi.injectEndpoints({
@@ -55,7 +56,23 @@ const authApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["User", "ActivityLogs"],
+      // Rotate Redux tokens BEFORE invalidating User/ActivityLogs so refetches use the new tokenVersion
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data?.data?.accessToken) {
+            dispatch(
+              setTokens({
+                accessToken: data.data.accessToken,
+                refreshToken: data.data.refreshToken,
+              }),
+            );
+          }
+          dispatch(baseApi.util.invalidateTags(["User", "ActivityLogs"]));
+        } catch {
+          // Handled by caller
+        }
+      },
     }),
     forgotPassword: builder.mutation<
       IForgotPasswordResponse,

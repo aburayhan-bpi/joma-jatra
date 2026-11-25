@@ -2,7 +2,11 @@ import { badRequest, notFound } from "../../core/app-error";
 import { AuthUser } from "../../core/auth-guard";
 import { connectDB } from "../../core/db";
 import { getAccountBalance } from "../../shared/accounting.service";
-import { resolveTransactionDate, toObjectId } from "../../shared/normalize";
+import {
+  resolveTransactionDate,
+  roundMoney,
+  toObjectId,
+} from "../../shared/normalize";
 import {
   buildPaginationMeta,
   buildSearchFilter,
@@ -51,10 +55,18 @@ export async function listCharges({
   };
 }
 
-export async function getChargeById(id: string) {
+export async function getChargeById(
+  id: string,
+  options?: { includeDeleted?: boolean },
+) {
   await connectDB();
 
-  const charge = await AccountChargeModel.findById(toObjectId(id, "chargeId"))
+  const filter: Record<string, unknown> = { _id: toObjectId(id, "chargeId") };
+  if (!options?.includeDeleted) {
+    filter.isDeleted = false;
+  }
+
+  const charge = await AccountChargeModel.findOne(filter)
     .populate("paymentAccountId", "accountName accountNumber method")
     .populate("createdBy", "name role")
     .lean();
@@ -82,16 +94,17 @@ export async function createCharge(
   });
   if (!account) throw notFound("Payment account not found");
 
+  const amount = roundMoney(input.amount);
   const accountBalance = await getAccountBalance(account._id);
-  if (accountBalance.balance < input.amount) {
+  if (accountBalance.balance < amount) {
     throw badRequest(
-      `Insufficient balance in ${account.accountName} (${account.method}). Available: ৳${accountBalance.balance}, Required: ৳${input.amount}.`,
+      `Insufficient balance in ${account.accountName} (${account.method}). Available: ৳${accountBalance.balance}, Required: ৳${amount}.`,
     );
   }
 
   const charge = await AccountChargeModel.create({
     paymentAccountId: account._id,
-    amount: input.amount,
+    amount,
     title: input.title,
     chargeDate: resolveTransactionDate(input.chargeDate),
     proofImage: input.proofImage || "",
@@ -146,6 +159,17 @@ export async function restoreCharge(actor: AuthUser, id: string) {
     isDeleted: true,
   });
   if (!charge) throw notFound("Deleted charge record not found");
+
+  // Ensure the charged payment account is not soft-deleted
+  const accountExists = await PaymentAccountModel.exists({
+    _id: charge.paymentAccountId,
+    isDeleted: false,
+  });
+  if (!accountExists) {
+    throw badRequest(
+      "Cannot restore charge: its payment account is currently in Trash. Restore the payment account first.",
+    );
+  }
 
   const accountBalance = await getAccountBalance(charge.paymentAccountId);
   if (accountBalance.balance < charge.amount) {

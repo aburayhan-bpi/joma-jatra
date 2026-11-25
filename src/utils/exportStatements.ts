@@ -20,9 +20,9 @@ export function exportMonthlyMatrixExcel(
     "Role",
     "Status",
     ...matrix.months.map((m) => formatMonthLabel(m.month)),
-    "Total Deposited (BDT)",
-    "Total Returned (BDT)",
-    "Net Balance (BDT)",
+    "All-Time Saved (BDT)",
+    "All-Time Returned (BDT)",
+    "All-Time Net (BDT)",
   ];
 
   const rows = matrix.rows.map((row) => [
@@ -91,9 +91,9 @@ export function exportMonthlyMatrixPdf(
   doc.text("Member", marginX + 6, y + 3);
   doc.text("Role", marginX + 180, y + 3);
   doc.text("Status", marginX + 250, y + 3);
-  doc.text("Total Saved", marginX + 360, y + 3);
-  doc.text("Returned", marginX + 490, y + 3);
-  doc.text("Net Balance", marginX + 620, y + 3);
+  doc.text("All-Time Saved", marginX + 360, y + 3);
+  doc.text("All-Time Returned", marginX + 490, y + 3);
+  doc.text("All-Time Net", marginX + 620, y + 3);
   y += 22;
 
   doc.setFont("helvetica", "normal");
@@ -157,6 +157,7 @@ export function exportMemberAuditExcel(
     "Summary",
     "Method",
     "TrxID",
+    "Direction",
     "Amount (BDT)",
     "Status",
     "Actioned By",
@@ -171,11 +172,14 @@ export function exportMemberAuditExcel(
     e.summary,
     e.paymentMethod || "—",
     e.trxId || "—",
+    e.direction,
     e.amount === null
       ? "—"
       : e.direction === "DEBIT"
         ? -e.amount
-        : e.amount,
+        : e.direction === "CREDIT"
+          ? e.amount
+          : `BDT ${e.amount.toLocaleString()} (Neutral)`,
     e.status || "—",
     e.performedBy?.name || "—",
     e.reviewedBy?.name || "—",
@@ -247,7 +251,9 @@ export function exportMemberAuditPdf(
     const amtText =
       e.amount === null
         ? "—"
-        : `${e.direction === "DEBIT" ? "-" : "+"}BDT ${e.amount.toLocaleString()}`;
+        : e.direction === "NEUTRAL"
+          ? `BDT ${e.amount.toLocaleString()}`
+          : `${e.direction === "DEBIT" ? "-" : "+"}BDT ${e.amount.toLocaleString()}`;
     const shortSummary =
       e.summary.length > 42 ? `${e.summary.slice(0, 39)}...` : e.summary;
 

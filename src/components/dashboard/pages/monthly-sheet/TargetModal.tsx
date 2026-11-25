@@ -55,7 +55,7 @@ function TargetForm({
       await upsertTarget({
         month,
         targetAmount: numericAmount,
-        note: note.trim() || undefined,
+        note: note.trim(),
       }).unwrap();
       toast.success(`Saved target for ${formatMonthLabel(month)}`);
       onClose();

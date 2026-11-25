@@ -409,6 +409,10 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
                       <td className="px-4 py-3 text-right font-semibold font-money whitespace-nowrap">
                         {entry.amount === null ? (
                           <span className="text-muted-foreground">—</span>
+                        ) : entry.direction === "NEUTRAL" ? (
+                          <span className="text-muted-foreground">
+                            {formatTaka(entry.amount)}
+                          </span>
                         ) : (
                           <span
                             className={

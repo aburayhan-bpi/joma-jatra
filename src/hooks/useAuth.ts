@@ -7,7 +7,6 @@ import { decodeJWT } from "@/utils/decodeJWT";
 
 const useAuth = () => {
   const token = useAppSelector((state) => state?.auth?.accessToken);
-  const refreshToken = useAppSelector((state) => state?.auth?.refreshToken);
 
   useEffect(() => {
     if (token && !Cookies.get("accessToken")) {
@@ -18,16 +17,7 @@ const useAuth = () => {
       }
       Cookies.set("accessToken", token, { expires: accessExpires || 7 });
     }
-
-    if (refreshToken && !Cookies.get("refreshToken")) {
-      let refreshExpires: Date | undefined;
-      const decodedRefresh = decodeJWT<{ exp?: number }>(refreshToken);
-      if (decodedRefresh?.exp) {
-        refreshExpires = new Date(decodedRefresh.exp * 1000);
-      }
-      Cookies.set("refreshToken", refreshToken, { expires: refreshExpires || 30 });
-    }
-  }, [token, refreshToken]);
+  }, [token]);
 
   return !!token;
 };

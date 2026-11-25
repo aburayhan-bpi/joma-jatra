@@ -8,6 +8,7 @@ export function LogoutButton({ isCollapsed }: { isCollapsed: boolean }) {
 
   return (
     <button
+      type="button"
       onClick={handleLogout}
       className={cn(
         "group w-full flex items-center gap-3 px-3 py-2 rounded transition-colors cursor-pointer border border-border bg-error-5 hover:bg-error-20 hover:text-error hover:border-error/40",

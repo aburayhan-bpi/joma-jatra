@@ -30,3 +30,7 @@ export const notFound = (message = "Requested resource not found") =>
 
 export const conflict = (message: string, details?: unknown) =>
   new AppError(409, message, details);
+
+export const tooManyRequests = (
+  message = "Too many requests. Please wait a moment and try again.",
+) => new AppError(429, message);

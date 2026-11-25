@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import FooterTextSection from "@/components/shared/FooterTextSection";
 import {
   useResendOtpMutation,
   useVerifyOtpMutation,
@@ -9,7 +7,9 @@ import {
 import { setResetPassToken } from "@/redux/features/user/authSlice";
 import { selectEmail } from "@/redux/features/verifyAuth/verifyAuth";
 import { useAppDispatch, useAppSelector } from "@/redux/hook";
+import { getApiErrorMessage } from "@/utils/formatMoney";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
@@ -26,7 +26,8 @@ export default function VerifyEmailPage() {
 
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [error, setError] = useState<string>("");
-  const [resendCountdown, setResendCountdown] = useState(30);
+  // Match backend 60-second resend cooldown
+  const [resendCountdown, setResendCountdown] = useState(60);
   const [resendMessage, setResendMessage] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -102,7 +103,9 @@ export default function VerifyEmailPage() {
         router.replace("/reset-password");
       }
     } catch (err) {
-      setError("Invalid verification code. Please try again.");
+      setError(
+        getApiErrorMessage(err, "Invalid verification code. Please try again."),
+      );
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     }
@@ -122,10 +125,12 @@ export default function VerifyEmailPage() {
       if (result?.success) {
         setResendMessage(result?.message ?? "OTP resent successfully");
         toast.success(result?.message ?? "OTP resent successfully");
-        setResendCountdown(30);
+        setResendCountdown(60);
       }
     } catch (err) {
-      setError("Failed to resend code. Please try again.");
+      setError(
+        getApiErrorMessage(err, "Failed to resend code. Please try again."),
+      );
     }
   };
 
@@ -265,13 +270,19 @@ export default function VerifyEmailPage() {
             </button>
           </motion.div>
 
-          {/* Footer Links */}
+          {/* Back to Login */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6, ease: "easeOut" }}
+            className="text-center"
           >
-            <FooterTextSection />
+            <Link
+              href="/login"
+              className="text-xs font-medium text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
+            >
+              ← Back to Sign In
+            </Link>
           </motion.div>
         </div>
       </motion.div>
