@@ -70,8 +70,10 @@ export default function OverviewPage() {
   const isManager = isAdmin || user?.role === "CASHIER";
 
   const { data: summaryRes, isLoading } = useGetDashboardSummaryQuery();
+  // Include inactive/former members so monthly chart bars match the group Target card and See More modal
   const { data: matrixRes } = useGetMonthlyMatrixQuery({
     year: String(new Date().getFullYear()),
+    includeInactive: true,
   });
 
   const [reviewDeposit, { isLoading: isReviewing }] =
@@ -139,6 +141,9 @@ export default function OverviewPage() {
   const pendingReturns = summary.pendingQueue?.returns || [];
   const hasPendingQueue =
     isManager && (pendingDeposits.length > 0 || pendingReturns.length > 0);
+  const personalGoalAchieved =
+    mySavings.personalGoalAchieved ??
+    Math.max(0, Math.min(mySavings.currentMonthDeposited, mySavings.netBalance));
 
   return (
     <div className="space-y-5">
@@ -232,6 +237,11 @@ export default function OverviewPage() {
               <p className="text-lg font-semibold text-foreground font-money mt-0.5">
                 {formatTaka(mySavings.totalReturned)}
               </p>
+              {mySavings.totalDonatedWaived > 0 && (
+                <p className="text-[11px] text-[#1c6b72] font-money mt-0.5">
+                  Includes {formatTaka(mySavings.totalDonatedWaived)} donated
+                </p>
+              )}
             </div>
           </div>
 
@@ -241,7 +251,7 @@ export default function OverviewPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">
-                {formatMonthLabel(currentMonth.month)} Saved
+                {formatMonthLabel(currentMonth.month)} Deposited
               </p>
               <p className="text-lg font-semibold text-foreground font-money mt-0.5">
                 {formatTaka(mySavings.currentMonthDeposited)}
@@ -272,7 +282,7 @@ export default function OverviewPage() {
 
                 <div className="flex items-center gap-2.5">
                   <span className="font-money text-foreground">
-                    <strong>{formatTaka(mySavings.currentMonthDeposited)}</strong>{" "}
+                    <strong>{formatTaka(personalGoalAchieved)}</strong>{" "}
                     <span className="text-muted-foreground">
                       / {formatTaka(mySavings.personalMonthlyGoal)}
                     </span>
@@ -322,6 +332,11 @@ export default function OverviewPage() {
                     </>
                   ) : (
                     "Great job! You hit your personal savings goal for this month."
+                  )}
+                  {mySavings.currentMonthDeposited > personalGoalAchieved && (
+                    <span className="text-muted-foreground ml-1.5">
+                      • Capped by your {formatTaka(mySavings.netBalance)} net balance
+                    </span>
                   )}
                   {mySavings.pendingDepositsCount > 0 && (
                     <span className="text-gold-dark ml-1.5">
@@ -404,7 +419,20 @@ export default function OverviewPage() {
           valueClassName="text-primary"
           icon={<ShieldCheck className="w-[18px] h-[18px]" />}
           tone="emerald"
-          subtext={`Total Charges: ${formatTaka(fundSummary.totalCharges)}`}
+          subtext={
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+              <span className="font-money">
+                Charges: {formatTaka(fundSummary.totalCharges)}
+              </span>
+              <Link
+                href="/dashboard/returns?returnType=DONATED_WAIVER"
+                className="font-money text-primary hover:text-brand-dark hover:underline cursor-pointer"
+                title="Retained group reserve from donated/waived member balances"
+              >
+                Donated: {formatTaka(fundSummary.totalDonatedWaivers)}
+              </Link>
+            </div>
+          }
         />
 
         <LedgerStatCard
@@ -419,7 +447,23 @@ export default function OverviewPage() {
           tone={
             fundSummary.unsettledFormerMemberPayable > 0 ? "amber" : "slate"
           }
-          subtext={`${counts.inactiveMembersCount} inactive / former member${counts.inactiveMembersCount === 1 ? "" : "s"}`}
+          subtext={
+            <div className="flex items-center justify-between gap-2">
+              <span>
+                {counts.inactiveMembersCount} inactive / former member
+                {counts.inactiveMembersCount === 1 ? "" : "s"}
+              </span>
+              {counts.inactiveMembersCount > 0 && (
+                <Link
+                  href="/dashboard/members?tab=former"
+                  className="inline-flex items-center gap-0.5 text-primary hover:text-brand-dark font-medium whitespace-nowrap cursor-pointer"
+                >
+                  View
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              )}
+            </div>
+          }
         />
 
         <LedgerStatCard

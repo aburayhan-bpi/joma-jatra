@@ -12,6 +12,7 @@ import { updatePaymentAccountSchema } from "../modules/payment-accounts/payment-
 import { createTransferSchema } from "../modules/transfers/account-transfer.validation";
 import {
   computeFundReconciliation,
+  computePersonalGoalProgress,
   computeSingleAccountBalance,
 } from "../shared/accounting.service";
 import { makeReceiptRef } from "../shared/email-templates";
@@ -59,6 +60,47 @@ describe("Accounting Reconciliation & Account Balance Math", () => {
     expect(result.totalCashInHand).toBe(45800);
     expect(result.activeNetFund).toBe(41300);
     expect(result.reconciliationDifference).toBe(0);
+  });
+
+  it("caps personal monthly goal progress by verified netBalance after returns or waivers", () => {
+    // Deposited 200 this month, returned/donated 200 -> netBalance is 0 -> goal progress must be 0
+    expect(
+      computePersonalGoalProgress({
+        currentMonthDeposited: 200,
+        netBalance: 0,
+        personalMonthlyGoal: 700,
+      }),
+    ).toEqual({
+      achievedAmount: 0,
+      remainingAmount: 700,
+      progressPercent: 0,
+    });
+
+    // Deposited 1450 this month, returned/donated 450 -> netBalance is 1000 -> goal capped at 1000 (100%)
+    expect(
+      computePersonalGoalProgress({
+        currentMonthDeposited: 1450,
+        netBalance: 1000,
+        personalMonthlyGoal: 1000,
+      }),
+    ).toEqual({
+      achievedAmount: 1000,
+      remainingAmount: 0,
+      progressPercent: 100,
+    });
+
+    // Existing 5000 balance + 700 deposited this month -> full 700 counts toward 700 goal
+    expect(
+      computePersonalGoalProgress({
+        currentMonthDeposited: 700,
+        netBalance: 5700,
+        personalMonthlyGoal: 700,
+      }),
+    ).toEqual({
+      achievedAmount: 700,
+      remainingAmount: 0,
+      progressPercent: 100,
+    });
   });
 });
 

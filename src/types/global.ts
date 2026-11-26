@@ -663,6 +663,7 @@ export interface IDashboardSummary {
   };
   mySavings: IMemberFinancialSummary & {
     currentMonthDeposited: number;
+    personalGoalAchieved: number;
     personalMonthlyGoal: number;
     personalGoalRemaining: number;
     personalGoalProgressPercent: number;

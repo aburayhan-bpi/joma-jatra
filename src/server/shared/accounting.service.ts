@@ -97,6 +97,30 @@ export function computeSingleAccountBalance(params: {
 }
 
 /**
+ * Pure helper for private personal monthly goal progress.
+ * Caps progress by the member's verified netBalance so returned/waived funds do not inflate goal completion.
+ */
+export function computePersonalGoalProgress(params: {
+  currentMonthDeposited: number;
+  netBalance: number;
+  personalMonthlyGoal: number;
+}) {
+  const goal = roundMoney(Math.max(0, params.personalMonthlyGoal));
+  const achievedAmount = roundMoney(
+    Math.max(0, Math.min(params.currentMonthDeposited, params.netBalance)),
+  );
+  const remainingAmount = roundMoney(Math.max(0, goal - achievedAmount));
+  const progressPercent =
+    goal > 0 ? Math.round((achievedAmount / goal) * 100) : 0;
+
+  return {
+    achievedAmount,
+    remainingAmount,
+    progressPercent,
+  };
+}
+
+/**
  * Computes live financial summary for a single member from approved non-deleted records.
  */
 export async function getMemberBalance(

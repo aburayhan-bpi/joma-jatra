@@ -1,6 +1,7 @@
 import { AuthUser } from "../../core/auth-guard";
 import { connectDB } from "../../core/db";
 import {
+  computePersonalGoalProgress,
   getAllAccountBalances,
   getGroupFundSummary,
   getMemberBalance,
@@ -122,13 +123,11 @@ export async function getDashboardSummary(actor: AuthUser, monthParam?: string) 
   const personalMonthlyGoal = roundMoney(
     myPrivateGoalDoc?.personalMonthlyGoal || 0,
   );
-  const personalGoalRemaining = roundMoney(
-    Math.max(0, personalMonthlyGoal - myCurrentMonthDeposited),
-  );
-  const personalGoalProgressPercent =
-    personalMonthlyGoal > 0
-      ? Math.round((myCurrentMonthDeposited / personalMonthlyGoal) * 100)
-      : 0;
+  const goalProgress = computePersonalGoalProgress({
+    currentMonthDeposited: myCurrentMonthDeposited,
+    netBalance: myBalance.netBalance,
+    personalMonthlyGoal,
+  });
 
   return {
     fundSummary,
@@ -144,9 +143,10 @@ export async function getDashboardSummary(actor: AuthUser, monthParam?: string) 
     mySavings: {
       ...myBalance,
       currentMonthDeposited: myCurrentMonthDeposited,
+      personalGoalAchieved: goalProgress.achievedAmount,
       personalMonthlyGoal,
-      personalGoalRemaining,
-      personalGoalProgressPercent,
+      personalGoalRemaining: goalProgress.remainingAmount,
+      personalGoalProgressPercent: goalProgress.progressPercent,
     },
     pendingQueue,
   };

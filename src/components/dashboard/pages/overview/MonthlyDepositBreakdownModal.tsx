@@ -177,6 +177,26 @@ export default function MonthlyDepositBreakdownModal({
           </div>
         </div>
 
+        {fundSummary.totalDonatedWaivers > 0 && (
+          <div className="rounded border border-[#cae1e3] bg-[#e9f4f5]/60 px-3 py-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="text-foreground">
+              Includes{" "}
+              <strong className="font-money text-[#1c6b72]">
+                {formatTaka(fundSummary.totalDonatedWaivers)}
+              </strong>{" "}
+              in donated/waived group reserve (retained in fund, not split across
+              members)
+            </span>
+            <Link
+              href="/dashboard/returns?returnType=DONATED_WAIVER"
+              onClick={onClose}
+              className="text-primary hover:text-brand-dark font-medium whitespace-nowrap cursor-pointer"
+            >
+              View donations →
+            </Link>
+          </div>
+        )}
+
         {/* Month-wise Member Contributions */}
         {isLoading ? (
           <InlineLoader text="Loading month-wise deposits..." />
