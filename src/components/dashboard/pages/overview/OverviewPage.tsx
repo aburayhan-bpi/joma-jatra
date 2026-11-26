@@ -55,6 +55,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import FundCardInfoModal, { OverviewInfoCardKey } from "./FundCardInfoModal";
 import MonthlyDepositBreakdownModal from "./MonthlyDepositBreakdownModal";
 import PersonalGoalModal from "./PersonalGoalModal";
 import ResetTestDataModal from "./ResetTestDataModal";
@@ -83,6 +84,9 @@ export default function OverviewPage() {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [personalGoalModalOpen, setPersonalGoalModalOpen] = useState(false);
   const [cashBreakdownOpen, setCashBreakdownOpen] = useState(false);
+  const [infoCardKey, setInfoCardKey] = useState<OverviewInfoCardKey | null>(
+    null,
+  );
   const [proofPreview, setProofPreview] = useState<ProofPreviewData | null>(
     null,
   );
@@ -379,6 +383,7 @@ export default function OverviewPage() {
           value={formatTaka(fundSummary.totalCashInHand)}
           icon={<Banknote className="w-[18px] h-[18px]" />}
           tone="steel"
+          onInfoClick={() => setInfoCardKey("cash")}
           badge={
             fundSummary.reconciliationDifference === 0 ? (
               <span className="inline-flex items-center gap-0.5 text-[11px] text-success font-medium">
@@ -419,6 +424,7 @@ export default function OverviewPage() {
           valueClassName="text-primary"
           icon={<ShieldCheck className="w-[18px] h-[18px]" />}
           tone="emerald"
+          onInfoClick={() => setInfoCardKey("activeFund")}
           subtext={
             <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
               <span className="font-money">
@@ -447,6 +453,7 @@ export default function OverviewPage() {
           tone={
             fundSummary.unsettledFormerMemberPayable > 0 ? "amber" : "slate"
           }
+          onInfoClick={() => setInfoCardKey("formerPayable")}
           subtext={
             <div className="flex items-center justify-between gap-2">
               <span>
@@ -471,6 +478,7 @@ export default function OverviewPage() {
           value={formatTaka(currentMonth.collectedAmount)}
           icon={<Target className="w-[18px] h-[18px]" />}
           tone="teal"
+          onInfoClick={() => setInfoCardKey("monthTarget")}
           badge={
             <span className="text-[11px] font-semibold text-primary font-money">
               {currentMonth.progressPercent}%
@@ -793,6 +801,16 @@ export default function OverviewPage() {
       <ProofPreviewModal
         proof={proofPreview}
         onClose={() => setProofPreview(null)}
+      />
+
+      {/* Fund KPI Card Bangla Explanation Modal */}
+      <FundCardInfoModal
+        cardKey={infoCardKey}
+        onClose={() => setInfoCardKey(null)}
+        fundSummary={fundSummary}
+        currentMonth={currentMonth}
+        inactiveMembersCount={counts.inactiveMembersCount}
+        accountBalancesCount={accountBalances.length}
       />
 
       {/* Month-wise Total Deposits Breakdown Modal */}

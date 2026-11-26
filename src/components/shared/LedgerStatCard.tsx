@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Info } from "lucide-react";
 import React from "react";
 
 export type StatTone =
@@ -28,6 +29,8 @@ interface LedgerStatCardProps {
   tone?: StatTone;
   valueClassName?: string;
   footer?: React.ReactNode;
+  onInfoClick?: () => void;
+  infoLabel?: string;
 }
 
 /**
@@ -42,15 +45,28 @@ export default function LedgerStatCard({
   tone = "slate",
   valueClassName,
   footer,
+  onInfoClick,
+  infoLabel,
 }: LedgerStatCardProps) {
   return (
     <div className="bg-card border border-border rounded-md p-4 flex flex-col justify-between gap-2.5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <p className="text-xs font-medium text-muted-foreground truncate">
               {label}
             </p>
+            {onInfoClick && (
+              <button
+                type="button"
+                onClick={onInfoClick}
+                aria-label={infoLabel || `${label} explanation`}
+                title="হিসাবের ব্যাখ্যা দেখুন"
+                className="inline-flex items-center justify-center w-4 h-4 rounded-full text-muted-foreground/80 hover:text-primary hover:bg-primary/10 transition-colors shrink-0 cursor-pointer"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            )}
             {badge}
           </div>
           <p
