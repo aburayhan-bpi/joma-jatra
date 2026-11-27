@@ -6,6 +6,7 @@ import { withErrorHandler } from "@/server/core/route-handler";
 import { ActivityLogModel } from "@/server/modules/activity-logs/activity-log.model";
 import { logActivity } from "@/server/modules/activity-logs/activity-log.service";
 import { AccountChargeModel } from "@/server/modules/charges/account-charge.model";
+import { ChargeAllocationModel } from "@/server/modules/charges/charge-allocation.model";
 import { DepositModel } from "@/server/modules/deposits/deposit.model";
 import { UserModel } from "@/server/modules/members/user.model";
 import { MonthlyTargetModel } from "@/server/modules/monthly-targets/monthly-target.model";
@@ -39,6 +40,7 @@ export const POST = withErrorHandler(async (req) => {
     returnsRes,
     transfersRes,
     chargesRes,
+    chargeAllocationsRes,
     targetsRes,
     accountsRes,
     logsRes,
@@ -47,6 +49,7 @@ export const POST = withErrorHandler(async (req) => {
     DepositReturnModel.deleteMany({}),
     AccountTransferModel.deleteMany({}),
     AccountChargeModel.deleteMany({}),
+    ChargeAllocationModel.deleteMany({}),
     MonthlyTargetModel.deleteMany({}),
     PaymentAccountModel.deleteMany({}),
     ActivityLogModel.deleteMany({}),
@@ -76,6 +79,7 @@ export const POST = withErrorHandler(async (req) => {
       returns: returnsRes.deletedCount || 0,
       transfers: transfersRes.deletedCount || 0,
       charges: chargesRes.deletedCount || 0,
+      chargeAllocations: chargeAllocationsRes.deletedCount || 0,
       monthlyTargets: targetsRes.deletedCount || 0,
       paymentAccounts: accountsRes.deletedCount || 0,
       activityLogs: logsRes.deletedCount || 0,

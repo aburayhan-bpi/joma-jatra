@@ -36,6 +36,17 @@ export function moneyAmountSchema(label: string, max = 100000000) {
 }
 
 /**
+ * Allows fractional settlements/returns down to 1 paisa (৳0.01) so pro-rata charge leftovers never lock accounts.
+ */
+export function settlementAmountSchema(label: string, max = 100000000) {
+  return z
+    .number()
+    .min(0.01, `${label} must be at least ৳0.01`)
+    .max(max, `${label} exceeds the maximum allowed amount`)
+    .transform((val) => roundMoney(val));
+}
+
+/**
  * Validates optional non-negative fee amounts (>= 0) and rounds to 2 decimals.
  */
 export function feeAmountSchema(label = "Fee", max = 10000000) {

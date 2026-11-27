@@ -6,7 +6,7 @@ import {
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { formatDate } from "./formatDate";
-import { formatMonthLabel, formatTaka } from "./formatMoney";
+import { formatMonthLabel, formatTaka, roundCurrency } from "./formatMoney";
 
 /**
  * Exports the Member × Month flexible savings matrix to an Excel (.xlsx) file.
@@ -22,6 +22,7 @@ export function exportMonthlyMatrixExcel(
     ...matrix.months.map((m) => formatMonthLabel(m.month)),
     "All-Time Saved (BDT)",
     "All-Time Returned (BDT)",
+    "All-Time Charges (BDT)",
     "All-Time Net (BDT)",
   ];
 
@@ -35,18 +36,20 @@ export function exportMonthlyMatrixExcel(
     }),
     row.totalDeposited,
     row.totalReturned,
+    row.totalCharges || 0,
     row.netBalance,
   ]);
 
-  // Append monthly totals footer row
+  // Append monthly totals footer row with 2-decimal rounding
   rows.push([
     "Monthly Collected Total",
     "",
     "",
-    ...matrix.months.map((m) => m.collectedAmount),
-    matrix.rows.reduce((sum, r) => sum + r.totalDeposited, 0),
-    matrix.rows.reduce((sum, r) => sum + r.totalReturned, 0),
-    matrix.rows.reduce((sum, r) => sum + r.netBalance, 0),
+    ...matrix.months.map((m) => roundCurrency(m.collectedAmount)),
+    roundCurrency(matrix.rows.reduce((sum, r) => sum + r.totalDeposited, 0)),
+    roundCurrency(matrix.rows.reduce((sum, r) => sum + r.totalReturned, 0)),
+    roundCurrency(matrix.rows.reduce((sum, r) => sum + (r.totalCharges || 0), 0)),
+    roundCurrency(matrix.rows.reduce((sum, r) => sum + r.netBalance, 0)),
   ]);
 
   const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -89,11 +92,12 @@ export function exportMonthlyMatrixPdf(
   doc.rect(marginX, y - 10, 770, 20, "F");
   doc.setFontSize(9);
   doc.text("Member", marginX + 6, y + 3);
-  doc.text("Role", marginX + 180, y + 3);
-  doc.text("Status", marginX + 250, y + 3);
-  doc.text("All-Time Saved", marginX + 360, y + 3);
-  doc.text("All-Time Returned", marginX + 490, y + 3);
-  doc.text("All-Time Net", marginX + 620, y + 3);
+  doc.text("Role", marginX + 165, y + 3);
+  doc.text("Status", marginX + 230, y + 3);
+  doc.text("Saved", marginX + 315, y + 3);
+  doc.text("Returned", marginX + 415, y + 3);
+  doc.text("Charges", marginX + 515, y + 3);
+  doc.text("Net Balance", marginX + 615, y + 3);
   y += 22;
 
   doc.setFont("helvetica", "normal");
@@ -103,11 +107,12 @@ export function exportMonthlyMatrixPdf(
       y = 42;
     }
     doc.text(row.name, marginX + 6, y);
-    doc.text(row.role, marginX + 180, y);
-    doc.text(row.status, marginX + 250, y);
-    doc.text(`BDT ${row.totalDeposited.toLocaleString()}`, marginX + 360, y);
-    doc.text(`BDT ${row.totalReturned.toLocaleString()}`, marginX + 490, y);
-    doc.text(`BDT ${row.netBalance.toLocaleString()}`, marginX + 620, y);
+    doc.text(row.role, marginX + 165, y);
+    doc.text(row.status, marginX + 230, y);
+    doc.text(`BDT ${row.totalDeposited.toLocaleString()}`, marginX + 315, y);
+    doc.text(`BDT ${row.totalReturned.toLocaleString()}`, marginX + 415, y);
+    doc.text(`BDT ${(row.totalCharges || 0).toLocaleString()}`, marginX + 515, y);
+    doc.text(`BDT ${row.netBalance.toLocaleString()}`, marginX + 615, y);
     doc.setDrawColor(215, 229, 221);
     doc.line(marginX, y + 6, marginX + 770, y + 6);
     y += 20;
@@ -190,6 +195,7 @@ export function exportMemberAuditExcel(
     [
       `Total Deposited: ${formatTaka(member.financialSummary.totalDeposited)}`,
       `Total Returned: ${formatTaka(member.financialSummary.totalReturned)}`,
+      `Charges Deducted: ${formatTaka(member.financialSummary.totalCharges || 0)}`,
       `Net Balance: ${formatTaka(member.financialSummary.netBalance)}`,
     ],
     [],
@@ -225,7 +231,7 @@ export function exportMemberAuditPdf(
 
   y += 15;
   doc.text(
-    `Total Saved: BDT ${member.financialSummary.totalDeposited.toLocaleString()}  |  Returned: BDT ${member.financialSummary.totalReturned.toLocaleString()}  |  Net Balance: BDT ${member.financialSummary.netBalance.toLocaleString()}`,
+    `Saved: BDT ${member.financialSummary.totalDeposited.toLocaleString()}  |  Returned: BDT ${member.financialSummary.totalReturned.toLocaleString()}  |  Charges: BDT ${(member.financialSummary.totalCharges || 0).toLocaleString()}  |  Net: BDT ${member.financialSummary.netBalance.toLocaleString()}`,
     marginX,
     y,
   );

@@ -112,6 +112,8 @@ const accountsApi = baseApi.injectEndpoints({
         invalidatesTags: [
           "Transfers",
           "PaymentAccounts",
+          "Members",
+          "Returns",
           "Dashboard",
           "ActivityLogs",
         ],
@@ -125,6 +127,8 @@ const accountsApi = baseApi.injectEndpoints({
       invalidatesTags: [
         "Transfers",
         "PaymentAccounts",
+        "Members",
+        "Returns",
         "Dashboard",
         "ActivityLogs",
       ],
@@ -137,6 +141,8 @@ const accountsApi = baseApi.injectEndpoints({
       invalidatesTags: [
         "Transfers",
         "PaymentAccounts",
+        "Members",
+        "Returns",
         "Dashboard",
         "ActivityLogs",
       ],
@@ -159,6 +165,8 @@ const accountsApi = baseApi.injectEndpoints({
       invalidatesTags: [
         "Charges",
         "PaymentAccounts",
+        "Members",
+        "Returns",
         "Dashboard",
         "ActivityLogs",
       ],
@@ -171,6 +179,8 @@ const accountsApi = baseApi.injectEndpoints({
       invalidatesTags: [
         "Charges",
         "PaymentAccounts",
+        "Members",
+        "Returns",
         "Dashboard",
         "ActivityLogs",
       ],
@@ -183,6 +193,8 @@ const accountsApi = baseApi.injectEndpoints({
       invalidatesTags: [
         "Charges",
         "PaymentAccounts",
+        "Members",
+        "Returns",
         "Dashboard",
         "ActivityLogs",
       ],

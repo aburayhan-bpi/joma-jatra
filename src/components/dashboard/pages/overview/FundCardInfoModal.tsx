@@ -8,6 +8,8 @@ import Link from "next/link";
 export type OverviewInfoCardKey =
   | "cash"
   | "activeFund"
+  | "activeMembersSavings"
+  | "donatedReserve"
   | "formerPayable"
   | "monthTarget";
 
@@ -98,8 +100,8 @@ export default function FundCardInfoModal({
           "হাতে থাকা মোট টাকা (Total Cash in Hand) থেকে কোনো প্রাক্তন মেম্বারের বকেয়া পাওনা থাকলে তা আলাদা করে বাদ দেওয়ার পর, বর্তমানে সক্রিয় গ্রুপের জন্য নিট যত টাকা থাকে সেটাই Active Net Fund।",
         points: [
           "কোনো প্রাক্তন মেম্বারের পাওনা বাকি থাকলে সেটা আগেই বাদ রাখা হয় যাতে ভুল করে খরচ না হয়।",
-          "গ্রুপের যৌথ চার্জ (ব্যাংক SMS বা অ্যাকাউন্ট ট্রান্সফার ফি) আলাদাভাবে গ্রুপ খরচ (Total Charges) হিসেবে মোট তহবিল থেকে বাদ যায় — সদস্যদের ব্যক্তিগত জমার ব্যালেন্স অটোমেটিক কমানো হয় না।",
-          "কেউ টাকা দান বা মাফ (Donated / Waived) করলে তা সম্পূর্ণ আলাদা গ্রুপ রিজার্ভ হিসেবে এখানে যুক্ত থাকে এবং অন্যান্য মেম্বারের ব্যক্তিগত ব্যালেন্সে ভাগ হয় না।",
+          "গ্রুপের যৌথ চার্জ (ব্যাংক SMS, মেইনটেন্যান্স বা শেয়ার্ড ট্রান্সফার ফি) Active মেম্বারদের ব্যালেন্স অনুপাতে (Pro-rata) ভাগ হয়ে সরাসরি প্রত্যেকের Net Balance থেকে সমন্বয় হয় — সাবেক মেম্বার বা নতুন জয়েন করা মেম্বারের ওপর পুরোনো চার্জ পড়ে না।",
+          "কেউ টাকা দান বা মাফ (Donated / Waived) করলে তা সম্পূর্ণ আলাদা গ্রুপ রিজার্ভ হিসেবে অক্ষত থাকে; কখনোই চার্জের টাকা Donated রিজার্ভ থেকে কাটা হয় না।",
         ],
         rows: [
           {
@@ -126,6 +128,82 @@ export default function FundCardInfoModal({
             label: "মোট বাদ যাওয়া চার্জ (Transfer + Account)",
             value: `${formatTaka(fundSummary.totalCharges)} (${formatTaka(fundSummary.totalTransferFees)} + ${formatTaka(fundSummary.totalStandaloneCharges)})`,
             tone: "neutral",
+          },
+        ],
+        footerLink: {
+          href: "/dashboard/returns?returnType=DONATED_WAIVER",
+          label: "সব দান / ওয়েভার রেকর্ড দেখুন →",
+        },
+      };
+    }
+
+    if (cardKey === "activeMembersSavings") {
+      const activeSavings =
+        fundSummary.activeMemberBalancesSum ??
+        Math.max(
+          0,
+          fundSummary.activeNetFund - fundSummary.totalDonatedWaivers,
+        );
+      return {
+        title: "Active Members' Savings — হিসাব কীভাবে হয়?",
+        subtitle: "সক্রিয় মেম্বারদের ব্যক্তিগত নিট সঞ্চয়ের মোট যোগফল",
+        summaryBangla:
+          "এই সংখ্যাটি হলো বর্তমানে সক্রিয় (Active) সব মেম্বারের প্রোফাইলে থাকা ব্যক্তিগত Net Balance-এর মোট যোগফল (মোট জমা − ফেরত/দান − ব্যক্তিগত ভাগের চার্জ)।",
+        points: [
+          "এখানে Donated / Waived রিজার্ভ বা সাবেক মেম্বারদের বকেয়া যুক্ত থাকে না — শুধু Active মেম্বারদের প্রাপ্য জমা দেখায়।",
+          "মেম্বার পেজে গিয়ে সব সক্রিয় মেম্বারের Net Balance যোগ করলে এই সংখ্যাটাই পাবেন।",
+          ...(fundSummary.unallocatedLegacyCharges &&
+          fundSummary.unallocatedLegacyCharges !== 0
+            ? [
+                `নোট: মেম্বার-ওয়াইজ চার্জ সিস্টেম চালুর আগে রেকর্ড হওয়া ${formatTaka(fundSummary.unallocatedLegacyCharges)} পুরোনো চার্জ শুধু গ্রুপ ফান্ড থেকে বাদ গিয়েছিল (মেম্বারদের ব্যক্তিগত ব্যালেন্স থেকে নয়)।`,
+              ]
+            : []),
+        ],
+        rows: [
+          {
+            label: "সক্রিয় মেম্বারদের মোট প্রাপ্য (Net Balances)",
+            value: formatTaka(activeSavings),
+            tone: "total",
+          },
+          {
+            label: "এর পাশাপাশি Donated Reserve",
+            value: formatTaka(fundSummary.totalDonatedWaivers),
+            tone: "positive",
+          },
+        ],
+        footerLink: {
+          href: "/dashboard/members",
+          label: "সব মেম্বারের ব্যালেন্স দেখুন →",
+        },
+      };
+    }
+
+    if (cardKey === "donatedReserve") {
+      return {
+        title: "Donated / Waived Reserve — হিসাব ও ব্যবহার",
+        subtitle: "ভবিষ্যৎ গ্রুপ কাজের জন্য আলাদাভাবে সংরক্ষিত দানকৃত তহবিল",
+        summaryBangla:
+          "কোনো মেম্বার নিজ ইচ্ছায় টাকা দান বা মাফ (DONATED_WAIVER অথবা Donate & Close) করলে সেটি তার ব্যক্তিগত ব্যালেন্স থেকে বাদ গিয়ে গ্রুপের এই স্থায়ী রিজার্ভে জমা থাকে।",
+        points: [
+          "এই টাকা ভবিষ্যতের কোনো সম্মিলিত গ্রুপ কাজে ব্যবহারের জন্য অক্ষত রাখা হয়।",
+          "গ্রুপের কোনো ব্যাংক চার্জ বা ট্রান্সফার ফি কখনোই এই Donated রিজার্ভ থেকে কাটা হয় না।",
+          "এই টাকা অন্য মেম্বারদের ব্যক্তিগত Net Balance-এ ভাগ হয় না; তাই কেউ গ্রুপ ছাড়লেও এটি গ্রুপ ফান্ডেই থেকে যায়।",
+        ],
+        rows: [
+          {
+            label: "মোট Donated / Waived জমা (Inflow)",
+            value: `+ ${formatTaka(fundSummary.totalDonatedWaivers)}`,
+            tone: "positive",
+          },
+          {
+            label: "রিজার্ভ থেকে খরচ (Outflow)",
+            value: formatTaka(0),
+            tone: "neutral",
+          },
+          {
+            label: "অবশিষ্ট Donated Reserve",
+            value: formatTaka(fundSummary.totalDonatedWaivers),
+            tone: "total",
           },
         ],
         footerLink: {

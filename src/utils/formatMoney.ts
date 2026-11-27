@@ -2,8 +2,14 @@
  * Currency, Month & API Error Formatting Utilities
  */
 
+export function roundCurrency(value: number): number {
+  const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
+  return Object.is(rounded, -0) || rounded === 0 ? 0 : rounded;
+}
+
 export function formatTaka(amount?: number | null): string {
-  const num = typeof amount === "number" && !Number.isNaN(amount) ? amount : 0;
+  const raw = typeof amount === "number" && !Number.isNaN(amount) ? amount : 0;
+  const num = roundCurrency(raw);
   return `৳ ${num.toLocaleString("en-IN", {
     maximumFractionDigits: 2,
   })}`;

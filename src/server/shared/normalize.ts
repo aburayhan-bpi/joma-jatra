@@ -28,7 +28,8 @@ export function formatYearMonth(date: Date): string {
  * Rounds currency values cleanly to 2 decimal places to prevent floating-point drift.
  */
 export function roundMoney(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+  const rounded = Math.round((value + Number.EPSILON) * 100) / 100;
+  return Object.is(rounded, -0) || rounded === 0 ? 0 : rounded;
 }
 
 /**

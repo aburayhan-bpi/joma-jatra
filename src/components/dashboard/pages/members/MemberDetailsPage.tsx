@@ -83,6 +83,7 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
   const category = (searchParams.get("category") || "") as
     | "DEPOSIT"
     | "RETURN"
+    | "CHARGE"
     | "LIFECYCLE"
     | "";
   const status = searchParams.get("status") || "";
@@ -239,6 +240,14 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
           value={formatTaka(member.financialSummary.totalReturned)}
           icon={<HandCoins className="w-[18px] h-[18px]" />}
           tone="indigo"
+          subtext={
+            (member.financialSummary.totalCharges || 0) > 0 ? (
+              <span className="font-money text-gold-dark">
+                Charges deducted:{" "}
+                {formatTaka(member.financialSummary.totalCharges)}
+              </span>
+            ) : undefined
+          }
         />
         <LedgerStatCard
           label="Donated / Waived"
@@ -260,6 +269,10 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
                 deposit(s), {member.financialSummary.pendingReturnsCount}{" "}
                 return(s)
               </span>
+            ) : (member.financialSummary.totalCharges || 0) > 0 ? (
+              <span className="font-money text-muted-foreground">
+                Saved − Returned − {formatTaka(member.financialSummary.totalCharges)} charges
+              </span>
             ) : undefined
           }
         />
@@ -279,6 +292,7 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
             { value: "", label: "All Categories" },
             { value: "DEPOSIT", label: "Deposits" },
             { value: "RETURN", label: "Returns" },
+            { value: "CHARGE", label: "Charges & Fees" },
             { value: "LIFECYCLE", label: "Edits & Lifecycle" },
           ]}
           className="w-44 text-xs"

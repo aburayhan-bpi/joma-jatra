@@ -12,6 +12,7 @@ export interface SidebarNavItem {
     | "Users"
     | "Landmark"
     | "History"
+    | "BookOpen"
     | "UserCircle";
   roles: UserRole[];
 }
@@ -65,6 +66,13 @@ export const SIDEBAR_ITEMS: SidebarNavItem[] = [
     label: "Activity Log",
     href: "/dashboard/activity-logs",
     icon: "History",
+    roles: ["ADMIN", "CASHIER", "MEMBER"],
+  },
+  {
+    id: "policies",
+    label: "Policies & Rules",
+    href: "/dashboard/policies",
+    icon: "BookOpen",
     roles: ["ADMIN", "CASHIER", "MEMBER"],
   },
   {

@@ -3,11 +3,13 @@ import CustomButton from "@/components/shared/CustomButton";
 const CancelSubmitButton = ({
   handleCancel,
   loading = false,
+  disabled = false,
   submitText = "Confirm",
   cancelText = "Cancel",
 }: {
   handleCancel: () => void;
   loading?: boolean;
+  disabled?: boolean;
   submitText?: string;
   cancelText?: string;
 }) => {
@@ -27,6 +29,7 @@ const CancelSubmitButton = ({
         btnText={submitText}
         className="w-full sm:w-auto px-6 bg-primary text-primary-foreground hover:bg-brand-dark cursor-pointer transition-colors"
         loading={loading}
+        disabled={disabled}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { AccountChargeModel } from "../modules/charges/account-charge.model";
+import { ChargeAllocationModel } from "../modules/charges/charge-allocation.model";
 import { DepositModel } from "../modules/deposits/deposit.model";
 import { UserModel } from "../modules/members/user.model";
 import { PaymentAccountModel } from "../modules/payment-accounts/payment-account.model";
@@ -11,6 +12,7 @@ export interface MemberBalanceSummary {
   totalDeposited: number;
   totalReturned: number;
   totalDonatedWaived: number;
+  totalCharges: number;
   netBalance: number;
   pendingDepositsCount: number;
   pendingReturnsCount: number;
@@ -34,11 +36,109 @@ export interface GroupFundSummary {
   totalTransferFees: number;
   totalStandaloneCharges: number;
   totalCharges: number;
+  totalAllocatedMemberCharges?: number;
+  unallocatedLegacyCharges?: number;
   totalCashInHand: number;
   unsettledFormerMemberPayable: number;
   activeNetFund: number;
+  activeMemberBalancesSum?: number;
   accountBalancesSum: number;
   reconciliationDifference: number;
+  memberLedgerDifference?: number;
+}
+
+export interface ProRataMemberAllocation {
+  memberId: string;
+  memberBalanceSnapshot: number;
+  eligibleTotalSnapshot: number;
+  sharePercent: number;
+  allocatedAmount: number;
+}
+
+/**
+ * Splits a charge pro-rata by member balance using exact integer-paisa Largest Remainder (Hamilton) allocation.
+ * Guarantees sum(allocatedAmount) === roundMoney(chargeAmount) and each allocation <= member balance with zero float drift.
+ */
+export function computeProRataChargeAllocations(
+  chargeAmount: number,
+  eligibleMembers: { memberId: string; balance: number }[],
+): ProRataMemberAllocation[] {
+  const totalCharge = roundMoney(chargeAmount);
+  const totalChargePaisa = Math.round(totalCharge * 100);
+  if (totalChargePaisa <= 0) return [];
+
+  const positiveMembers = eligibleMembers
+    .map((m) => {
+      const bal = roundMoney(m.balance);
+      return {
+        memberId: m.memberId,
+        balance: bal,
+        balancePaisa: Math.round(bal * 100),
+      };
+    })
+    .filter((m) => m.balancePaisa > 0);
+
+  const eligibleTotalPaisa = positiveMembers.reduce(
+    (sum, m) => sum + m.balancePaisa,
+    0,
+  );
+  if (positiveMembers.length === 0 || eligibleTotalPaisa < totalChargePaisa) {
+    return [];
+  }
+
+  const eligibleTotal = roundMoney(eligibleTotalPaisa / 100);
+  const scored = positiveMembers.map((m) => {
+    // Use integer product (Number.MAX_SAFE_INTEGER supports up to ৳900 crore * ৳900 crore safely, or BigInt for huge totals)
+    const exactNum = m.balancePaisa * totalChargePaisa;
+    const floorPaisa = Math.floor(exactNum / eligibleTotalPaisa);
+    const remainderNum = exactNum % eligibleTotalPaisa;
+    return {
+      memberId: m.memberId,
+      balance: m.balance,
+      balancePaisa: m.balancePaisa,
+      floorPaisa,
+      remainderNum,
+      sharePercent: roundMoney((m.balancePaisa / eligibleTotalPaisa) * 100),
+    };
+  });
+
+  const floorSum = scored.reduce((sum, s) => sum + s.floorPaisa, 0);
+  let leftoverPaisa = totalChargePaisa - floorSum;
+
+  const rankedIndices = scored
+    .map((item, idx) => ({ item, idx }))
+    .sort((a, b) => {
+      if (b.item.remainderNum !== a.item.remainderNum) {
+        return b.item.remainderNum - a.item.remainderNum;
+      }
+      if (b.item.balancePaisa !== a.item.balancePaisa) {
+        return b.item.balancePaisa - a.item.balancePaisa;
+      }
+      return a.item.memberId.localeCompare(b.item.memberId);
+    });
+
+  const bonusSet = new Set<number>();
+  for (const { item, idx } of rankedIndices) {
+    if (leftoverPaisa <= 0) break;
+    // Never allow a rounding bonus to exceed a member's own balance
+    if (item.floorPaisa + 1 <= item.balancePaisa) {
+      bonusSet.add(idx);
+      leftoverPaisa -= 1;
+    }
+  }
+
+  return scored
+    .map((s, idx) => {
+      const paisa = s.floorPaisa + (bonusSet.has(idx) ? 1 : 0);
+      return {
+        memberId: s.memberId,
+        memberBalanceSnapshot: s.balance,
+        eligibleTotalSnapshot: eligibleTotal,
+        sharePercent: s.sharePercent,
+        allocatedAmount: roundMoney(paisa / 100),
+      };
+    })
+    .filter((entry) => entry.allocatedAmount > 0);
 }
 
 /**
@@ -122,7 +222,7 @@ export function validateReturnPayoutFee(
     return "Donated/waived records cannot have a payout fee.";
   }
   if (payoutFee >= grossAmount) {
-    return `Payout fee (৳${payoutFee}) must be less than the return amount (৳${grossAmount}) so at least ৳1 reaches the member.`;
+    return `Payout fee (৳${payoutFee}) must be less than the return amount (৳${grossAmount}) so a positive net payout reaches the member.`;
   }
   return null;
 }
@@ -160,39 +260,53 @@ export async function getMemberBalance(
   const objectId =
     typeof memberId === "string" ? toObjectId(memberId, "memberId") : memberId;
 
-  const [depositAgg, returnAgg, pendingDepositsCount, pendingReturnsCount] =
-    await Promise.all([
-      DepositModel.aggregate<{ _id: null; total: number }>([
-        {
-          $match: {
-            memberId: objectId,
-            status: "APPROVED",
-            isDeleted: false,
-          },
+  const [
+    depositAgg,
+    returnAgg,
+    chargeAgg,
+    pendingDepositsCount,
+    pendingReturnsCount,
+  ] = await Promise.all([
+    DepositModel.aggregate<{ _id: null; total: number }>([
+      {
+        $match: {
+          memberId: objectId,
+          status: "APPROVED",
+          isDeleted: false,
         },
-        { $group: { _id: null, total: { $sum: "$amount" } } },
-      ]),
-      DepositReturnModel.aggregate<{ _id: string; total: number }>([
-        {
-          $match: {
-            memberId: objectId,
-            status: "APPROVED",
-            isDeleted: false,
-          },
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]),
+    DepositReturnModel.aggregate<{ _id: string; total: number }>([
+      {
+        $match: {
+          memberId: objectId,
+          status: "APPROVED",
+          isDeleted: false,
         },
-        { $group: { _id: "$returnType", total: { $sum: "$amount" } } },
-      ]),
-      DepositModel.countDocuments({
-        memberId: objectId,
-        status: "PENDING",
-        isDeleted: false,
-      }),
-      DepositReturnModel.countDocuments({
-        memberId: objectId,
-        status: "PENDING",
-        isDeleted: false,
-      }),
-    ]);
+      },
+      { $group: { _id: "$returnType", total: { $sum: "$amount" } } },
+    ]),
+    ChargeAllocationModel.aggregate<{ _id: null; total: number }>([
+      {
+        $match: {
+          memberId: objectId,
+          isDeleted: false,
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$allocatedAmount" } } },
+    ]),
+    DepositModel.countDocuments({
+      memberId: objectId,
+      status: "PENDING",
+      isDeleted: false,
+    }),
+    DepositReturnModel.countDocuments({
+      memberId: objectId,
+      status: "PENDING",
+      isDeleted: false,
+    }),
+  ]);
 
   const totalDeposited = roundMoney(depositAgg[0]?.total || 0);
   let totalReturned = 0;
@@ -207,12 +321,14 @@ export async function getMemberBalance(
 
   totalReturned = roundMoney(totalReturned);
   totalDonatedWaived = roundMoney(totalDonatedWaived);
-  const netBalance = roundMoney(totalDeposited - totalReturned);
+  const totalCharges = roundMoney(chargeAgg[0]?.total || 0);
+  const netBalance = roundMoney(totalDeposited - totalReturned - totalCharges);
 
   return {
     totalDeposited,
     totalReturned,
     totalDonatedWaived,
+    totalCharges,
     netBalance,
     pendingDepositsCount,
     pendingReturnsCount,
@@ -228,35 +344,48 @@ export async function getMemberBalancesMap(
   const memberMatch =
     memberIds && memberIds.length > 0 ? { memberId: { $in: memberIds } } : {};
 
-  const [deposits, returns, pendingDep, pendingRet] = await Promise.all([
-    DepositModel.aggregate<{ _id: mongoose.Types.ObjectId; total: number }>([
-      { $match: { ...memberMatch, status: "APPROVED", isDeleted: false } },
-      { $group: { _id: "$memberId", total: { $sum: "$amount" } } },
-    ]),
-    DepositReturnModel.aggregate<{
-      _id: { memberId: mongoose.Types.ObjectId; returnType: string };
-      total: number;
-    }>([
-      { $match: { ...memberMatch, status: "APPROVED", isDeleted: false } },
-      {
-        $group: {
-          _id: { memberId: "$memberId", returnType: "$returnType" },
-          total: { $sum: "$amount" },
+  const [deposits, returns, charges, pendingDep, pendingRet] =
+    await Promise.all([
+      DepositModel.aggregate<{ _id: mongoose.Types.ObjectId; total: number }>([
+        { $match: { ...memberMatch, status: "APPROVED", isDeleted: false } },
+        { $group: { _id: "$memberId", total: { $sum: "$amount" } } },
+      ]),
+      DepositReturnModel.aggregate<{
+        _id: { memberId: mongoose.Types.ObjectId; returnType: string };
+        total: number;
+      }>([
+        { $match: { ...memberMatch, status: "APPROVED", isDeleted: false } },
+        {
+          $group: {
+            _id: { memberId: "$memberId", returnType: "$returnType" },
+            total: { $sum: "$amount" },
+          },
         },
-      },
-    ]),
-    DepositModel.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
-      { $match: { ...memberMatch, status: "PENDING", isDeleted: false } },
-      { $group: { _id: "$memberId", count: { $sum: 1 } } },
-    ]),
-    DepositReturnModel.aggregate<{
-      _id: mongoose.Types.ObjectId;
-      count: number;
-    }>([
-      { $match: { ...memberMatch, status: "PENDING", isDeleted: false } },
-      { $group: { _id: "$memberId", count: { $sum: 1 } } },
-    ]),
-  ]);
+      ]),
+      ChargeAllocationModel.aggregate<{
+        _id: mongoose.Types.ObjectId;
+        total: number;
+      }>([
+        { $match: { ...memberMatch, isDeleted: false } },
+        {
+          $group: {
+            _id: "$memberId",
+            total: { $sum: "$allocatedAmount" },
+          },
+        },
+      ]),
+      DepositModel.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+        { $match: { ...memberMatch, status: "PENDING", isDeleted: false } },
+        { $group: { _id: "$memberId", count: { $sum: 1 } } },
+      ]),
+      DepositReturnModel.aggregate<{
+        _id: mongoose.Types.ObjectId;
+        count: number;
+      }>([
+        { $match: { ...memberMatch, status: "PENDING", isDeleted: false } },
+        { $group: { _id: "$memberId", count: { $sum: 1 } } },
+      ]),
+    ]);
 
   const map = new Map<string, MemberBalanceSummary>();
 
@@ -267,6 +396,7 @@ export async function getMemberBalancesMap(
         totalDeposited: 0,
         totalReturned: 0,
         totalDonatedWaived: 0,
+        totalCharges: 0,
         netBalance: 0,
         pendingDepositsCount: 0,
         pendingReturnsCount: 0,
@@ -290,6 +420,10 @@ export async function getMemberBalancesMap(
     }
   }
 
+  for (const row of charges) {
+    ensureEntry(row._id.toString()).totalCharges = roundMoney(row.total);
+  }
+
   for (const row of pendingDep) {
     ensureEntry(row._id.toString()).pendingDepositsCount = row.count;
   }
@@ -299,7 +433,9 @@ export async function getMemberBalancesMap(
   }
 
   for (const entry of map.values()) {
-    entry.netBalance = roundMoney(entry.totalDeposited - entry.totalReturned);
+    entry.netBalance = roundMoney(
+      entry.totalDeposited - entry.totalReturned - entry.totalCharges,
+    );
   }
 
   return map;
@@ -447,6 +583,8 @@ export async function getGroupFundSummary(
     returnAgg,
     transferFeeAgg,
     chargeAgg,
+    allocatedChargeAgg,
+    activeUsers,
     inactiveUsers,
     allAccounts,
     accountBalancesMap,
@@ -467,6 +605,13 @@ export async function getGroupFundSummary(
       { $match: { isDeleted: false } },
       { $group: { _id: null, total: { $sum: "$amount" } } },
     ]),
+    ChargeAllocationModel.aggregate<{ _id: null; total: number }>([
+      { $match: { isDeleted: false } },
+      { $group: { _id: null, total: { $sum: "$allocatedAmount" } } },
+    ]),
+    UserModel.find({ status: "ACTIVE", isDeleted: false })
+      .select("_id")
+      .lean(),
     UserModel.find({
       $or: [{ status: "INACTIVE" }, { isDeleted: true }],
     })
@@ -494,18 +639,35 @@ export async function getGroupFundSummary(
 
   const totalTransferFees = roundMoney(transferFeeAgg[0]?.total || 0);
   const totalStandaloneCharges = roundMoney(chargeAgg[0]?.total || 0);
+  const totalAllocatedMemberCharges = roundMoney(
+    allocatedChargeAgg[0]?.total || 0,
+  );
 
-  // Sum unsettled positive balances belonging to inactive/closed members
+  // Sum active and former member net balances in parallel
+  const activeIds = activeUsers.map((u) => u._id);
   const inactiveIds = inactiveUsers.map((u) => u._id);
+  const [activeBalancesMap, inactiveBalancesMap] = await Promise.all([
+    activeIds.length > 0
+      ? getMemberBalancesMap(activeIds)
+      : Promise.resolve(new Map<string, MemberBalanceSummary>()),
+    inactiveIds.length > 0
+      ? getMemberBalancesMap(inactiveIds)
+      : Promise.resolve(new Map<string, MemberBalanceSummary>()),
+  ]);
+
+  let activeMemberBalancesSum = 0;
+  for (const balance of activeBalancesMap.values()) {
+    activeMemberBalancesSum = roundMoney(
+      activeMemberBalancesSum + balance.netBalance,
+    );
+  }
+
   let unsettledFormerMemberPayable = 0;
-  if (inactiveIds.length > 0) {
-    const inactiveBalances = await getMemberBalancesMap(inactiveIds);
-    for (const balance of inactiveBalances.values()) {
-      if (balance.netBalance > 0) {
-        unsettledFormerMemberPayable = roundMoney(
-          unsettledFormerMemberPayable + balance.netBalance,
-        );
-      }
+  for (const balance of inactiveBalancesMap.values()) {
+    if (balance.netBalance > 0) {
+      unsettledFormerMemberPayable = roundMoney(
+        unsettledFormerMemberPayable + balance.netBalance,
+      );
     }
   }
 
@@ -529,6 +691,16 @@ export async function getGroupFundSummary(
     accountBalancesSum,
   });
 
+  const unallocatedLegacyCharges = roundMoney(
+    reconciled.totalCharges - totalAllocatedMemberCharges,
+  );
+  const memberLedgerDifference = roundMoney(
+    reconciled.totalCashInHand -
+      (activeMemberBalancesSum +
+        unsettledFormerMemberPayable +
+        totalDonatedWaivers),
+  );
+
   return {
     totalApprovedDeposits,
     totalApprovedPayoutReturns,
@@ -536,10 +708,14 @@ export async function getGroupFundSummary(
     totalTransferFees,
     totalStandaloneCharges,
     totalCharges: reconciled.totalCharges,
+    totalAllocatedMemberCharges,
+    unallocatedLegacyCharges,
     totalCashInHand: reconciled.totalCashInHand,
     unsettledFormerMemberPayable,
     activeNetFund: reconciled.activeNetFund,
+    activeMemberBalancesSum,
     accountBalancesSum,
     reconciliationDifference: reconciled.reconciliationDifference,
+    memberLedgerDifference,
   };
 }

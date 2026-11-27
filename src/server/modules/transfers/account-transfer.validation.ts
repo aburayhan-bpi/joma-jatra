@@ -1,3 +1,4 @@
+import { TRANSFER_FEE_BEARER_TYPES } from "@/types/backend";
 import { z } from "zod";
 import {
   moneyAmountSchema,
@@ -18,6 +19,11 @@ export const createTransferSchema = z
       .max(10000000)
       .optional()
       .default(0),
+    feeBearerType: z
+      .enum(TRANSFER_FEE_BEARER_TYPES)
+      .optional()
+      .default("SHARED_PRO_RATA"),
+    feeBearerMemberId: z.string().trim().optional(),
     transferDate: z.coerce.date().optional(),
     trxId: z.string().trim().max(80).optional(),
     proofImage: safeImageUrlSchema.optional().default(""),
@@ -26,4 +32,16 @@ export const createTransferSchema = z
   .refine((data) => data.fromAccountId !== data.toAccountId, {
     message: "Source and destination payment accounts must be different",
     path: ["toAccountId"],
-  });
+  })
+  .refine(
+    (data) =>
+      !(
+        (data.transferFee || 0) > 0 &&
+        data.feeBearerType === "SPECIFIC_MEMBER" &&
+        !data.feeBearerMemberId
+      ),
+    {
+      message: "Please select the member who bears this transfer fee",
+      path: ["feeBearerMemberId"],
+    },
+  );

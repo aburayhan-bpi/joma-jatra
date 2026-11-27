@@ -15,6 +15,13 @@ import {
 import { logActivity } from "../activity-logs/activity-log.service";
 import { PaymentAccountModel } from "../payment-accounts/payment-account.model";
 import { AccountChargeModel } from "./account-charge.model";
+import {
+  getAllocationsMapBySourceIds,
+  persistChargeAllocationsAndNotify,
+  prepareChargeAllocations,
+  restoreAllocationsForSource,
+  softDeleteAllocationsForSource,
+} from "./charge-allocation.service";
 
 export interface ListChargesParams {
   pagination: PaginationQuery;
@@ -49,8 +56,18 @@ export async function listCharges({
     AccountChargeModel.countDocuments(filter),
   ]);
 
+  const allocationsMap = await getAllocationsMapBySourceIds(
+    "ACCOUNT_CHARGE",
+    items.map((c) => c._id),
+    onlyDeleted,
+  );
+
   return {
-    items: items.map((c) => ({ ...c, id: c._id.toString() })),
+    items: items.map((c) => ({
+      ...c,
+      id: c._id.toString(),
+      allocations: allocationsMap.get(c._id.toString()) || [],
+    })),
     meta: buildPaginationMeta(total, pagination.page, pagination.limit),
   };
 }
@@ -72,7 +89,18 @@ export async function getChargeById(
     .lean();
 
   if (!charge) throw notFound("Charge record not found");
-  return { ...charge, id: charge._id.toString() };
+
+  const allocationsMap = await getAllocationsMapBySourceIds(
+    "ACCOUNT_CHARGE",
+    [charge._id],
+    Boolean(charge.isDeleted),
+  );
+
+  return {
+    ...charge,
+    id: charge._id.toString(),
+    allocations: allocationsMap.get(charge._id.toString()) || [],
+  };
 }
 
 export async function createCharge(
@@ -102,21 +130,43 @@ export async function createCharge(
     );
   }
 
+  // Validate and compute pro-rata allocations across ACTIVE members BEFORE persisting
+  const preparedAllocations = await prepareChargeAllocations({
+    chargeAmount: amount,
+    bearerType: "SHARED_PRO_RATA",
+  });
+
+  const chargeDate = resolveTransactionDate(input.chargeDate);
   const charge = await AccountChargeModel.create({
     paymentAccountId: account._id,
     amount,
     title: input.title,
-    chargeDate: resolveTransactionDate(input.chargeDate),
+    chargeDate,
     proofImage: input.proofImage || "",
     note: input.note || "",
     createdBy: toObjectId(actor.id, "actorId"),
   });
 
+  try {
+    await persistChargeAllocationsAndNotify({
+      sourceType: "ACCOUNT_CHARGE",
+      sourceId: charge._id,
+      title: charge.title,
+      chargeDate,
+      totalChargeAmount: charge.amount,
+      recordedByName: actor.name,
+      allocations: preparedAllocations,
+    });
+  } catch (err) {
+    await AccountChargeModel.deleteOne({ _id: charge._id });
+    throw err;
+  }
+
   await logActivity({
     entityType: "CHARGE",
     entityId: charge._id,
     action: "CREATED",
-    summary: `${actor.name} recorded ৳${charge.amount} charge ("${charge.title}") on ${account.accountName} (${account.method})`,
+    summary: `${actor.name} recorded ৳${charge.amount} charge ("${charge.title}") on ${account.accountName} (${account.method}) — split across ${preparedAllocations.length} active member(s)`,
     amount: charge.amount,
     proofImage: charge.proofImage || null,
     performedBy: actor.id,
@@ -139,11 +189,13 @@ export async function softDeleteCharge(actor: AuthUser, id: string) {
   charge.deletedBy = toObjectId(actor.id, "actorId");
   await charge.save();
 
+  await softDeleteAllocationsForSource(actor.id, "ACCOUNT_CHARGE", charge._id);
+
   await logActivity({
     entityType: "CHARGE",
     entityId: charge._id,
     action: "DELETED",
-    summary: `${actor.name} soft-deleted ৳${charge.amount} charge ("${charge.title}")`,
+    summary: `${actor.name} soft-deleted ৳${charge.amount} charge ("${charge.title}") and refunded member shares`,
     amount: charge.amount,
     performedBy: actor.id,
   });
@@ -177,6 +229,9 @@ export async function restoreCharge(actor: AuthUser, id: string) {
       `Cannot restore charge: payment account balance (৳${accountBalance.balance}) is less than ৳${charge.amount}.`,
     );
   }
+
+  // Validate member balances & pending return safety before restoring charge allocations
+  await restoreAllocationsForSource("ACCOUNT_CHARGE", charge._id);
 
   charge.isDeleted = false;
   charge.deletedAt = null;

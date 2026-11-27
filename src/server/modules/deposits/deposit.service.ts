@@ -28,6 +28,7 @@ import {
 import { logActivity } from "../activity-logs/activity-log.service";
 import { UserModel } from "../members/user.model";
 import { PaymentAccountModel } from "../payment-accounts/payment-account.model";
+import { DepositReturnModel } from "../returns/deposit-return.model";
 import { DepositModel } from "./deposit.model";
 
 export interface ListDepositsParams {
@@ -337,10 +338,26 @@ export async function updateDeposit(
   if (deposit.status === "APPROVED") {
     const amountReduction = roundMoney(deposit.amount - nextAmount);
     if (amountReduction > 0) {
-      const memberBalance = await getMemberBalance(deposit.memberId);
-      if (memberBalance.netBalance < amountReduction) {
+      const [memberBalance, pendingRetAgg] = await Promise.all([
+        getMemberBalance(deposit.memberId),
+        DepositReturnModel.aggregate<{ _id: null; total: number }>([
+          {
+            $match: {
+              memberId: deposit.memberId,
+              status: "PENDING",
+              isDeleted: false,
+            },
+          },
+          { $group: { _id: null, total: { $sum: "$amount" } } },
+        ]),
+      ]);
+      const pendingRet = roundMoney(pendingRetAgg[0]?.total || 0);
+      const availableBalance = roundMoney(memberBalance.netBalance - pendingRet);
+      if (availableBalance < amountReduction) {
         throw badRequest(
-          `Cannot reduce approved deposit by ৳${amountReduction}: member's remaining net balance is only ৳${memberBalance.netBalance}.`,
+          pendingRet > 0
+            ? `Cannot reduce approved deposit by ৳${amountReduction}: member's available balance after ৳${pendingRet} pending return(s) is only ৳${availableBalance}.`
+            : `Cannot reduce approved deposit by ৳${amountReduction}: member's remaining net balance is only ৳${memberBalance.netBalance}.`,
         );
       }
     }
@@ -561,16 +578,30 @@ export async function softDeleteDeposit(actor: AuthUser, id: string) {
     }
   }
 
-  // Prevent soft-deleting an APPROVED deposit if doing so would make member or account balance negative
+  // Prevent soft-deleting an APPROVED deposit if doing so would make member/account negative or invalidate pending returns
   if (deposit.status === "APPROVED") {
-    const [memberBalance, accountBalance] = await Promise.all([
+    const [memberBalance, accountBalance, pendingRetAgg] = await Promise.all([
       getMemberBalance(deposit.memberId),
       getAccountBalance(deposit.paymentAccountId),
+      DepositReturnModel.aggregate<{ _id: null; total: number }>([
+        {
+          $match: {
+            memberId: deposit.memberId,
+            status: "PENDING",
+            isDeleted: false,
+          },
+        },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
+      ]),
     ]);
 
-    if (memberBalance.netBalance < deposit.amount) {
+    const pendingRet = roundMoney(pendingRetAgg[0]?.total || 0);
+    const availableBalance = roundMoney(memberBalance.netBalance - pendingRet);
+    if (availableBalance < deposit.amount) {
       throw badRequest(
-        `Cannot delete approved deposit of ৳${deposit.amount}: member's current net balance is ৳${memberBalance.netBalance} (part of this money was already returned).`,
+        pendingRet > 0
+          ? `Cannot delete approved deposit of ৳${deposit.amount}: available balance is ৳${availableBalance} after ৳${pendingRet} pending return request(s).`
+          : `Cannot delete approved deposit of ৳${deposit.amount}: member's current net balance is ৳${memberBalance.netBalance} (part of this money was returned or used for charges).`,
       );
     }
 

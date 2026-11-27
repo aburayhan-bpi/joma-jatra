@@ -133,8 +133,8 @@ function ReturnForm({
       : Number(amount);
     const numericFee = showPayoutMetadataFields ? Number(payoutFee || 0) : 0;
 
-    if (!isEditingApproved && (!numericAmount || numericAmount < 1)) {
-      toast.error("Return amount must be at least ৳1");
+    if (!isEditingApproved && (!numericAmount || numericAmount < 0.01)) {
+      toast.error("Return amount must be at least ৳0.01");
       return;
     }
     if (requiresPayoutAccount && !activeAccountId) {
@@ -282,7 +282,7 @@ function ReturnForm({
           </label>
           <input
             type="number"
-            min={1}
+            min={0.01}
             step="any"
             required
             disabled={isEditingApproved}

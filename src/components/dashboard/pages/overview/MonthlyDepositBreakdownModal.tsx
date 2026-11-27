@@ -8,6 +8,7 @@ import {
   formatMonthLabel,
   formatTaka,
   getCurrentYearMonth,
+  roundCurrency,
 } from "@/utils/formatMoney";
 import {
   ArrowRight,
@@ -107,7 +108,10 @@ export default function MonthlyDepositBreakdownModal({
   }, [matrixRes]);
 
   const totalMonthDeposits = useMemo(
-    () => monthlyGroups.reduce((sum, item) => sum + item.collectedAmount, 0),
+    () =>
+      roundCurrency(
+        monthlyGroups.reduce((sum, item) => sum + item.collectedAmount, 0),
+      ),
     [monthlyGroups],
   );
   const totalEntriesCount = useMemo(

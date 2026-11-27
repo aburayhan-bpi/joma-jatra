@@ -16,6 +16,7 @@ export const getStatusBadge = (status: string) => {
     case "PARTIAL":
     case "CASHIER":
     case "UNSETTLED":
+    case "CHARGE":
       return "bg-amber-50 text-amber-800 border border-amber-200/80";
     case "REJECTED":
     case "INACTIVE":

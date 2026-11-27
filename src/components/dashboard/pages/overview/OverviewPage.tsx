@@ -31,6 +31,7 @@ import {
   Copy,
   Eye,
   HandCoins,
+  HeartHandshake,
   Landmark,
   Lock,
   Pencil,
@@ -55,6 +56,7 @@ import {
   YAxis,
 } from "recharts";
 import { toast } from "sonner";
+import DonatedReserveModal from "./DonatedReserveModal";
 import FundCardInfoModal, { OverviewInfoCardKey } from "./FundCardInfoModal";
 import MonthlyDepositBreakdownModal from "./MonthlyDepositBreakdownModal";
 import PersonalGoalModal from "./PersonalGoalModal";
@@ -84,6 +86,7 @@ export default function OverviewPage() {
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [personalGoalModalOpen, setPersonalGoalModalOpen] = useState(false);
   const [cashBreakdownOpen, setCashBreakdownOpen] = useState(false);
+  const [donatedModalOpen, setDonatedModalOpen] = useState(false);
   const [infoCardKey, setInfoCardKey] = useState<OverviewInfoCardKey | null>(
     null,
   );
@@ -217,6 +220,11 @@ export default function OverviewPage() {
               <p className="text-lg font-semibold text-primary font-money mt-0.5">
                 {formatTaka(mySavings.netBalance)}
               </p>
+              {(mySavings.totalCharges || 0) > 0 && (
+                <p className="text-[11px] text-gold-dark font-money mt-0.5">
+                  After {formatTaka(mySavings.totalCharges)} charges
+                </p>
+              )}
             </div>
           </div>
 
@@ -501,6 +509,60 @@ export default function OverviewPage() {
                 ? formatTaka(currentMonth.targetAmount)
                 : "Not set yet"}
             </span>
+          }
+        />
+      </section>
+
+      {/* Active Savings Breakdown & Donated Reserve Cards */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <LedgerStatCard
+          label="Active Members' Savings"
+          value={formatTaka(
+            fundSummary.activeMemberBalancesSum ??
+              Math.max(
+                0,
+                fundSummary.activeNetFund - fundSummary.totalDonatedWaivers,
+              ),
+          )}
+          icon={<PiggyBank className="w-[18px] h-[18px]" />}
+          tone="emerald"
+          onInfoClick={() => setInfoCardKey("activeMembersSavings")}
+          subtext={
+            <div className="flex items-center justify-between gap-2">
+              <span>
+                Combined net balance of {counts.activeMembersCount} active
+                member{counts.activeMembersCount === 1 ? "" : "s"}
+              </span>
+              <Link
+                href="/dashboard/members"
+                className="inline-flex items-center gap-0.5 text-primary hover:text-brand-dark font-medium whitespace-nowrap cursor-pointer"
+              >
+                Members
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+          }
+        />
+
+        <LedgerStatCard
+          label="Donated / Waived Reserve"
+          value={formatTaka(fundSummary.totalDonatedWaivers)}
+          valueClassName="text-[#1c6b72]"
+          icon={<HeartHandshake className="w-[18px] h-[18px]" />}
+          tone="teal"
+          onInfoClick={() => setInfoCardKey("donatedReserve")}
+          subtext={
+            <div className="flex items-center justify-between gap-2">
+              <span>Protected group reserve • Untouched by charges</span>
+              <button
+                type="button"
+                onClick={() => setDonatedModalOpen(true)}
+                className="inline-flex items-center gap-0.5 text-primary hover:text-brand-dark font-medium whitespace-nowrap cursor-pointer"
+              >
+                Audit Trail
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
           }
         />
       </section>
@@ -821,6 +883,13 @@ export default function OverviewPage() {
         isOpen={cashBreakdownOpen}
         onClose={() => setCashBreakdownOpen(false)}
         fundSummary={fundSummary}
+      />
+
+      {/* Donated / Waived Reserve Audit Trail Modal */}
+      <DonatedReserveModal
+        isOpen={donatedModalOpen}
+        onClose={() => setDonatedModalOpen(false)}
+        totalDonatedWaivers={fundSummary.totalDonatedWaivers}
       />
 
       {/* Private Personal Monthly Goal Modal */}

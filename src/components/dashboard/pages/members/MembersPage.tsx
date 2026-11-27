@@ -167,6 +167,7 @@ export default function MembersPage() {
                   <th className="px-4 py-3">Joined</th>
                   <th className="px-4 py-3 text-right">Deposited</th>
                   <th className="px-4 py-3 text-right">Returned</th>
+                  <th className="px-4 py-3 text-right">Charges</th>
                   <th className="px-4 py-3 text-right">Net Balance</th>
                   <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
@@ -239,6 +240,12 @@ export default function MembersPage() {
 
                       <td className="px-4 py-3 text-right font-money text-muted-foreground whitespace-nowrap">
                         {formatTaka(member.financialSummary.totalReturned)}
+                      </td>
+
+                      <td className="px-4 py-3 text-right font-money text-gold-dark whitespace-nowrap">
+                        {(member.financialSummary.totalCharges || 0) > 0
+                          ? formatTaka(member.financialSummary.totalCharges)
+                          : "—"}
                       </td>
 
                       <td className="px-4 py-3 text-right font-semibold font-money text-primary whitespace-nowrap">

@@ -45,7 +45,7 @@ const depositReturnSchema = new Schema<IDepositReturnDocument>(
     amount: {
       type: Number,
       required: true,
-      min: 1,
+      min: 0.01,
     },
     payoutFee: {
       type: Number,
@@ -145,10 +145,16 @@ depositReturnSchema.index({ memberId: 1, status: 1, isDeleted: 1 });
 depositReturnSchema.index({ paymentAccountId: 1, status: 1, isDeleted: 1 });
 depositReturnSchema.index({ returnDate: -1 });
 
-// Refresh cached Mongoose model during Next.js dev hot-reload if schema gained new fields
+// Refresh cached Mongoose model during Next.js dev hot-reload if schema constraints or fields changed
+const existingAmountOpts = (
+  mongoose.models.DepositReturn?.schema.path("amount") as
+    | { options?: { min?: number } }
+    | undefined
+)?.options;
 if (
   mongoose.models.DepositReturn &&
-  !mongoose.models.DepositReturn.schema.path("payoutFee")
+  (!mongoose.models.DepositReturn.schema.path("payoutFee") ||
+    existingAmountOpts?.min !== 0.01)
 ) {
   mongoose.deleteModel("DepositReturn");
 }

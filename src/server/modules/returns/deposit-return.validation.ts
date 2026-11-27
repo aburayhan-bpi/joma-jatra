@@ -2,14 +2,14 @@ import { PAYMENT_METHODS, RETURN_TYPES } from "@/types/backend";
 import { z } from "zod";
 import {
   feeAmountSchema,
-  moneyAmountSchema,
   safeImageUrlSchema,
+  settlementAmountSchema,
 } from "../../shared/validation-helpers";
 
 export const createReturnSchema = z
   .object({
     memberId: z.string().trim().optional(), // Admin/Cashier can specify (including inactive members for post-close settlement)
-    amount: moneyAmountSchema("Return amount"),
+    amount: settlementAmountSchema("Return amount"),
     payoutFee: feeAmountSchema("Payout fee").optional().default(0),
     returnDate: z.coerce.date().optional(),
     paymentAccountId: z.string().trim().optional(),
@@ -32,13 +32,13 @@ export const createReturnSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["payoutFee"],
-        message: "Payout fee must be less than the return amount (leave at least ৳1 net payout)",
+        message: "Payout fee must be less than the return amount (leave positive net payout)",
       });
     }
   });
 
 export const updateReturnSchema = z.object({
-  amount: moneyAmountSchema("Return amount").optional(),
+  amount: settlementAmountSchema("Return amount").optional(),
   payoutFee: feeAmountSchema("Payout fee").optional(),
   recipientAccount: z.string().trim().max(120).optional(),
   reason: z.string().trim().max(400).optional(),

@@ -6,6 +6,7 @@ import CustomModal from "@/components/shared/CustomModal";
 import PayoutFeeField from "@/components/shared/PayoutFeeField";
 import ProofUploadField from "@/components/shared/ProofUploadField";
 import { useGetPaymentAccountsQuery } from "@/redux/api/accounts/accountsApi";
+import { useGetMemberByIdQuery } from "@/redux/api/members/membersApi";
 import { useReviewReturnMutation } from "@/redux/api/returns/returnsApi";
 import { IDepositReturn } from "@/types/global";
 import { formatDate } from "@/utils/formatDate";
@@ -14,6 +15,7 @@ import {
   getApiErrorMessage,
   getPaymentMethodLabel,
 } from "@/utils/formatMoney";
+import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -33,7 +35,17 @@ function ReviewReturnContent({
   const { data: accountsRes } = useGetPaymentAccountsQuery({
     limit: 100,
   });
+  const targetMemberId =
+    returnEntry.memberId?._id || returnEntry.memberId?.id || "";
+  const { data: memberRes } = useGetMemberByIdQuery(targetMemberId, {
+    skip: !targetMemberId,
+  });
   const [reviewReturn, { isLoading }] = useReviewReturnMutation();
+
+  const liveNetBalance = memberRes?.data?.financialSummary?.netBalance;
+  const totalMemberCharges = memberRes?.data?.financialSummary?.totalCharges || 0;
+  const exceedsLiveBalance =
+    liveNetBalance !== undefined && returnEntry.amount > liveNetBalance;
 
   const [paymentAccountId, setPaymentAccountId] = useState(
     returnEntry.paymentAccountId?._id ||
@@ -103,6 +115,14 @@ function ReviewReturnContent({
           <p className="text-base font-semibold text-gold-dark font-money mt-0.5">
             {formatTaka(returnEntry.amount)}
           </p>
+          {liveNetBalance !== undefined && (
+            <p className="text-[11px] text-muted-foreground mt-0.5 font-money">
+              Current Net Balance: {formatTaka(liveNetBalance)}
+              {totalMemberCharges > 0
+                ? ` (after ${formatTaka(totalMemberCharges)} charges)`
+                : ""}
+            </p>
+          )}
         </div>
         <div>
           <p className="text-muted-foreground">Date & Type</p>
@@ -124,6 +144,17 @@ function ReviewReturnContent({
           </div>
         )}
       </div>
+
+      {exceedsLiveBalance && (
+        <div className="flex items-start gap-2 p-3 rounded bg-error-5 border border-error/25 text-xs text-error">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <p>
+            Requested amount ({formatTaka(returnEntry.amount)}) exceeds current
+            net balance ({formatTaka(liveNetBalance!)}). Edit this pending
+            return amount or reject and re-record with the updated balance.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-3 pt-1">
         <div className="space-y-1.5">

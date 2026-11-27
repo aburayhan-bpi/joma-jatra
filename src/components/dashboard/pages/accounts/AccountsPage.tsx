@@ -45,6 +45,9 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import AccountBreakdownModal from "./AccountBreakdownModal";
+import ChargeAllocationsModal, {
+  ChargeAllocationModalData,
+} from "./ChargeAllocationsModal";
 import ChargeModal from "./ChargeModal";
 import PaymentAccountModal from "./PaymentAccountModal";
 import TransferModal from "./TransferModal";
@@ -117,6 +120,8 @@ export default function AccountsPage() {
   const [proofPreview, setProofPreview] = useState<ProofPreviewData | null>(
     null,
   );
+  const [allocationPreview, setAllocationPreview] =
+    useState<ChargeAllocationModalData | null>(null);
 
   // Unified soft-delete confirmation state across all 3 tabs
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -481,7 +486,36 @@ export default function AccountsPage() {
                         {formatTaka(trf.amount)}
                       </td>
                       <td className="px-4 py-3 text-right font-money text-gold-dark whitespace-nowrap">
-                        {trf.transferFee > 0 ? formatTaka(trf.transferFee) : "—"}
+                        {trf.transferFee > 0 ? (
+                          <div>
+                            <p>{formatTaka(trf.transferFee)}</p>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setAllocationPreview({
+                                  title: `Transfer Fee Split — ${trf.fromAccountId?.accountName} → ${trf.toAccountId?.accountName}`,
+                                  subtitle:
+                                    trf.feeBearerType === "SPECIFIC_MEMBER"
+                                      ? `Borne by ${trf.feeBearerMemberId?.name || "specific member"}`
+                                      : "Pro-rata across active members",
+                                  date: trf.transferDate,
+                                  totalAmount: trf.transferFee,
+                                  allocations: trf.allocations || [],
+                                })
+                              }
+                              className="text-[10px] font-sans font-medium text-primary hover:underline cursor-pointer"
+                            >
+                              {trf.feeBearerType === "SPECIFIC_MEMBER" &&
+                              trf.feeBearerMemberId?.name
+                                ? `Borne: ${trf.feeBearerMemberId.name}`
+                                : trf.allocations && trf.allocations.length > 0
+                                  ? `Pro-rata (${trf.allocations.length})`
+                                  : "View split"}
+                            </button>
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         {trf.proofImage ? (
@@ -588,7 +622,26 @@ export default function AccountsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right font-semibold font-money text-gold-dark whitespace-nowrap">
-                        {formatTaka(chg.amount)}
+                        <div>
+                          <p>{formatTaka(chg.amount)}</p>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAllocationPreview({
+                                title: `Charge Split — ${chg.title}`,
+                                subtitle: `${chg.paymentAccountId?.accountName || "Account"} • Pro-rata by balance`,
+                                date: chg.chargeDate,
+                                totalAmount: chg.amount,
+                                allocations: chg.allocations || [],
+                              })
+                            }
+                            className="text-[10px] font-sans font-medium text-primary hover:underline cursor-pointer"
+                          >
+                            {chg.allocations && chg.allocations.length > 0
+                              ? `Split (${chg.allocations.length} members)`
+                              : "View split"}
+                          </button>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         {chg.proofImage ? (
@@ -690,6 +743,11 @@ export default function AccountsPage() {
       <ProofPreviewModal
         proof={proofPreview}
         onClose={() => setProofPreview(null)}
+      />
+
+      <ChargeAllocationsModal
+        data={allocationPreview}
+        onClose={() => setAllocationPreview(null)}
       />
 
       <ConfirmModal

@@ -1,3 +1,7 @@
+import {
+  TRANSFER_FEE_BEARER_TYPES,
+  TransferFeeBearerType,
+} from "@/types/backend";
 import mongoose, { Document, Model, Schema } from "mongoose";
 
 export interface IAccountTransferDocument extends Document {
@@ -5,6 +9,8 @@ export interface IAccountTransferDocument extends Document {
   toAccountId: mongoose.Types.ObjectId;
   amount: number;
   transferFee: number;
+  feeBearerType: TransferFeeBearerType;
+  feeBearerMemberId?: mongoose.Types.ObjectId | null;
   transferDate: Date;
   trxId?: string;
   proofImage?: string;
@@ -38,6 +44,16 @@ const accountTransferSchema = new Schema<IAccountTransferDocument>(
       type: Number,
       default: 0,
       min: 0,
+    },
+    feeBearerType: {
+      type: String,
+      enum: TRANSFER_FEE_BEARER_TYPES,
+      default: "SHARED_PRO_RATA",
+    },
+    feeBearerMemberId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
     transferDate: {
       type: Date,
@@ -87,6 +103,14 @@ const accountTransferSchema = new Schema<IAccountTransferDocument>(
 accountTransferSchema.index({ fromAccountId: 1, isDeleted: 1 });
 accountTransferSchema.index({ toAccountId: 1, isDeleted: 1 });
 accountTransferSchema.index({ transferDate: -1 });
+
+// Refresh cached Mongoose schema cleanly under Next.js HMR in dev
+const existingModel = mongoose.models.AccountTransfer as
+  | Model<IAccountTransferDocument>
+  | undefined;
+if (existingModel && !existingModel.schema.path("feeBearerType")) {
+  mongoose.deleteModel("AccountTransfer");
+}
 
 export const AccountTransferModel: Model<IAccountTransferDocument> =
   mongoose.models.AccountTransfer ||

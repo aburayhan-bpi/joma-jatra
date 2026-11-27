@@ -14,11 +14,13 @@ import { createTransferSchema } from "../modules/transfers/account-transfer.vali
 import {
   computeFundReconciliation,
   computePersonalGoalProgress,
+  computeProRataChargeAllocations,
   computeReturnNetPayout,
   computeSingleAccountBalance,
   validateReturnPayoutFee,
 } from "../shared/accounting.service";
 import {
+  buildChargeAllocationEmail,
   buildReturnReceiptEmail,
   makeReceiptRef,
 } from "../shared/email-templates";
@@ -383,5 +385,112 @@ describe("Domain Zod Validations", () => {
     expect(receipt.text).toContain("Gross Settled: BDT 1,000");
     expect(receipt.text).toContain("Payout Fee (Deducted): BDT 20");
     expect(receipt.text).toContain("Net Disbursed: BDT 980");
+  });
+
+  it("allocates shared charges pro-rata with 2-decimal Largest Remainder precision and validates transfer fee bearers", () => {
+    // 100 BDT split across 2000 & 1000 active balances (0-balance skipped) -> exact 66.67 + 33.33 = 100.00
+    const split2 = computeProRataChargeAllocations(100, [
+      { memberId: "m1", balance: 2000 },
+      { memberId: "m2", balance: 1000 },
+      { memberId: "m3", balance: 0 },
+    ]);
+    expect(split2).toHaveLength(2);
+    expect(split2[0].allocatedAmount).toBe(66.67);
+    expect(split2[1].allocatedAmount).toBe(33.33);
+    expect(
+      roundMoney(split2.reduce((sum, a) => sum + a.allocatedAmount, 0)),
+    ).toBe(100);
+
+    // 10 BDT split equally across 3 members -> 3.34 + 3.33 + 3.33 = 10.00
+    const split3 = computeProRataChargeAllocations(10, [
+      { memberId: "a", balance: 1000 },
+      { memberId: "b", balance: 1000 },
+      { memberId: "c", balance: 1000 },
+    ]);
+    expect(split3.map((a) => a.allocatedAmount).sort()).toEqual([
+      3.33, 3.33, 3.34,
+    ]);
+    expect(
+      roundMoney(split3.reduce((sum, a) => sum + a.allocatedAmount, 0)),
+    ).toBe(10);
+
+    // Returns empty when active pool cannot cover charge (protects donated reserve & former payable)
+    expect(
+      computeProRataChargeAllocations(500, [{ memberId: "m1", balance: 300 }]),
+    ).toEqual([]);
+
+    // Specific-member transfer fee Zod invariant
+    expect(
+      createTransferSchema.safeParse({
+        fromAccountId: "acc1",
+        toAccountId: "acc2",
+        amount: 1000,
+        transferFee: 30,
+        feeBearerType: "SPECIFIC_MEMBER",
+      }).success,
+    ).toBe(false);
+    expect(
+      createTransferSchema.safeParse({
+        fromAccountId: "acc1",
+        toAccountId: "acc2",
+        amount: 1000,
+        transferFee: 30,
+        feeBearerType: "SPECIFIC_MEMBER",
+        feeBearerMemberId: "mem1",
+      }).success,
+    ).toBe(true);
+
+    // Charge notice email formatting
+    const notice = buildChargeAllocationEmail({
+      memberName: "Rahim",
+      sourceType: "ACCOUNT_CHARGE",
+      allocationMode: "PRO_RATA_ACTIVE",
+      title: "Bank SMS Fee",
+      chargeDate: new Date("2026-11-27T06:00:00Z"),
+      totalChargeAmount: 100,
+      allocatedAmount: 66.67,
+      sharePercent: 66.67,
+      memberBalanceSnapshot: 2000,
+      eligibleTotalSnapshot: 3000,
+      recordedByName: "Admin",
+      newNetBalance: 1933.33,
+    });
+    expect(notice.subject).toContain("66.67");
+    expect(notice.text).toContain("Updated Net Balance: BDT 1,933.33");
+  });
+
+  it("handles extreme sub-taka balances, 100% drain pro-rata splits, negative-zero, and sub-taka settlements cleanly", () => {
+    // 100% drain on tiny paisa balances (0.01, 0.02, 100.00): integer math keeps exact sums <= balance
+    const drain = computeProRataChargeAllocations(100.03, [
+      { memberId: "m1", balance: 0.01 },
+      { memberId: "m2", balance: 0.02 },
+      { memberId: "m3", balance: 100.0 },
+    ]);
+    expect(drain.find((d) => d.memberId === "m1")?.allocatedAmount).toBe(0.01);
+    expect(drain.find((d) => d.memberId === "m2")?.allocatedAmount).toBe(0.02);
+    expect(drain.find((d) => d.memberId === "m3")?.allocatedAmount).toBe(100);
+    expect(
+      roundMoney(drain.reduce((sum, a) => sum + a.allocatedAmount, 0)),
+    ).toBe(100.03);
+
+    // Sub-taka leftover balance settlement/return allowed down to 0.01 BDT
+    expect(
+      createReturnSchema.safeParse({
+        amount: 0.55,
+        payoutFee: 0,
+        returnType: "FULL_SETTLEMENT",
+      }).success,
+    ).toBe(true);
+    expect(
+      createReturnSchema.safeParse({
+        amount: 0.55,
+        payoutFee: 0.55,
+        returnType: "FULL_SETTLEMENT",
+      }).success,
+    ).toBe(false);
+
+    // Negative zero normalization
+    expect(Object.is(roundMoney(-0), -0)).toBe(false);
+    expect(roundMoney(-0)).toBe(0);
   });
 });

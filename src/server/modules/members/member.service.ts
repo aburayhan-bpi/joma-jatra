@@ -37,6 +37,7 @@ import {
 } from "../../shared/pagination";
 import { ActivityLogModel } from "../activity-logs/activity-log.model";
 import { logActivity } from "../activity-logs/activity-log.service";
+import { ChargeAllocationModel } from "../charges/charge-allocation.model";
 import { DepositModel } from "../deposits/deposit.model";
 import { PaymentAccountModel } from "../payment-accounts/payment-account.model";
 import { DepositReturnModel } from "../returns/deposit-return.model";
@@ -93,6 +94,7 @@ export async function listMembers({
       totalDeposited: 0,
       totalReturned: 0,
       totalDonatedWaived: 0,
+      totalCharges: 0,
       netBalance: 0,
       pendingDepositsCount: 0,
       pendingReturnsCount: 0,
@@ -709,7 +711,7 @@ export async function restoreMember(actor: AuthUser, memberId: string) {
 
 export interface MemberAuditTrailEntry {
   id: string;
-  eventCategory: "DEPOSIT" | "RETURN" | "LIFECYCLE";
+  eventCategory: "DEPOSIT" | "RETURN" | "CHARGE" | "LIFECYCLE";
   eventType: string;
   action: string;
   summary: string;
@@ -717,6 +719,10 @@ export interface MemberAuditTrailEntry {
   month: string | null;
   amount: number | null;
   payoutFee?: number;
+  allocationMode?: "PRO_RATA_ACTIVE" | "DIRECT_MEMBER";
+  sharePercent?: number;
+  memberBalanceSnapshot?: number;
+  eligibleTotalSnapshot?: number;
   direction: "CREDIT" | "DEBIT" | "NEUTRAL";
   paymentMethod: string | null;
   paymentAccountName: string | null;
@@ -735,13 +741,13 @@ export interface MemberAuditTrailEntry {
 
 /**
  * Builds a complete, paginated, filterable Audit Trail for a single member
- * combining all Deposits, Returns/Settlements, and Account Lifecycle Activity Logs.
+ * combining all Deposits, Returns/Settlements, Charge Allocations, and Lifecycle Activity Logs.
  */
 export async function getMemberAuditTrail(
   memberId: string,
   params: {
     pagination: PaginationQuery;
-    category?: string; // DEPOSIT | RETURN | LIFECYCLE
+    category?: string; // DEPOSIT | RETURN | CHARGE | LIFECYCLE
     status?: string;
     month?: string;
   },
@@ -754,7 +760,7 @@ export async function getMemberAuditTrail(
     throw notFound("Member not found");
   }
 
-  const [deposits, returns, userLogs] = await Promise.all([
+  const [deposits, returns, chargeAllocations, userLogs] = await Promise.all([
     DepositModel.find({ memberId: memberObjectId, isDeleted: false })
       .populate("paymentAccountId", "accountName method")
       .populate("createdBy", "name role")
@@ -765,6 +771,7 @@ export async function getMemberAuditTrail(
       .populate("createdBy", "name role")
       .populate("reviewedBy", "name role")
       .lean(),
+    ChargeAllocationModel.find({ memberId: memberObjectId, isDeleted: false }).lean(),
     ActivityLogModel.find({
       targetMemberId: memberObjectId,
       $or: [
@@ -856,6 +863,37 @@ export async function getMemberAuditTrail(
       note: ret.rejectionReason || ret.reason || null,
       performedBy: toActor(ret.createdBy),
       reviewedBy: toActor(ret.reviewedBy),
+    });
+  }
+
+  for (const alloc of chargeAllocations) {
+    const allocDate = alloc.chargeDate || alloc.createdAt;
+    const isDirect = alloc.allocationMode === "DIRECT_MEMBER";
+    timeline.push({
+      id: alloc._id.toString(),
+      eventCategory: "CHARGE",
+      eventType: alloc.sourceType,
+      action: isDirect ? "DIRECT_FEE" : "PRO_RATA_SHARE",
+      summary: alloc.title,
+      date: allocDate,
+      month: formatYearMonth(allocDate),
+      amount: alloc.allocatedAmount,
+      allocationMode: alloc.allocationMode,
+      sharePercent: alloc.sharePercent,
+      memberBalanceSnapshot: alloc.memberBalanceSnapshot,
+      eligibleTotalSnapshot: alloc.eligibleTotalSnapshot,
+      direction: "DEBIT",
+      paymentMethod: null,
+      paymentAccountName: null,
+      trxId: null,
+      status: "APPROVED",
+      entrySource: alloc.sourceType,
+      proofImage: null,
+      note: isDirect
+        ? `Dedicated transfer fee (৳${alloc.totalChargeAmount}) applied to your balance`
+        : `${alloc.sharePercent.toFixed(2)}% of ৳${alloc.totalChargeAmount} (your balance ৳${alloc.memberBalanceSnapshot} / ৳${alloc.eligibleTotalSnapshot} active total)`,
+      performedBy: null,
+      reviewedBy: null,
     });
   }
 

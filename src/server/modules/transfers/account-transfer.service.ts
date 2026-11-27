@@ -1,3 +1,4 @@
+import { TransferFeeBearerType } from "@/types/backend";
 import { badRequest, conflict, notFound } from "../../core/app-error";
 import { AuthUser } from "../../core/auth-guard";
 import { connectDB } from "../../core/db";
@@ -14,6 +15,13 @@ import {
   PaginationQuery,
 } from "../../shared/pagination";
 import { logActivity } from "../activity-logs/activity-log.service";
+import {
+  getAllocationsMapBySourceIds,
+  persistChargeAllocationsAndNotify,
+  prepareChargeAllocations,
+  restoreAllocationsForSource,
+  softDeleteAllocationsForSource,
+} from "../charges/charge-allocation.service";
 import { PaymentAccountModel } from "../payment-accounts/payment-account.model";
 import { AccountTransferModel } from "./account-transfer.model";
 
@@ -49,13 +57,24 @@ export async function listTransfers({
       .limit(pagination.limit)
       .populate("fromAccountId", "accountName accountNumber method")
       .populate("toAccountId", "accountName accountNumber method")
+      .populate("feeBearerMemberId", "name email role status isDeleted")
       .populate("createdBy", "name role")
       .lean(),
     AccountTransferModel.countDocuments(filter),
   ]);
 
+  const allocationsMap = await getAllocationsMapBySourceIds(
+    "TRANSFER_FEE",
+    items.map((t) => t._id),
+    onlyDeleted,
+  );
+
   return {
-    items: items.map((t) => ({ ...t, id: t._id.toString() })),
+    items: items.map((t) => ({
+      ...t,
+      id: t._id.toString(),
+      allocations: allocationsMap.get(t._id.toString()) || [],
+    })),
     meta: buildPaginationMeta(total, pagination.page, pagination.limit),
   };
 }
@@ -93,16 +112,28 @@ export async function getTransferById(
   const transfer = await AccountTransferModel.findOne(filter)
     .populate("fromAccountId", "accountName accountNumber method")
     .populate("toAccountId", "accountName accountNumber method")
+    .populate("feeBearerMemberId", "name email role status isDeleted")
     .populate("createdBy", "name role")
     .lean();
 
   if (!transfer) throw notFound("Transfer record not found");
-  return { ...transfer, id: transfer._id.toString() };
+
+  const allocationsMap = await getAllocationsMapBySourceIds(
+    "TRANSFER_FEE",
+    [transfer._id],
+    Boolean(transfer.isDeleted),
+  );
+
+  return {
+    ...transfer,
+    id: transfer._id.toString(),
+    allocations: allocationsMap.get(transfer._id.toString()) || [],
+  };
 }
 
 /**
  * Records an internal transfer between two group payment accounts (with optional cash-out/transfer fee).
- * Validates fromAccount balance >= (amount + transferFee).
+ * Allocates any transferFee > 0 either pro-rata across active members or directly to a specific member.
  */
 export async function createTransfer(
   actor: AuthUser,
@@ -111,6 +142,8 @@ export async function createTransfer(
     toAccountId: string;
     amount: number;
     transferFee?: number;
+    feeBearerType?: TransferFeeBearerType;
+    feeBearerMemberId?: string;
     transferDate?: Date;
     trxId?: string;
     proofImage?: string;
@@ -147,23 +180,71 @@ export async function createTransfer(
   const normalizedTrx = normalizeTrxId(input.trxId);
   await ensureUniqueTransferTrxId(normalizedTrx);
 
+  const feeBearerType: TransferFeeBearerType =
+    fee > 0 && input.feeBearerType === "SPECIFIC_MEMBER"
+      ? "SPECIFIC_MEMBER"
+      : "SHARED_PRO_RATA";
+
+  const preparedAllocations =
+    fee > 0
+      ? await prepareChargeAllocations({
+          chargeAmount: fee,
+          bearerType: feeBearerType,
+          specificMemberId: input.feeBearerMemberId,
+        })
+      : [];
+
+  const transferDate = resolveTransactionDate(input.transferDate);
+  const resolvedBearerMemberId =
+    fee > 0 && feeBearerType === "SPECIFIC_MEMBER" && preparedAllocations[0]
+      ? preparedAllocations[0].memberId
+      : null;
+
   const transfer = await AccountTransferModel.create({
     fromAccountId: fromAccount._id,
     toAccountId: toAccount._id,
     amount,
     transferFee: fee,
-    transferDate: resolveTransactionDate(input.transferDate),
+    feeBearerType,
+    feeBearerMemberId: resolvedBearerMemberId,
+    transferDate,
     trxId: normalizedTrx,
     proofImage: input.proofImage || "",
     note: input.note || "",
     createdBy: toObjectId(actor.id, "actorId"),
   });
 
+  if (fee > 0 && preparedAllocations.length > 0) {
+    const feeTitle = `Transfer Fee: ${fromAccount.accountName} → ${toAccount.accountName}`;
+    try {
+      await persistChargeAllocationsAndNotify({
+        sourceType: "TRANSFER_FEE",
+        sourceId: transfer._id,
+        title: feeTitle,
+        chargeDate: transferDate,
+        totalChargeAmount: fee,
+        recordedByName: actor.name,
+        allocations: preparedAllocations,
+      });
+    } catch (err) {
+      await AccountTransferModel.deleteOne({ _id: transfer._id });
+      throw err;
+    }
+  }
+
+  const feeNote =
+    fee > 0
+      ? feeBearerType === "SPECIFIC_MEMBER" && preparedAllocations[0]
+        ? ` (+ ৳${fee} charge borne by ${preparedAllocations[0].memberName})`
+        : ` (+ ৳${fee} charge split across ${preparedAllocations.length} active member(s))`
+      : "";
+
   await logActivity({
     entityType: "TRANSFER",
     entityId: transfer._id,
+    targetMemberId: resolvedBearerMemberId,
     action: "CREATED",
-    summary: `${actor.name} transferred ৳${transfer.amount}${fee > 0 ? ` (+ ৳${fee} charge)` : ""} from ${fromAccount.accountName} (${fromAccount.method}) to ${toAccount.accountName} (${toAccount.method})`,
+    summary: `${actor.name} transferred ৳${transfer.amount}${feeNote} from ${fromAccount.accountName} (${fromAccount.method}) to ${toAccount.accountName} (${toAccount.method})`,
     amount: transfer.amount,
     proofImage: transfer.proofImage || null,
     performedBy: actor.id,
@@ -194,11 +275,15 @@ export async function softDeleteTransfer(actor: AuthUser, id: string) {
   transfer.deletedBy = toObjectId(actor.id, "actorId");
   await transfer.save();
 
+  if (transfer.transferFee > 0) {
+    await softDeleteAllocationsForSource(actor.id, "TRANSFER_FEE", transfer._id);
+  }
+
   await logActivity({
     entityType: "TRANSFER",
     entityId: transfer._id,
     action: "DELETED",
-    summary: `${actor.name} soft-deleted ৳${transfer.amount} internal transfer`,
+    summary: `${actor.name} soft-deleted ৳${transfer.amount} internal transfer${transfer.transferFee > 0 ? " and refunded fee shares" : ""}`,
     amount: transfer.amount,
     performedBy: actor.id,
   });
@@ -242,6 +327,10 @@ export async function restoreTransfer(actor: AuthUser, id: string) {
     throw badRequest(
       `Cannot restore transfer: source account balance (৳${fromBalance.balance}) is less than required ৳${totalDeduction}.`,
     );
+  }
+
+  if (transfer.transferFee > 0) {
+    await restoreAllocationsForSource("TRANSFER_FEE", transfer._id);
   }
 
   transfer.isDeleted = false;

@@ -269,6 +269,7 @@ export async function getMonthlyMatrix(params?: {
       totalDeposited: 0,
       totalReturned: 0,
       totalDonatedWaived: 0,
+      totalCharges: 0,
       netBalance: 0,
       pendingDepositsCount: 0,
       pendingReturnsCount: 0,
@@ -302,6 +303,7 @@ export async function getMonthlyMatrix(params?: {
       joinedAt: u.joinedAt,
       totalDeposited: balance.totalDeposited,
       totalReturned: balance.totalReturned,
+      totalCharges: balance.totalCharges,
       netBalance: balance.netBalance,
       monthlyBreakdown,
     };

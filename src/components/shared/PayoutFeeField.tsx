@@ -20,7 +20,7 @@ export default function PayoutFeeField({
   label = "Send Money / Cash-Out Fee (BDT, Optional)",
 }: PayoutFeeFieldProps) {
   const numericFee = Number(feeValue || 0);
-  const hasValidGross = !Number.isNaN(grossAmount) && grossAmount >= 1;
+  const hasValidGross = !Number.isNaN(grossAmount) && grossAmount >= 0.01;
   const hasFee = !Number.isNaN(numericFee) && numericFee > 0;
   const invalidFee =
     Number.isNaN(numericFee) ||

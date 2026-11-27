@@ -17,6 +17,7 @@ import {
   formatMonthLabel,
   formatTaka,
   getCurrentYearMonth,
+  roundCurrency,
 } from "@/utils/formatMoney";
 import {
   Download,
@@ -117,11 +118,18 @@ export default function MonthlySheetPage() {
   };
 
   const totalMembersCount = matrix?.rows.length || 0;
-  const grandDeposited =
-    matrix?.rows.reduce((sum, r) => sum + r.totalDeposited, 0) || 0;
-  const grandReturned =
-    matrix?.rows.reduce((sum, r) => sum + r.totalReturned, 0) || 0;
-  const grandNet = matrix?.rows.reduce((sum, r) => sum + r.netBalance, 0) || 0;
+  const grandDeposited = roundCurrency(
+    matrix?.rows.reduce((sum, r) => sum + r.totalDeposited, 0) || 0,
+  );
+  const grandReturned = roundCurrency(
+    matrix?.rows.reduce((sum, r) => sum + r.totalReturned, 0) || 0,
+  );
+  const grandCharges = roundCurrency(
+    matrix?.rows.reduce((sum, r) => sum + (r.totalCharges || 0), 0) || 0,
+  );
+  const grandNet = roundCurrency(
+    matrix?.rows.reduce((sum, r) => sum + r.netBalance, 0) || 0,
+  );
 
   // Focus the KPI goal card on the current calendar month (or latest configured month)
   const focusMonth = useMemo(() => {
@@ -194,7 +202,11 @@ export default function MonthlySheetPage() {
             value={formatTaka(grandReturned)}
             icon={<HandCoins className="w-[18px] h-[18px]" />}
             tone="indigo"
-            subtext="Approved payouts & settlements"
+            subtext={
+              grandCharges > 0
+                ? `Charges deducted: ${formatTaka(grandCharges)}`
+                : "Approved payouts & settlements"
+            }
           />
 
           <LedgerStatCard
@@ -454,6 +466,9 @@ export default function MonthlySheetPage() {
                   <th className="px-3.5 py-3 text-right w-[126px] min-w-[116px] border-r border-border/60 whitespace-nowrap">
                     All-Time Returned
                   </th>
+                  <th className="px-3.5 py-3 text-right w-[120px] min-w-[110px] border-r border-border/60 whitespace-nowrap">
+                    All-Time Charges
+                  </th>
                   <th className="px-3.5 py-3 text-right w-[126px] min-w-[118px] bg-emerald-50/45 text-foreground whitespace-nowrap">
                     All-Time Net
                   </th>
@@ -565,6 +580,9 @@ export default function MonthlySheetPage() {
                       <td className="px-3.5 py-3 text-right font-money text-xs text-muted-foreground border-r border-border/60 whitespace-nowrap">
                         {formatTaka(row.totalReturned)}
                       </td>
+                      <td className="px-3.5 py-3 text-right font-money text-xs text-gold-dark border-r border-border/60 whitespace-nowrap">
+                        {formatTaka(row.totalCharges || 0)}
+                      </td>
                       <td className="px-3.5 py-3 text-right font-money text-xs font-semibold text-primary bg-emerald-50/25 whitespace-nowrap">
                         {formatTaka(row.netBalance)}
                       </td>
@@ -627,6 +645,9 @@ export default function MonthlySheetPage() {
                   </td>
                   <td className="px-3.5 py-3 text-right font-semibold text-muted-foreground border-r border-border/60 whitespace-nowrap">
                     {formatTaka(grandReturned)}
+                  </td>
+                  <td className="px-3.5 py-3 text-right font-semibold text-gold-dark border-r border-border/60 whitespace-nowrap">
+                    {formatTaka(grandCharges)}
                   </td>
                   <td className="px-3.5 py-3 text-right font-bold text-primary bg-emerald-50/45 whitespace-nowrap">
                     {formatTaka(grandNet)}

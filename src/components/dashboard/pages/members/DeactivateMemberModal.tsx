@@ -125,7 +125,7 @@ function DeactivateMemberForm({
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-3 p-3.5 rounded bg-muted/60 border border-border text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded bg-muted/60 border border-border text-xs">
         <div>
           <p className="text-muted-foreground">Total Saved</p>
           <p className="font-semibold text-foreground font-money mt-0.5">
@@ -136,6 +136,12 @@ function DeactivateMemberForm({
           <p className="text-muted-foreground">Returned</p>
           <p className="font-semibold text-foreground font-money mt-0.5">
             {formatTaka(member.financialSummary.totalReturned)}
+          </p>
+        </div>
+        <div>
+          <p className="text-muted-foreground">Charges</p>
+          <p className="font-semibold text-gold-dark font-money mt-0.5">
+            {formatTaka(member.financialSummary.totalCharges || 0)}
           </p>
         </div>
         <div>

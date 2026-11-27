@@ -927,3 +927,139 @@ export function buildRoleChangedEmail(params: {
     html,
   };
 }
+
+/* ==========================================================================
+   6. CHARGE / FEE ALLOCATION NOTICE — Transparent Pro-Rata or Direct Debit
+   ========================================================================== */
+
+export function buildChargeAllocationEmail(params: {
+  memberName: string;
+  sourceType: "ACCOUNT_CHARGE" | "TRANSFER_FEE";
+  allocationMode: "PRO_RATA_ACTIVE" | "DIRECT_MEMBER";
+  title: string;
+  chargeDate: Date | string;
+  totalChargeAmount: number;
+  allocatedAmount: number;
+  sharePercent: number;
+  memberBalanceSnapshot: number;
+  eligibleTotalSnapshot: number;
+  recordedByName: string;
+  newNetBalance: number;
+}): EmailTemplatePayload {
+  const dateLabel = formatShortDate(params.chargeDate);
+  const isDirect = params.allocationMode === "DIRECT_MEMBER";
+  const badgeText = isDirect
+    ? "Dedicated Transfer Fee"
+    : params.sourceType === "TRANSFER_FEE"
+      ? "Shared Transfer Fee (Pro-Rata)"
+      : "Shared Account Charge (Pro-Rata)";
+
+  const ruleExplanation = isDirect
+    ? "Applied directly to your balance for moving funds for your payout/settlement."
+    : `Split pro-rata by balance (${formatTakaText(params.memberBalanceSnapshot)} / ${formatTakaText(params.eligibleTotalSnapshot)} active total = ${params.sharePercent.toFixed(2)}%).`;
+
+  const receiptRef = makeReceiptRef("CHG", params.chargeDate);
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  ${FONT_LINK}
+</head>
+<body style="margin:0;padding:0;background:#eef2f5;font-family:${FONT_STACK};color:#0f172a;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f5;padding:30px 14px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #d1dce5;border-top:4px solid #a15c07;border-radius:4px;overflow:hidden;">
+          <tr>
+            <td style="padding:20px 26px;border-bottom:1px solid #e2e8f0;background:#ffffff;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>${renderLogoImg(36)}</td>
+                  <td align="right" valign="middle">
+                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#a15c07;">Charge Notice</div>
+                    <div style="font-family:${MONO_STACK};font-size:13px;font-weight:700;color:#0f172a;margin-top:2px;">${escapeHtml(receiptRef)}</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:1px;">${escapeHtml(dateLabel)}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:26px 26px 20px 26px;text-align:center;background:#f8fafc;">
+              <div style="display:inline-block;padding:3px 10px;background:#fcf4e6;border:1px solid #e8cfa0;border-radius:2px;font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:#a15c07;margin-bottom:10px;">
+                ${escapeHtml(badgeText)}
+              </div>
+              <div style="font-family:${MONO_STACK};font-size:32px;font-weight:700;color:#0f172a;letter-spacing:-0.5px;line-height:1.15;">
+                &minus;${escapeHtml(formatTakaText(params.allocatedAmount))}
+              </div>
+              <div style="font-size:13px;color:#475569;margin-top:6px;">
+                Deducted from <strong style="color:#0f172a;">${escapeHtml(params.memberName)}</strong>&apos;s balance
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 26px;">
+              <div style="border-top:1px dashed #cbd5e1;height:1px;"></div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:20px 26px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;">
+                <tr>
+                  <td style="padding:7px 0;color:#64748b;">Charge Details</td>
+                  <td style="padding:7px 0;text-align:right;font-weight:600;color:#0f172a;">${escapeHtml(params.title)}</td>
+                </tr>
+                <tr>
+                  <td style="padding:7px 0;color:#64748b;">Total Group Fee</td>
+                  <td style="padding:7px 0;text-align:right;font-family:${MONO_STACK};font-weight:600;color:#0f172a;">${escapeHtml(formatTakaText(params.totalChargeAmount))}</td>
+                </tr>
+                <tr>
+                  <td style="padding:7px 0;color:#64748b;">Your Share (${params.sharePercent.toFixed(2)}%)</td>
+                  <td style="padding:7px 0;text-align:right;font-family:${MONO_STACK};font-weight:700;color:#a15c07;">&minus;${escapeHtml(formatTakaText(params.allocatedAmount))}</td>
+                </tr>
+                <tr>
+                  <td style="padding:7px 0;color:#64748b;">Recorded By</td>
+                  <td style="padding:7px 0;text-align:right;font-weight:600;color:#0f172a;">${escapeHtml(params.recordedByName)}</td>
+                </tr>
+              </table>
+
+              <div style="margin-top:12px;padding:10px 12px;background:#f8fafc;border-left:3px solid #285a84;font-size:12px;color:#334155;line-height:1.5;">
+                ${escapeHtml(ruleExplanation)}
+              </div>
+
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background:#f8fafc;border:1px solid #d1dce5;border-radius:4px;">
+                <tr>
+                  <td style="padding:12px 14px;font-size:12px;font-weight:600;color:#334155;">
+                    Updated Member Net Balance
+                  </td>
+                  <td style="padding:12px 14px;text-align:right;font-family:${MONO_STACK};font-size:16px;font-weight:700;color:#046c4e;">
+                    ${escapeHtml(formatTakaText(params.newNetBalance))}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:14px 26px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:11px;color:#64748b;">
+              JomaJatra Transparent Charge Ledger &bull; Archived in your Member Audit Trail.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return {
+    subject: `Charge Share ${formatBdtPlain(params.allocatedAmount)} — ${params.title}`,
+    text: `JomaJatra Charge Notice (${receiptRef})\nDate: ${dateLabel}\n\nMember: ${params.memberName}\nCharge: ${params.title}\nTotal Fee: ${formatBdtPlain(params.totalChargeAmount)}\nYour Share (${params.sharePercent.toFixed(2)}%): -${formatBdtPlain(params.allocatedAmount)}\nRule: ${ruleExplanation}\nRecorded By: ${params.recordedByName}\nUpdated Net Balance: ${formatBdtPlain(params.newNetBalance)}`,
+    html,
+  };
+}

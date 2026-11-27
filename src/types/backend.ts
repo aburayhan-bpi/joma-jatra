@@ -101,3 +101,25 @@ export const ACTIVITY_ENTITIES = [
   "AUTH",
 ] as const;
 export type ActivityEntity = (typeof ACTIVITY_ENTITIES)[number];
+
+/* ==========================================================================
+   CHARGES & FEE ALLOCATION MODULE
+   ========================================================================== */
+
+export const TRANSFER_FEE_BEARER_TYPES = [
+  "SHARED_PRO_RATA",
+  "SPECIFIC_MEMBER",
+] as const;
+export type TransferFeeBearerType = (typeof TRANSFER_FEE_BEARER_TYPES)[number];
+
+export const CHARGE_ALLOCATION_MODES = [
+  "PRO_RATA_ACTIVE",
+  "DIRECT_MEMBER",
+] as const;
+export type ChargeAllocationMode = (typeof CHARGE_ALLOCATION_MODES)[number];
+
+export const CHARGE_ALLOCATION_SOURCES = [
+  "ACCOUNT_CHARGE",
+  "TRANSFER_FEE",
+] as const;
+export type ChargeAllocationSource = (typeof CHARGE_ALLOCATION_SOURCES)[number];

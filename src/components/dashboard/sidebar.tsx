@@ -5,6 +5,7 @@ import { SIDEBAR_ITEMS, SidebarNavItem } from "@/lib/constants";
 import { selectUser } from "@/redux/features/user/authSlice";
 import { useAppSelector } from "@/redux/hook";
 import {
+  BookOpen,
   HandCoins,
   History,
   Landmark,
@@ -35,6 +36,7 @@ const iconMap: Record<SidebarNavItem["icon"], React.ReactNode> = {
   Users: <Users className="w-[17px] h-[17px] shrink-0" />,
   Landmark: <Landmark className="w-[17px] h-[17px] shrink-0" />,
   History: <History className="w-[17px] h-[17px] shrink-0" />,
+  BookOpen: <BookOpen className="w-[17px] h-[17px] shrink-0" />,
   UserCircle: <UserCircle className="w-[17px] h-[17px] shrink-0" />,
 };
 

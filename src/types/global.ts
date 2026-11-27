@@ -1,12 +1,15 @@
 import {
   ActivityAction,
   ActivityEntity,
+  ChargeAllocationMode,
+  ChargeAllocationSource,
   EntrySource,
   MemberDeactivateAction,
   PaymentAccountType,
   PaymentMethodType,
   ReturnType,
   TransactionStatus,
+  TransferFeeBearerType,
   UserRole,
   UserStatus,
 } from "@/types/backend";
@@ -63,6 +66,7 @@ export interface IMemberFinancialSummary {
   totalDeposited: number;
   totalReturned: number;
   totalDonatedWaived: number;
+  totalCharges: number;
   netBalance: number;
   pendingDepositsCount: number;
   pendingReturnsCount: number;
@@ -255,7 +259,7 @@ export type IDeactivateMemberResponse = IBaseResponse<{
 
 export interface IMemberAuditTrailEntry {
   id: string;
-  eventCategory: "DEPOSIT" | "RETURN" | "LIFECYCLE";
+  eventCategory: "DEPOSIT" | "RETURN" | "CHARGE" | "LIFECYCLE";
   eventType: string;
   action: string;
   summary: string;
@@ -263,6 +267,10 @@ export interface IMemberAuditTrailEntry {
   month: string | null;
   amount: number | null;
   payoutFee?: number;
+  allocationMode?: ChargeAllocationMode;
+  sharePercent?: number;
+  memberBalanceSnapshot?: number;
+  eligibleTotalSnapshot?: number;
   direction: "CREDIT" | "DEBIT" | "NEUTRAL";
   paymentMethod: string | null;
   paymentAccountName: string | null;
@@ -281,7 +289,7 @@ export interface IMemberAuditTrailEntry {
 
 export interface IMemberAuditTrailQuery extends IListQueryParams {
   id: string;
-  category?: "DEPOSIT" | "RETURN" | "LIFECYCLE" | "";
+  category?: "DEPOSIT" | "RETURN" | "CHARGE" | "LIFECYCLE" | "";
   status?: string;
   month?: string;
 }
@@ -540,6 +548,17 @@ export type IReturnResponse = IBaseResponse<IDepositReturn>;
    8. TRANSFERS, CHARGES, ACTIVITY LOGS & DASHBOARD TYPES
    ========================================================================== */
 
+export interface IChargeAllocationItem {
+  id: string;
+  sourceType: ChargeAllocationSource;
+  allocationMode: ChargeAllocationMode;
+  memberId: IActorRef | string;
+  memberBalanceSnapshot: number;
+  eligibleTotalSnapshot: number;
+  sharePercent: number;
+  allocatedAmount: number;
+}
+
 export interface IAccountTransfer {
   _id?: string;
   id: string;
@@ -547,6 +566,9 @@ export interface IAccountTransfer {
   toAccountId: IPaymentAccountRef;
   amount: number;
   transferFee: number;
+  feeBearerType?: TransferFeeBearerType;
+  feeBearerMemberId?: IActorRef | null;
+  allocations?: IChargeAllocationItem[];
   transferDate: string;
   trxId?: string;
   proofImage?: string;
@@ -566,6 +588,8 @@ export interface ICreateTransferPayload {
   toAccountId: string;
   amount: number;
   transferFee?: number;
+  feeBearerType?: TransferFeeBearerType;
+  feeBearerMemberId?: string;
   transferDate?: string;
   trxId?: string;
   proofImage?: string;
@@ -584,6 +608,7 @@ export interface IAccountCharge {
   title: string;
   proofImage?: string;
   note?: string;
+  allocations?: IChargeAllocationItem[];
   createdBy?: IActorRef | null;
   isDeleted: boolean;
   createdAt: string;
@@ -639,11 +664,15 @@ export interface IGroupFundSummary {
   totalTransferFees: number;
   totalStandaloneCharges: number;
   totalCharges: number;
+  totalAllocatedMemberCharges?: number;
+  unallocatedLegacyCharges?: number;
   totalCashInHand: number;
   unsettledFormerMemberPayable: number;
   activeNetFund: number;
+  activeMemberBalancesSum?: number;
   accountBalancesSum: number;
   reconciliationDifference: number;
+  memberLedgerDifference?: number;
 }
 
 export interface IDashboardAccountBalance {
@@ -702,6 +731,7 @@ export interface IMonthlyMatrixRow {
   joinedAt: string;
   totalDeposited: number;
   totalReturned: number;
+  totalCharges?: number;
   netBalance: number;
   monthlyBreakdown: Record<string, { amount: number; count: number } | null>;
 }
@@ -728,6 +758,7 @@ export interface IResetTestDataResult {
   returns: number;
   transfers: number;
   charges: number;
+  chargeAllocations?: number;
   monthlyTargets: number;
   paymentAccounts: number;
   activityLogs: number;
