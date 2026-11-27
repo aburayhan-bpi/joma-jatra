@@ -200,16 +200,16 @@ function ChargeForm({ onClose }: { onClose: () => void }) {
             </div>
           ) : (
             <span>
-              Will split pro-rata by balance across{" "}
+              Will split pro-rata across{" "}
               <strong className="text-foreground">
                 {activeEligibleMembers.length}
               </strong>{" "}
-              active member(s) (
+              active member(s) with balance &gt; ৳0 (
               <strong className="font-money">
                 {formatTaka(activeTotalBalance)}
               </strong>{" "}
-              total active balance). Donated Reserve &amp; former members are
-              untouched.
+              combined member balance). Donated Reserve &amp; former members are
+              excluded.
             </span>
           )}
         </div>

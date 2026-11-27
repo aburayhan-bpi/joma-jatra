@@ -291,6 +291,12 @@ export default function ProfilePage() {
             valueClassName="text-primary"
             icon={<Wallet className="w-[18px] h-[18px]" />}
             tone="emerald"
+            subtext={
+              profile.financialSummary.totalReturned > 0 ||
+              (profile.financialSummary.totalCharges || 0) > 0
+                ? `Returned: ${formatTaka(profile.financialSummary.totalReturned)} · Charges: ${formatTaka(profile.financialSummary.totalCharges || 0)}`
+                : "No returns or charges deducted"
+            }
           />
         </div>
       )}

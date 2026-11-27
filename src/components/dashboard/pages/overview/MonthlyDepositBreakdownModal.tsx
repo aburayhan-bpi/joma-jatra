@@ -188,8 +188,8 @@ export default function MonthlyDepositBreakdownModal({
               <strong className="font-money text-[#1c6b72]">
                 {formatTaka(fundSummary.totalDonatedWaivers)}
               </strong>{" "}
-              in donated/waived group reserve (retained in fund, not split across
-              members)
+              in donated/waived group reserve (kept separate from member savings
+              and untouched by charges)
             </span>
             <Link
               href="/dashboard/returns?returnType=DONATED_WAIVER"

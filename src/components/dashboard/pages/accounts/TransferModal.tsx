@@ -315,11 +315,11 @@ function TransferForm({ onClose }: { onClose: () => void }) {
                   <strong className="text-foreground">
                     {activeEligibleMembers.length}
                   </strong>{" "}
-                  active member(s) (
+                  active member(s) with balance &gt; ৳0 (
                   <strong className="font-money">
                     {formatTaka(activeTotalBalance)}
                   </strong>{" "}
-                  total balance).
+                  combined member balance • Donated &amp; former funds excluded).
                 </span>
               )}
             </div>

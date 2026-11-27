@@ -50,8 +50,8 @@ function ResetTestDataForm({ onClose }: { onClose: () => void }) {
           <p className="text-foreground/85 leading-relaxed">
             This will permanently erase all{" "}
             <strong>
-              Deposits, Returns, Transfers, Charges, Monthly Targets, Payment
-              Accounts, and Activity Logs
+              Deposits, Returns, Transfers, Charges, Charge Allocations, Monthly
+              Targets, Payment Accounts, and Activity Logs
             </strong>{" "}
             so you can start fresh testing. Your own Admin account is always
             preserved.

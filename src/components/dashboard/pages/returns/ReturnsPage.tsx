@@ -294,7 +294,9 @@ export default function ReturnsPage() {
                             ? "Donated to Group Fund"
                             : ret.paymentAccountId
                               ? `${ret.paymentAccountId.accountName} (${getPaymentMethodLabel(ret.paymentMethod)})`
-                              : "Payout account pending"}
+                              : ret.status === "REJECTED"
+                                ? "Request declined"
+                                : "Awaiting payout account"}
                         </p>
                         <p
                           className="text-[11px] text-muted-foreground truncate max-w-48"
