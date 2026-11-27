@@ -299,6 +299,7 @@ export default function MonthlyDepositBreakdownModal({
                               <Link
                                 href={`/dashboard/members/${member.id}`}
                                 onClick={onClose}
+                                title={member.name}
                                 className="font-medium text-foreground hover:text-primary hover:underline truncate cursor-pointer"
                               >
                                 {member.name}

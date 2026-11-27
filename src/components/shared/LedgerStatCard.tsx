@@ -53,7 +53,10 @@ export default function LedgerStatCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <p className="text-xs font-medium text-muted-foreground truncate">
+            <p
+              className="text-xs font-medium text-muted-foreground truncate"
+              title={label}
+            >
               {label}
             </p>
             {onInfoClick && (

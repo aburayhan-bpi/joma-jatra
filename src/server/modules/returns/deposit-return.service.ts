@@ -13,8 +13,10 @@ import {
 import { AuthUser } from "../../core/auth-guard";
 import { connectDB } from "../../core/db";
 import {
+  computeReturnNetPayout,
   getAccountBalance,
   getMemberBalance,
+  validateReturnPayoutFee,
 } from "../../shared/accounting.service";
 import { safeSendEmail } from "../../shared/email";
 import { buildReturnReceiptEmail } from "../../shared/email-templates";
@@ -158,6 +160,7 @@ export async function createReturn(
   input: {
     memberId?: string;
     amount: number;
+    payoutFee?: number;
     returnDate?: Date;
     paymentAccountId?: string;
     paymentMethod?: PaymentMethodType;
@@ -240,6 +243,19 @@ export async function createReturn(
         ? "FULL_SETTLEMENT"
         : "PARTIAL";
 
+  // Self-requests remain fee-free until reviewed/disbursed; managers can log payout fee on direct payout
+  const requestedFee = roundMoney(input.payoutFee || 0);
+  if (returnType === "DONATED_WAIVER" && requestedFee > 0) {
+    throw badRequest("Donated/waived records cannot have a payout fee.");
+  }
+  const payoutFee =
+    canAutoProcess && returnType !== "DONATED_WAIVER" ? requestedFee : 0;
+  const feeError = validateReturnPayoutFee(amount, payoutFee, returnType);
+  if (feeError) {
+    throw badRequest(feeError);
+  }
+  const netSent = computeReturnNetPayout(amount, payoutFee);
+
   let paymentAccountObjectId = null;
   let resolvedMethod: PaymentMethodType | null = input.paymentMethod || null;
 
@@ -300,6 +316,7 @@ export async function createReturn(
   const record = await DepositReturnModel.create({
     memberId: targetMember._id,
     amount,
+    payoutFee,
     returnDate: canAutoProcess
       ? resolveTransactionDate(input.returnDate)
       : new Date(),
@@ -329,7 +346,7 @@ export async function createReturn(
         : "CREATED",
     summary:
       status === "APPROVED"
-        ? `${actor.name} processed ৳${record.amount} (${returnType}) for ${targetMember.name}`
+        ? `${actor.name} processed ৳${record.amount} (${returnType}${payoutFee > 0 ? ` · Net ৳${netSent}, Fee ৳${payoutFee}` : ""}) for ${targetMember.name}`
         : `${actor.name} requested a return of ৳${record.amount}`,
     amount: record.amount,
     proofImage: record.proofImage || null,
@@ -352,6 +369,7 @@ export async function createReturn(
         memberName: targetMember.name,
         status: "APPROVED",
         amount: record.amount,
+        payoutFee: record.payoutFee,
         returnType: record.returnType,
         returnDate: record.returnDate,
         paymentAccountName: accountDoc?.accountName || null,
@@ -375,6 +393,7 @@ export async function updateReturn(
   id: string,
   input: {
     amount?: number;
+    payoutFee?: number;
     recipientAccount?: string;
     reason?: string;
     paymentAccountId?: string;
@@ -406,6 +425,7 @@ export async function updateReturn(
 
   const before = {
     amount: record.amount,
+    payoutFee: record.payoutFee || 0,
     recipientAccount: record.recipientAccount || "",
     reason: record.reason || "",
     paymentAccountId: record.paymentAccountId?.toString() || null,
@@ -456,48 +476,66 @@ export async function updateReturn(
   }
   if (input.proofImage !== undefined) record.proofImage = input.proofImage;
 
-  // Never assign a payment account or method onto a DONATED_WAIVER record
+  // Never assign a payment account, method, or payout fee onto a DONATED_WAIVER record
   if (record.returnType === "DONATED_WAIVER") {
-    if (input.paymentAccountId || input.paymentMethod) {
-      throw badRequest(
-        "Cannot assign a payment account or payment method to a donated waiver record.",
-      );
-    }
-  } else if (input.paymentAccountId) {
-    const acc = await PaymentAccountModel.findOne({
-      _id: toObjectId(input.paymentAccountId, "paymentAccountId"),
-      isDeleted: false,
-    });
-    if (!acc) throw notFound("Payment account not found");
-    if (input.paymentMethod && input.paymentMethod !== acc.method) {
-      throw badRequest(
-        `Payment method (${input.paymentMethod}) does not match selected account "${acc.accountName}" (${acc.method}).`,
-      );
-    }
     if (
-      record.status === "APPROVED" &&
-      record.paymentAccountId?.toString() !== acc._id.toString()
+      input.paymentAccountId ||
+      input.paymentMethod ||
+      (input.payoutFee !== undefined && input.payoutFee > 0)
     ) {
-      const targetAccBalance = await getAccountBalance(acc._id);
-      if (targetAccBalance.balance < record.amount) {
+      throw badRequest(
+        "Cannot assign a payment account, payment method, or payout fee to a donated waiver record.",
+      );
+    }
+  } else {
+    if (input.payoutFee !== undefined && actor.role === "ADMIN") {
+      record.payoutFee = roundMoney(input.payoutFee);
+    }
+    const feeError = validateReturnPayoutFee(
+      record.amount,
+      record.payoutFee || 0,
+      record.returnType,
+    );
+    if (feeError) {
+      throw badRequest(feeError);
+    }
+
+    if (input.paymentAccountId) {
+      const acc = await PaymentAccountModel.findOne({
+        _id: toObjectId(input.paymentAccountId, "paymentAccountId"),
+        isDeleted: false,
+      });
+      if (!acc) throw notFound("Payment account not found");
+      if (input.paymentMethod && input.paymentMethod !== acc.method) {
         throw badRequest(
-          `Insufficient balance in ${acc.accountName} (${acc.method}). Available: ৳${targetAccBalance.balance}, Required: ৳${record.amount}.`,
+          `Payment method (${input.paymentMethod}) does not match selected account "${acc.accountName}" (${acc.method}).`,
         );
       }
-    }
-    record.paymentAccountId = acc._id;
-    record.paymentMethod = acc.method;
-  } else if (input.paymentMethod) {
-    if (
-      record.paymentAccountId &&
-      input.paymentMethod !== record.paymentMethod
-    ) {
-      throw badRequest(
-        "To change payment method, please select a matching paymentAccountId.",
-      );
-    }
-    if (record.status === "PENDING") {
-      record.paymentMethod = input.paymentMethod;
+      if (
+        record.status === "APPROVED" &&
+        record.paymentAccountId?.toString() !== acc._id.toString()
+      ) {
+        const targetAccBalance = await getAccountBalance(acc._id);
+        if (targetAccBalance.balance < record.amount) {
+          throw badRequest(
+            `Insufficient balance in ${acc.accountName} (${acc.method}). Available: ৳${targetAccBalance.balance}, Required: ৳${record.amount}.`,
+          );
+        }
+      }
+      record.paymentAccountId = acc._id;
+      record.paymentMethod = acc.method;
+    } else if (input.paymentMethod) {
+      if (
+        record.paymentAccountId &&
+        input.paymentMethod !== record.paymentMethod
+      ) {
+        throw badRequest(
+          "To change payment method, please select a matching paymentAccountId.",
+        );
+      }
+      if (record.status === "PENDING") {
+        record.paymentMethod = input.paymentMethod;
+      }
     }
   }
 
@@ -515,6 +553,7 @@ export async function updateReturn(
       before,
       after: {
         amount: record.amount,
+        payoutFee: record.payoutFee || 0,
         recipientAccount: record.recipientAccount || "",
         reason: record.reason || "",
         paymentAccountId: record.paymentAccountId?.toString() || null,
@@ -541,6 +580,7 @@ export async function reviewReturn(
     rejectionReason?: string;
     paymentAccountId?: string;
     paymentMethod?: PaymentMethodType;
+    payoutFee?: number;
     trxId?: string;
     proofImage?: string;
   },
@@ -610,6 +650,23 @@ export async function reviewReturn(
       setFields.paymentMethod = account.method;
     }
 
+    const resolvedFee =
+      record.returnType === "DONATED_WAIVER"
+        ? 0
+        : roundMoney(input.payoutFee ?? record.payoutFee ?? 0);
+    if (record.returnType === "DONATED_WAIVER" && (input.payoutFee || 0) > 0) {
+      throw badRequest("Donated/waived records cannot have a payout fee.");
+    }
+    const feeError = validateReturnPayoutFee(
+      record.amount,
+      resolvedFee,
+      record.returnType,
+    );
+    if (feeError) {
+      throw badRequest(feeError);
+    }
+    setFields.payoutFee = resolvedFee;
+
     if (input.trxId !== undefined) {
       const normalizedTrx = normalizeTrxId(input.trxId);
       await ensureUniqueReturnTrxId(normalizedTrx, record._id.toString());
@@ -642,6 +699,12 @@ export async function reviewReturn(
       : Promise.resolve(null),
   ]);
 
+  const approvedFee = updatedRecord.payoutFee || 0;
+  const approvedNetSent = computeReturnNetPayout(
+    updatedRecord.amount,
+    approvedFee,
+  );
+
   await logActivity({
     entityType: "RETURN",
     entityId: updatedRecord._id,
@@ -649,7 +712,7 @@ export async function reviewReturn(
     action: input.status,
     summary:
       input.status === "APPROVED"
-        ? `${actor.name} approved ৳${updatedRecord.amount} return to ${member?.name || "Member"}`
+        ? `${actor.name} approved ৳${updatedRecord.amount} return${approvedFee > 0 ? ` (Net ৳${approvedNetSent}, Fee ৳${approvedFee})` : ""} to ${member?.name || "Member"}`
         : `${actor.name} rejected ৳${updatedRecord.amount} return request from ${member?.name || "Member"} — ${updatedRecord.rejectionReason}`,
     amount: updatedRecord.amount,
     proofImage: updatedRecord.proofImage || null,
@@ -667,6 +730,7 @@ export async function reviewReturn(
         memberName: member.name,
         status: input.status,
         amount: updatedRecord.amount,
+        payoutFee: approvedFee,
         returnType: updatedRecord.returnType,
         returnDate: updatedRecord.returnDate,
         paymentAccountName: accountDoc?.accountName || null,

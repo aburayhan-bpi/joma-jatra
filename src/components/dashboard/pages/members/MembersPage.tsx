@@ -194,11 +194,19 @@ export default function MembersPage() {
                           <div className="min-w-0">
                             <Link
                               href={`/dashboard/members/${member.id}`}
+                              title={member.name}
                               className="font-medium text-foreground hover:text-primary transition-colors cursor-pointer block truncate"
                             >
                               {member.name}
                             </Link>
-                            <p className="text-[11px] text-muted-foreground truncate">
+                            <p
+                              className="text-[11px] text-muted-foreground truncate"
+                              title={
+                                member.phone
+                                  ? `${member.email} • ${member.phone}`
+                                  : member.email
+                              }
+                            >
                               {member.email}
                               {member.phone ? ` • ${member.phone}` : ""}
                             </p>

@@ -68,7 +68,10 @@ export default function ProofUploadField({
             <p className="text-xs font-medium text-foreground truncate">
               Proof attached
             </p>
-            <p className="text-[11px] text-muted-foreground truncate">
+            <p
+              className="text-[11px] text-muted-foreground truncate"
+              title={value}
+            >
               {value}
             </p>
           </div>

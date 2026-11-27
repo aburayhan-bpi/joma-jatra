@@ -9,13 +9,19 @@ import {
 } from "../modules/members/member.validation";
 import { upsertMonthlyTargetSchema } from "../modules/monthly-targets/monthly-target.validation";
 import { updatePaymentAccountSchema } from "../modules/payment-accounts/payment-account.validation";
+import { createReturnSchema } from "../modules/returns/deposit-return.validation";
 import { createTransferSchema } from "../modules/transfers/account-transfer.validation";
 import {
   computeFundReconciliation,
   computePersonalGoalProgress,
+  computeReturnNetPayout,
   computeSingleAccountBalance,
+  validateReturnPayoutFee,
 } from "../shared/accounting.service";
-import { makeReceiptRef } from "../shared/email-templates";
+import {
+  buildReturnReceiptEmail,
+  makeReceiptRef,
+} from "../shared/email-templates";
 import {
   formatYearMonth,
   normalizeTrxId,
@@ -313,5 +319,69 @@ describe("Domain Zod Validations", () => {
       "http://localhost:3000/api/v1/members/123/audit-trail?page=1&limit=99999",
     );
     expect(parsePaginationQuery(abusiveReq, 25, 1000).limit).toBe(1000);
+  });
+
+  it("deducts return & settlement payout fees safely without violating reconciliation or allowing invalid fees", () => {
+    expect(computeReturnNetPayout(1000, 20)).toBe(980);
+    expect(validateReturnPayoutFee(1000, 20, "FULL_SETTLEMENT")).toBeNull();
+    expect(validateReturnPayoutFee(1000, 1000, "PARTIAL")).not.toBeNull();
+    expect(validateReturnPayoutFee(1000, -5, "PARTIAL")).not.toBeNull();
+    expect(validateReturnPayoutFee(1000, 10, "DONATED_WAIVER")).not.toBeNull();
+
+    // Create return Zod rules
+    expect(
+      createReturnSchema.safeParse({
+        amount: 1000,
+        payoutFee: 20,
+        returnType: "PARTIAL",
+      }).success,
+    ).toBe(true);
+    expect(
+      createReturnSchema.safeParse({
+        amount: 500,
+        payoutFee: 500,
+        returnType: "PARTIAL",
+      }).success,
+    ).toBe(false);
+    expect(
+      createReturnSchema.safeParse({
+        amount: 500,
+        payoutFee: 10,
+        returnType: "DONATED_WAIVER",
+      }).success,
+    ).toBe(false);
+
+    // Deactivate settlement fee rules
+    expect(
+      deactivateMemberSchema.safeParse({
+        action: "SETTLE_AND_CLOSE",
+        paymentAccountId: "65f1a2b3c4d5e6f7a8b9c0d1",
+        payoutFee: 20,
+      }).success,
+    ).toBe(true);
+    expect(
+      deactivateMemberSchema.safeParse({
+        action: "DONATE_AND_CLOSE",
+        payoutFee: 20,
+      }).success,
+    ).toBe(false);
+
+    // Receipt email clearly separates Gross Settled, Payout Fee, and Net Disbursed
+    const receipt = buildReturnReceiptEmail({
+      memberName: "Karim",
+      status: "APPROVED",
+      amount: 1000,
+      payoutFee: 20,
+      returnType: "FULL_SETTLEMENT",
+      returnDate: new Date("2026-11-26T06:00:00Z"),
+      paymentAccountName: "Group bKash",
+      paymentMethod: "BKASH",
+      trxId: "RET999",
+      reviewedByName: "Admin",
+      newNetBalance: 0,
+    });
+    expect(receipt.text).toContain("Gross Settled: BDT 1,000");
+    expect(receipt.text).toContain("Payout Fee (Deducted): BDT 20");
+    expect(receipt.text).toContain("Net Disbursed: BDT 980");
   });
 });

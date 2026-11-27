@@ -136,10 +136,16 @@ export function Sidebar({ isOpen, isCollapsed, onClose }: SidebarProps) {
             {!isCollapsed && user && (
               <div className="px-2.5 py-2 rounded bg-background border border-border flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate">
+                  <p
+                    className="text-xs font-medium text-foreground truncate"
+                    title={user.name}
+                  >
                     {user.name}
                   </p>
-                  <p className="text-[11px] text-muted-foreground truncate">
+                  <p
+                    className="text-[11px] text-muted-foreground truncate"
+                    title={user.email}
+                  >
                     {user.email}
                   </p>
                 </div>

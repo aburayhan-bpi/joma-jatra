@@ -3,6 +3,7 @@
 import AppSelect from "@/components/shared/AppSelect";
 import CancelSubmitButton from "@/components/shared/CancelSubmitButton";
 import CustomModal from "@/components/shared/CustomModal";
+import PayoutFeeField from "@/components/shared/PayoutFeeField";
 import ProofUploadField from "@/components/shared/ProofUploadField";
 import { useGetPaymentAccountsQuery } from "@/redux/api/accounts/accountsApi";
 import { useDeactivateMemberMutation } from "@/redux/api/members/membersApi";
@@ -44,6 +45,7 @@ function DeactivateMemberForm({
     netBalance > 0 ? "SETTLE_AND_CLOSE" : "DEACTIVATE_ONLY",
   );
   const [paymentAccountId, setPaymentAccountId] = useState("");
+  const [payoutFee, setPayoutFee] = useState("0");
   const [recipientAccount, setRecipientAccount] = useState("");
   const [trxId, setTrxId] = useState("");
   const [proofImage, setProofImage] = useState("");
@@ -55,6 +57,7 @@ function DeactivateMemberForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const numericFee = Number(payoutFee || 0);
 
     if (pendingTotal > 0) {
       toast.error(
@@ -65,6 +68,14 @@ function DeactivateMemberForm({
 
     if (action === "SETTLE_AND_CLOSE" && netBalance > 0 && !activeAccountId) {
       toast.error("Please select a payment account for the settlement payout");
+      return;
+    }
+    if (
+      action === "SETTLE_AND_CLOSE" &&
+      netBalance > 0 &&
+      (Number.isNaN(numericFee) || numericFee < 0 || numericFee >= netBalance)
+    ) {
+      toast.error("Settlement payout fee must be at least ৳0 and less than the net balance");
       return;
     }
 
@@ -81,6 +92,8 @@ function DeactivateMemberForm({
           action === "SETTLE_AND_CLOSE" && netBalance > 0
             ? selectedAccount?.method
             : undefined,
+        payoutFee:
+          action === "SETTLE_AND_CLOSE" && netBalance > 0 ? numericFee : 0,
         recipientAccount:
           action === "SETTLE_AND_CLOSE"
             ? recipientAccount.trim() || undefined
@@ -205,6 +218,13 @@ function DeactivateMemberForm({
               }))}
             />
           </div>
+
+          <PayoutFeeField
+            grossAmount={netBalance}
+            feeValue={payoutFee}
+            onChange={setPayoutFee}
+            label="Settlement Payout Fee (BDT, Optional)"
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">

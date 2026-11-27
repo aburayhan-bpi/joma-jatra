@@ -11,9 +11,11 @@ import {
 import { AuthUser } from "../../core/auth-guard";
 import { connectDB } from "../../core/db";
 import {
+  computeReturnNetPayout,
   getAccountBalance,
   getMemberBalance,
   getMemberBalancesMap,
+  validateReturnPayoutFee,
 } from "../../shared/accounting.service";
 import { safeSendEmail } from "../../shared/email";
 import {
@@ -25,6 +27,7 @@ import {
   formatYearMonth,
   normalizeTrxId,
   resolveTransactionDate,
+  roundMoney,
   toObjectId,
 } from "../../shared/normalize";
 import {
@@ -427,6 +430,7 @@ export async function deactivateMember(
     leaveNote?: string;
     paymentAccountId?: string;
     paymentMethod?: PaymentMethodType;
+    payoutFee?: number;
     recipientAccount?: string;
     trxId?: string;
     proofImage?: string;
@@ -502,6 +506,17 @@ export async function deactivateMember(
         );
       }
 
+      const payoutFee = roundMoney(input.payoutFee || 0);
+      const feeError = validateReturnPayoutFee(
+        balance.netBalance,
+        payoutFee,
+        "FULL_SETTLEMENT",
+      );
+      if (feeError) {
+        throw badRequest(feeError);
+      }
+      const netSent = computeReturnNetPayout(balance.netBalance, payoutFee);
+
       const normalizedTrx = normalizeTrxId(input.trxId);
       if (normalizedTrx) {
         const duplicateTrx = await DepositReturnModel.exists({
@@ -519,6 +534,7 @@ export async function deactivateMember(
       settlementReturn = await DepositReturnModel.create({
         memberId: memberObjectId,
         amount: balance.netBalance,
+        payoutFee,
         returnDate: now,
         paymentMethod: account.method,
         paymentAccountId: account._id,
@@ -539,7 +555,7 @@ export async function deactivateMember(
         entityId: settlementReturn._id,
         targetMemberId: memberObjectId,
         action: "SETTLED",
-        summary: `${actor.name} settled ৳${balance.netBalance} to ${user.name} via ${account.method} (${account.accountName}) while closing account`,
+        summary: `${actor.name} settled ৳${balance.netBalance}${payoutFee > 0 ? ` (Net ৳${netSent}, Fee ৳${payoutFee})` : ""} to ${user.name} via ${account.method} (${account.accountName}) while closing account`,
         amount: balance.netBalance,
         proofImage: input.proofImage || null,
         performedBy: actor.id,
@@ -551,6 +567,7 @@ export async function deactivateMember(
           memberName: user.name,
           status: "APPROVED",
           amount: balance.netBalance,
+          payoutFee,
           returnType: "FULL_SETTLEMENT",
           returnDate: now,
           paymentAccountName: account.accountName,
@@ -699,6 +716,7 @@ export interface MemberAuditTrailEntry {
   date: Date;
   month: string | null;
   amount: number | null;
+  payoutFee?: number;
   direction: "CREDIT" | "DEBIT" | "NEUTRAL";
   paymentMethod: string | null;
   paymentAccountName: string | null;
@@ -787,8 +805,8 @@ export async function getMemberAuditTrail(
       summary:
         dep.note ||
         `Deposit for ${dep.month} via ${dep.paymentMethod}`,
-      // Use exact createdAt timestamp for true chronological ordering in the audit trail
-      date: dep.createdAt || dep.depositDate,
+      // Order by latest milestone (approval/rejection if reviewed, otherwise submission time)
+      date: dep.reviewedAt || dep.createdAt || dep.depositDate,
       month: dep.month,
       amount: dep.amount,
       direction: "CREDIT",
@@ -808,8 +826,8 @@ export async function getMemberAuditTrail(
     const acc = ret.paymentAccountId as unknown as
       | { accountName?: string; method?: string }
       | null;
-    // Use exact createdAt timestamp for true chronological ordering in the audit trail
-    const retDate = ret.createdAt || ret.returnDate;
+    // Order by latest milestone (approval/rejection if reviewed, otherwise request time)
+    const retDate = ret.reviewedAt || ret.createdAt || ret.returnDate;
     const retMonth = formatYearMonth(retDate);
 
     timeline.push({
@@ -827,6 +845,7 @@ export async function getMemberAuditTrail(
       date: retDate,
       month: retMonth,
       amount: ret.amount,
+      payoutFee: ret.payoutFee || 0,
       direction: "DEBIT",
       paymentMethod: ret.paymentMethod || null,
       paymentAccountName: acc?.accountName || null,

@@ -97,6 +97,37 @@ export function computeSingleAccountBalance(params: {
 }
 
 /**
+ * Pure helper for net cash sent to a member on a return after deducting payout fee.
+ */
+export function computeReturnNetPayout(
+  grossAmount: number,
+  payoutFee = 0,
+): number {
+  return roundMoney(Math.max(0, grossAmount - Math.max(0, payoutFee)));
+}
+
+/**
+ * Pure validator for payout fee invariants across returns and settlement payouts.
+ * Returns null if valid, otherwise a clear error message.
+ */
+export function validateReturnPayoutFee(
+  grossAmount: number,
+  payoutFee = 0,
+  returnType?: string,
+): string | null {
+  if (payoutFee < 0) {
+    return "Payout fee cannot be negative.";
+  }
+  if (returnType === "DONATED_WAIVER" && payoutFee > 0) {
+    return "Donated/waived records cannot have a payout fee.";
+  }
+  if (payoutFee >= grossAmount) {
+    return `Payout fee (৳${payoutFee}) must be less than the return amount (৳${grossAmount}) so at least ৳1 reaches the member.`;
+  }
+  return null;
+}
+
+/**
  * Pure helper for private personal monthly goal progress.
  * Caps progress by the member's verified netBalance so returned/waived funds do not inflate goal completion.
  */

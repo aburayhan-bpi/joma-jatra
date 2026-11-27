@@ -240,6 +240,7 @@ export interface IDeactivateMemberPayload {
   leaveNote?: string;
   paymentAccountId?: string;
   paymentMethod?: PaymentMethodType;
+  payoutFee?: number;
   recipientAccount?: string;
   trxId?: string;
   proofImage?: string;
@@ -261,6 +262,7 @@ export interface IMemberAuditTrailEntry {
   date: string;
   month: string | null;
   amount: number | null;
+  payoutFee?: number;
   direction: "CREDIT" | "DEBIT" | "NEUTRAL";
   paymentMethod: string | null;
   paymentAccountName: string | null;
@@ -465,6 +467,7 @@ export interface IDepositReturn {
   id: string;
   memberId: IActorRef;
   amount: number;
+  payoutFee?: number;
   returnDate: string;
   paymentMethod?: PaymentMethodType | null;
   paymentAccountId?: IPaymentAccountRef | null;
@@ -499,6 +502,7 @@ export interface ICreateReturnPayload {
   returnDate?: string;
   paymentAccountId?: string;
   paymentMethod?: PaymentMethodType;
+  payoutFee?: number;
   recipientAccount?: string;
   trxId?: string;
   proofImage?: string;
@@ -509,6 +513,7 @@ export interface ICreateReturnPayload {
 export interface IUpdateReturnPayload {
   id: string;
   amount?: number;
+  payoutFee?: number;
   recipientAccount?: string;
   reason?: string;
   paymentAccountId?: string;
@@ -523,6 +528,7 @@ export interface IReviewReturnPayload {
   rejectionReason?: string;
   paymentAccountId?: string;
   paymentMethod?: PaymentMethodType;
+  payoutFee?: number;
   trxId?: string;
   proofImage?: string;
 }

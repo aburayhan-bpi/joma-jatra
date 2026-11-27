@@ -91,8 +91,6 @@ export default function FundCardInfoModal({
     }
 
     if (cardKey === "activeFund") {
-      const reserveAfterCharges =
-        fundSummary.totalDonatedWaivers - fundSummary.totalCharges;
       return {
         title: "Active Net Fund — হিসাব কীভাবে হয়?",
         subtitle: "বকেয়া বাদ দিয়ে সক্রিয় গ্রুপ তহবিলের নিট পরিমাণ",
@@ -100,12 +98,8 @@ export default function FundCardInfoModal({
           "হাতে থাকা মোট টাকা (Total Cash in Hand) থেকে কোনো প্রাক্তন মেম্বারের বকেয়া পাওনা থাকলে তা আলাদা করে বাদ দেওয়ার পর, বর্তমানে সক্রিয় গ্রুপের জন্য নিট যত টাকা থাকে সেটাই Active Net Fund।",
         points: [
           "কোনো প্রাক্তন মেম্বারের পাওনা বাকি থাকলে সেটা আগেই বাদ রাখা হয় যাতে ভুল করে খরচ না হয়।",
-          "এখানে গ্রুপ চার্জ (যেমন ব্যাংক SMS বা ট্রান্সফার ফি) বাদ যায় এবং দান করা টাকা (Donated Reserve) যুক্ত থাকে।",
-          fundSummary.totalDonatedWaivers > 0
-            ? reserveAfterCharges >= 0
-              ? `গ্রুপে ${formatTaka(fundSummary.totalDonatedWaivers)} দান রিজার্ভ থাকায় ${formatTaka(fundSummary.totalCharges)} চার্জ তা থেকেই কভার হয়েছে এবং আরও ${formatTaka(reserveAfterCharges)} অতিরিক্ত রিজার্ভ আছে।`
-              : `গ্রুপে থাকা ${formatTaka(fundSummary.totalDonatedWaivers)} দান রিজার্ভ ${formatTaka(fundSummary.totalCharges)} চার্জের কিছুটা অংশ কভার করেছে; বাকি ${formatTaka(Math.abs(reserveAfterCharges))} নিট চার্জ হিসেবে বাদ গেছে।`
-            : "কোনো দান রিজার্ভ না থাকলে মোট চার্জ সরাসরি যৌথ তহবিল থেকে বাদ যায় (সদস্যদের ব্যক্তিগত জমার ব্যালেন্স প্রতিদিন কমানো হয় না)।",
+          "গ্রুপের যৌথ চার্জ (ব্যাংক SMS বা অ্যাকাউন্ট ট্রান্সফার ফি) আলাদাভাবে গ্রুপ খরচ (Total Charges) হিসেবে মোট তহবিল থেকে বাদ যায় — সদস্যদের ব্যক্তিগত জমার ব্যালেন্স অটোমেটিক কমানো হয় না।",
+          "কেউ টাকা দান বা মাফ (Donated / Waived) করলে তা সম্পূর্ণ আলাদা গ্রুপ রিজার্ভ হিসেবে এখানে যুক্ত থাকে এবং অন্যান্য মেম্বারের ব্যক্তিগত ব্যালেন্সে ভাগ হয় না।",
         ],
         rows: [
           {

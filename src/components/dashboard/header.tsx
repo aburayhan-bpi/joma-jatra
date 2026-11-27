@@ -211,12 +211,18 @@ export function Header({
             <div className="absolute right-0 top-full mt-1.5 w-56 rounded-md border border-border bg-card shadow-[0_10px_28px_rgba(7,42,31,0.1)] overflow-hidden">
               <div className="px-3.5 py-2.5 border-b border-border bg-background/70">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-semibold text-foreground truncate">
+                  <p
+                    className="text-xs font-semibold text-foreground truncate"
+                    title={user?.name}
+                  >
                     {user?.name}
                   </p>
                   {user?.role && <StatusPill status={user.role} />}
                 </div>
-                <p className="text-[11px] text-muted-foreground truncate mt-0.5">
+                <p
+                  className="text-[11px] text-muted-foreground truncate mt-0.5"
+                  title={user?.email}
+                >
                   {user?.email}
                 </p>
               </div>

@@ -489,6 +489,7 @@ export default function MonthlySheetPage() {
                           <div className="min-w-0">
                             <Link
                               href={`/dashboard/members/${row.id}`}
+                              title={row.name}
                               className="font-medium text-foreground hover:text-primary transition-colors cursor-pointer block truncate max-w-44"
                             >
                               {row.name}

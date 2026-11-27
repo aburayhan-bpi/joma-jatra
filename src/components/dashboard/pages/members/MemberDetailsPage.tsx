@@ -414,16 +414,27 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
                             {formatTaka(entry.amount)}
                           </span>
                         ) : (
-                          <span
-                            className={
-                              entry.direction === "DEBIT"
-                                ? "text-gold-dark"
-                                : "text-primary"
-                            }
-                          >
-                            {entry.direction === "DEBIT" ? "-" : "+"}
-                            {formatTaka(entry.amount)}
-                          </span>
+                          <div>
+                            <span
+                              className={
+                                entry.direction === "DEBIT"
+                                  ? "text-gold-dark"
+                                  : "text-primary"
+                              }
+                            >
+                              {entry.direction === "DEBIT" ? "-" : "+"}
+                              {formatTaka(entry.amount)}
+                            </span>
+                            {(entry.payoutFee || 0) > 0 && (
+                              <span className="block text-[10px] font-normal text-muted-foreground">
+                                Net{" "}
+                                {formatTaka(
+                                  Math.max(0, entry.amount - (entry.payoutFee || 0)),
+                                )}{" "}
+                                · Fee {formatTaka(entry.payoutFee || 0)}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
 
@@ -431,12 +442,20 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
                         {entry.status && <StatusPill status={entry.status} />}
                         {entry.performedBy && (
                           <p className="text-[11px] text-muted-foreground mt-1">
-                            By {entry.performedBy.name}
+                            {entry.eventCategory === "LIFECYCLE"
+                              ? `By ${entry.performedBy.name}`
+                              : entry.entrySource === "MEMBER_REQUEST"
+                                ? `Requested: ${entry.performedBy.name}`
+                                : `Recorded: ${entry.performedBy.name}`}
                           </p>
                         )}
                         {entry.reviewedBy && (
                           <p className="text-[11px] text-muted-foreground">
-                            Reviewed: {entry.reviewedBy.name}
+                            {entry.status === "APPROVED"
+                              ? `Approved: ${entry.reviewedBy.name}`
+                              : entry.status === "REJECTED"
+                                ? `Rejected: ${entry.reviewedBy.name}`
+                                : `Reviewed: ${entry.reviewedBy.name}`}
                           </p>
                         )}
                       </td>
@@ -450,6 +469,7 @@ export default function MemberDetailsPage({ memberId }: { memberId: string }) {
                                 title: `${member.name} — ${entry.eventCategory} Proof`,
                                 imageUrl: entry.proofImage!,
                                 amount: entry.amount,
+                                payoutFee: entry.payoutFee,
                                 method: entry.paymentMethod,
                                 trxId: entry.trxId,
                                 date: entry.date,

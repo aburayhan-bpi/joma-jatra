@@ -34,3 +34,14 @@ export function moneyAmountSchema(label: string, max = 100000000) {
     .max(max, `${label} exceeds the maximum allowed amount`)
     .transform((val) => roundMoney(val));
 }
+
+/**
+ * Validates optional non-negative fee amounts (>= 0) and rounds to 2 decimals.
+ */
+export function feeAmountSchema(label = "Fee", max = 10000000) {
+  return z
+    .number()
+    .min(0, `${label} cannot be negative`)
+    .max(max, `${label} exceeds the maximum allowed amount`)
+    .transform((val) => roundMoney(val));
+}

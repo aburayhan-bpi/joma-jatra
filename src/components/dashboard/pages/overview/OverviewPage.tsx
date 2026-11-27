@@ -618,7 +618,10 @@ export default function OverviewPage() {
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground truncate">
+                      <p
+                        className="text-sm font-medium text-foreground truncate"
+                        title={acc.accountName}
+                      >
                         {acc.accountName}
                       </p>
                       <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-[3px] bg-muted text-muted-foreground">

@@ -3,6 +3,7 @@
 import AppSelect from "@/components/shared/AppSelect";
 import CancelSubmitButton from "@/components/shared/CancelSubmitButton";
 import CustomModal from "@/components/shared/CustomModal";
+import PayoutFeeField from "@/components/shared/PayoutFeeField";
 import ProofUploadField from "@/components/shared/ProofUploadField";
 import { useGetPaymentAccountsQuery } from "@/redux/api/accounts/accountsApi";
 import { useGetMeQuery } from "@/redux/api/getMe/getMeApi";
@@ -62,6 +63,9 @@ function ReturnForm({
   );
   const [amount, setAmount] = useState(
     editingReturn ? String(editingReturn.amount) : "",
+  );
+  const [payoutFee, setPayoutFee] = useState(
+    editingReturn?.payoutFee ? String(editingReturn.payoutFee) : "0",
   );
   const [returnType, setReturnType] = useState<ReturnType>(
     editingReturn?.returnType || "PARTIAL",
@@ -124,7 +128,10 @@ function ReturnForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const numericAmount = Number(amount);
+    const numericAmount = isEditingApproved
+      ? Number(editingReturn?.amount || 0)
+      : Number(amount);
+    const numericFee = showPayoutMetadataFields ? Number(payoutFee || 0) : 0;
 
     if (!isEditingApproved && (!numericAmount || numericAmount < 1)) {
       toast.error("Return amount must be at least ৳1");
@@ -132,6 +139,13 @@ function ReturnForm({
     }
     if (requiresPayoutAccount && !activeAccountId) {
       toast.error("Please select the payout payment account");
+      return;
+    }
+    if (
+      showPayoutMetadataFields &&
+      (Number.isNaN(numericFee) || numericFee < 0 || numericFee >= numericAmount)
+    ) {
+      toast.error("Payout fee must be at least ৳0 and less than the return amount");
       return;
     }
 
@@ -145,6 +159,10 @@ function ReturnForm({
           id: editingReturn.id,
           // Amount is locked once a return is approved; only metadata can be updated
           ...(isEditingApproved ? {} : { amount: numericAmount }),
+          payoutFee:
+            isEditingApproved && returnType !== "DONATED_WAIVER"
+              ? numericFee
+              : undefined,
           recipientAccount:
             returnType === "DONATED_WAIVER" ? undefined : recipientAccount.trim(),
           reason: reason.trim(),
@@ -162,6 +180,7 @@ function ReturnForm({
         await createReturn({
           memberId: isManager && targetMemberId ? targetMemberId : undefined,
           amount: numericAmount,
+          payoutFee: requiresPayoutAccount ? numericFee : 0,
           returnType: effectiveReturnType,
           returnDate,
           paymentAccountId: requiresPayoutAccount ? activeAccountId : undefined,
@@ -358,6 +377,16 @@ function ReturnForm({
 
       {showPayoutMetadataFields && (
         <>
+          <PayoutFeeField
+            grossAmount={
+              isEditingApproved
+                ? Number(editingReturn?.amount || 0)
+                : Number(amount)
+            }
+            feeValue={payoutFee}
+            onChange={setPayoutFee}
+          />
+
           <div className="space-y-1.5">
             <label className="block text-xs font-medium text-text-description">
               Payout TrxID (Optional)

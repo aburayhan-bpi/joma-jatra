@@ -279,7 +279,10 @@ export default function ReturnsPage() {
                           </span>
                         )}
                         {ret.reason && (
-                          <p className="text-[11px] text-muted-foreground truncate max-w-44">
+                          <p
+                            className="text-[11px] text-muted-foreground truncate max-w-44"
+                            title={ret.reason}
+                          >
                             {ret.reason}
                           </p>
                         )}
@@ -293,7 +296,16 @@ export default function ReturnsPage() {
                               ? `${ret.paymentAccountId.accountName} (${getPaymentMethodLabel(ret.paymentMethod)})`
                               : "Payout account pending"}
                         </p>
-                        <p className="text-[11px] text-muted-foreground truncate max-w-48">
+                        <p
+                          className="text-[11px] text-muted-foreground truncate max-w-48"
+                          title={
+                            ret.recipientAccount
+                              ? `To: ${ret.recipientAccount}`
+                              : ret.trxId
+                                ? `TrxID: ${ret.trxId}`
+                                : undefined
+                          }
+                        >
                           {ret.recipientAccount
                             ? `To: ${ret.recipientAccount}`
                             : ret.trxId
@@ -303,7 +315,16 @@ export default function ReturnsPage() {
                       </td>
 
                       <td className="px-4 py-3 text-right font-semibold font-money text-gold-dark whitespace-nowrap">
-                        {formatTaka(ret.amount)}
+                        <div>{formatTaka(ret.amount)}</div>
+                        {(ret.payoutFee || 0) > 0 && (
+                          <div className="text-[10px] font-normal text-muted-foreground">
+                            Net{" "}
+                            {formatTaka(
+                              Math.max(0, ret.amount - (ret.payoutFee || 0)),
+                            )}{" "}
+                            · Fee {formatTaka(ret.payoutFee || 0)}
+                          </div>
+                        )}
                       </td>
 
                       <td className="px-4 py-3">
@@ -315,6 +336,7 @@ export default function ReturnsPage() {
                                 title: `${ret.memberId?.name || "Member"} — Return Proof`,
                                 imageUrl: ret.proofImage!,
                                 amount: ret.amount,
+                                payoutFee: ret.payoutFee,
                                 method: ret.paymentMethod,
                                 trxId: ret.trxId,
                                 date: ret.returnDate,

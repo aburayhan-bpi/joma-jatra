@@ -13,6 +13,7 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 export interface IDepositReturnDocument extends Document {
   memberId: mongoose.Types.ObjectId;
   amount: number;
+  payoutFee: number;
   returnDate: Date;
   paymentMethod?: PaymentMethodType | null;
   paymentAccountId?: mongoose.Types.ObjectId | null;
@@ -45,6 +46,11 @@ const depositReturnSchema = new Schema<IDepositReturnDocument>(
       type: Number,
       required: true,
       min: 1,
+    },
+    payoutFee: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
     returnDate: {
       type: Date,
@@ -138,6 +144,14 @@ const depositReturnSchema = new Schema<IDepositReturnDocument>(
 depositReturnSchema.index({ memberId: 1, status: 1, isDeleted: 1 });
 depositReturnSchema.index({ paymentAccountId: 1, status: 1, isDeleted: 1 });
 depositReturnSchema.index({ returnDate: -1 });
+
+// Refresh cached Mongoose model during Next.js dev hot-reload if schema gained new fields
+if (
+  mongoose.models.DepositReturn &&
+  !mongoose.models.DepositReturn.schema.path("payoutFee")
+) {
+  mongoose.deleteModel("DepositReturn");
+}
 
 export const DepositReturnModel: Model<IDepositReturnDocument> =
   mongoose.models.DepositReturn ||

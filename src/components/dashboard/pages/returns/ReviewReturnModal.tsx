@@ -3,6 +3,7 @@
 import AppSelect from "@/components/shared/AppSelect";
 import CustomButton from "@/components/shared/CustomButton";
 import CustomModal from "@/components/shared/CustomModal";
+import PayoutFeeField from "@/components/shared/PayoutFeeField";
 import ProofUploadField from "@/components/shared/ProofUploadField";
 import { useGetPaymentAccountsQuery } from "@/redux/api/accounts/accountsApi";
 import { useReviewReturnMutation } from "@/redux/api/returns/returnsApi";
@@ -39,6 +40,9 @@ function ReviewReturnContent({
       returnEntry.paymentAccountId?.id ||
       "",
   );
+  const [payoutFee, setPayoutFee] = useState(
+    returnEntry.payoutFee ? String(returnEntry.payoutFee) : "0",
+  );
   const [trxId, setTrxId] = useState(returnEntry.trxId || "");
   const [proofImage, setProofImage] = useState(returnEntry.proofImage || "");
   const [rejectionReason, setRejectionReason] = useState("");
@@ -48,8 +52,18 @@ function ReviewReturnContent({
   const selectedAccount = accounts.find((a) => a.id === activeAccountId);
 
   const handleDecision = async (status: "APPROVED" | "REJECTED") => {
+    const numericFee = Number(payoutFee || 0);
     if (status === "APPROVED" && !activeAccountId) {
       toast.error("Please select the payout payment account");
+      return;
+    }
+    if (
+      status === "APPROVED" &&
+      (Number.isNaN(numericFee) ||
+        numericFee < 0 ||
+        numericFee >= returnEntry.amount)
+    ) {
+      toast.error("Payout fee must be at least ৳0 and less than the requested amount");
       return;
     }
     if (status === "REJECTED" && !rejectionReason.trim()) {
@@ -64,6 +78,7 @@ function ReviewReturnContent({
         paymentAccountId: status === "APPROVED" ? activeAccountId : undefined,
         paymentMethod:
           status === "APPROVED" ? selectedAccount?.method : undefined,
+        payoutFee: status === "APPROVED" ? numericFee : undefined,
         trxId: status === "APPROVED" ? trxId.trim() || undefined : undefined,
         proofImage: status === "APPROVED" ? proofImage || undefined : undefined,
         rejectionReason:
@@ -125,6 +140,12 @@ function ReviewReturnContent({
             }))}
           />
         </div>
+
+        <PayoutFeeField
+          grossAmount={returnEntry.amount}
+          feeValue={payoutFee}
+          onChange={setPayoutFee}
+        />
 
         <div className="space-y-1.5">
           <label className="block text-xs font-medium text-text-description">

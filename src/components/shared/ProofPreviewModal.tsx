@@ -10,6 +10,7 @@ export interface ProofPreviewData {
   title: string;
   imageUrl: string;
   amount?: number | null;
+  payoutFee?: number | null;
   method?: string | null;
   trxId?: string | null;
   date?: string | null;
@@ -42,10 +43,21 @@ export default function ProofPreviewModal({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 rounded-md bg-muted/60 border border-border text-xs">
             {proof.amount !== undefined && proof.amount !== null && (
               <div>
-                <p className="text-muted-foreground">Amount</p>
+                <p className="text-muted-foreground">
+                  {(proof.payoutFee || 0) > 0 ? "Settled Amount" : "Amount"}
+                </p>
                 <p className="font-semibold text-foreground font-money mt-0.5">
                   {formatTaka(proof.amount)}
                 </p>
+                {(proof.payoutFee || 0) > 0 && (
+                  <p className="text-[11px] text-muted-foreground font-money mt-0.5">
+                    Net{" "}
+                    {formatTaka(
+                      Math.max(0, proof.amount - (proof.payoutFee || 0)),
+                    )}{" "}
+                    · Fee {formatTaka(proof.payoutFee || 0)}
+                  </p>
+                )}
               </div>
             )}
             {proof.method && (

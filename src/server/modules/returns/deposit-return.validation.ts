@@ -1,25 +1,45 @@
 import { PAYMENT_METHODS, RETURN_TYPES } from "@/types/backend";
 import { z } from "zod";
 import {
+  feeAmountSchema,
   moneyAmountSchema,
   safeImageUrlSchema,
 } from "../../shared/validation-helpers";
 
-export const createReturnSchema = z.object({
-  memberId: z.string().trim().optional(), // Admin/Cashier can specify (including inactive members for post-close settlement)
-  amount: moneyAmountSchema("Return amount"),
-  returnDate: z.coerce.date().optional(),
-  paymentAccountId: z.string().trim().optional(),
-  paymentMethod: z.enum(PAYMENT_METHODS).optional(),
-  recipientAccount: z.string().trim().max(120).optional().default(""),
-  trxId: z.string().trim().max(80).optional(),
-  proofImage: safeImageUrlSchema.optional().default(""),
-  reason: z.string().trim().max(400).optional().default(""),
-  returnType: z.enum(RETURN_TYPES).optional().default("PARTIAL"),
-});
+export const createReturnSchema = z
+  .object({
+    memberId: z.string().trim().optional(), // Admin/Cashier can specify (including inactive members for post-close settlement)
+    amount: moneyAmountSchema("Return amount"),
+    payoutFee: feeAmountSchema("Payout fee").optional().default(0),
+    returnDate: z.coerce.date().optional(),
+    paymentAccountId: z.string().trim().optional(),
+    paymentMethod: z.enum(PAYMENT_METHODS).optional(),
+    recipientAccount: z.string().trim().max(120).optional().default(""),
+    trxId: z.string().trim().max(80).optional(),
+    proofImage: safeImageUrlSchema.optional().default(""),
+    reason: z.string().trim().max(400).optional().default(""),
+    returnType: z.enum(RETURN_TYPES).optional().default("PARTIAL"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.payoutFee > 0 && data.returnType === "DONATED_WAIVER") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["payoutFee"],
+        message: "Donated/waived records cannot have a payout fee",
+      });
+    }
+    if (data.payoutFee >= data.amount) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["payoutFee"],
+        message: "Payout fee must be less than the return amount (leave at least ৳1 net payout)",
+      });
+    }
+  });
 
 export const updateReturnSchema = z.object({
   amount: moneyAmountSchema("Return amount").optional(),
+  payoutFee: feeAmountSchema("Payout fee").optional(),
   recipientAccount: z.string().trim().max(120).optional(),
   reason: z.string().trim().max(400).optional(),
   paymentAccountId: z.string().trim().optional(),
@@ -34,6 +54,7 @@ export const reviewReturnSchema = z
     rejectionReason: z.string().trim().max(300).optional(),
     paymentAccountId: z.string().trim().optional(),
     paymentMethod: z.enum(PAYMENT_METHODS).optional(),
+    payoutFee: feeAmountSchema("Payout fee").optional(),
     trxId: z.string().trim().max(80).optional(),
     proofImage: safeImageUrlSchema.optional(),
   })

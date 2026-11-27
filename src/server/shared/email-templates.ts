@@ -546,6 +546,7 @@ export function buildReturnReceiptEmail(params: {
   memberName: string;
   status: "APPROVED" | "REJECTED";
   amount: number;
+  payoutFee?: number;
   returnType: string;
   returnDate: Date | string;
   paymentAccountName?: string | null;
@@ -557,6 +558,8 @@ export function buildReturnReceiptEmail(params: {
   newNetBalance?: number;
 }): EmailTemplatePayload {
   const isDonation = params.returnType === "DONATED_WAIVER";
+  const fee = !isDonation && params.payoutFee && params.payoutFee > 0 ? params.payoutFee : 0;
+  const netDisbursed = Math.max(0, params.amount - fee);
   const readableType = params.returnType.replace(/_/g, " ");
   const dateLabel = formatShortDate(params.returnDate);
   const methodLabel = formatMethodName(params.paymentMethod);
@@ -606,10 +609,16 @@ export function buildReturnReceiptEmail(params: {
                 ${isDonation ? "Waived to Group Fund" : `Disbursed &bull; ${escapeHtml(readableType)}`}
               </div>
               <div style="font-family:${MONO_STACK};font-size:34px;font-weight:700;color:#0f172a;letter-spacing:-0.5px;line-height:1.15;">
-                ${escapeHtml(formatTakaText(params.amount))}
+                ${escapeHtml(formatTakaText(isDonation ? params.amount : netDisbursed))}
               </div>
               <div style="font-size:13px;color:#475569;margin-top:6px;">
-                ${isDonation ? `Waived by <strong style="color:#0f172a;">${escapeHtml(params.memberName)}</strong> to the group fund` : `Paid out to <strong style="color:#0f172a;">${escapeHtml(params.memberName)}</strong>`}
+                ${
+                  isDonation
+                    ? `Waived by <strong style="color:#0f172a;">${escapeHtml(params.memberName)}</strong> to the group fund`
+                    : fee > 0
+                      ? `Paid net to <strong style="color:#0f172a;">${escapeHtml(params.memberName)}</strong> (${escapeHtml(formatTakaText(params.amount))} settled &minus; ${escapeHtml(formatTakaText(fee))} fee)`
+                      : `Paid out to <strong style="color:#0f172a;">${escapeHtml(params.memberName)}</strong>`
+                }
               </div>
             </td>
           </tr>
@@ -629,6 +638,23 @@ export function buildReturnReceiptEmail(params: {
                   <td style="padding:7px 0;color:#64748b;">Settlement Type</td>
                   <td style="padding:7px 0;text-align:right;font-weight:600;color:#0f172a;">${escapeHtml(readableType)}</td>
                 </tr>
+                ${
+                  fee > 0
+                    ? `
+                <tr>
+                  <td style="padding:7px 0;color:#64748b;">Gross Settled</td>
+                  <td style="padding:7px 0;text-align:right;font-family:${MONO_STACK};font-weight:600;color:#0f172a;">${escapeHtml(formatTakaText(params.amount))}</td>
+                </tr>
+                <tr>
+                  <td style="padding:7px 0;color:#64748b;">Payout Fee (Deducted)</td>
+                  <td style="padding:7px 0;text-align:right;font-family:${MONO_STACK};font-weight:600;color:#a15c07;">&minus;${escapeHtml(formatTakaText(fee))}</td>
+                </tr>
+                <tr>
+                  <td style="padding:7px 0;color:#64748b;">Net Disbursed</td>
+                  <td style="padding:7px 0;text-align:right;font-family:${MONO_STACK};font-weight:700;color:#046c4e;">${escapeHtml(formatTakaText(netDisbursed))}</td>
+                </tr>`
+                    : ""
+                }
                 ${
                   !isDonation && params.paymentAccountName
                     ? `
@@ -693,8 +719,8 @@ export function buildReturnReceiptEmail(params: {
 </html>`;
 
     return {
-      subject: `Voucher ${voucherNo} — ${isDonation ? "Balance Waiver" : "Return Payout"} of ${formatBdtPlain(params.amount)}`,
-      text: `JomaJatra Payout Voucher (${voucherNo})\nDate: ${dateLabel}\n\nMember: ${params.memberName}\nType: ${readableType}\nAmount: ${formatBdtPlain(params.amount)}${params.paymentAccountName ? `\nPaid From: ${params.paymentAccountName} (${methodLabel})` : ""}${params.recipientAccount ? `\nSent To: ${params.recipientAccount}` : ""}${params.trxId ? `\nTrxID: ${params.trxId}` : ""}\nProcessed By: ${params.reviewedByName}${params.newNetBalance !== undefined ? `\nRemaining Net Balance: ${formatBdtPlain(params.newNetBalance)}` : ""}`,
+      subject: `Voucher ${voucherNo} — ${isDonation ? "Balance Waiver" : "Return Payout"} of ${formatBdtPlain(isDonation ? params.amount : netDisbursed)}`,
+      text: `JomaJatra Payout Voucher (${voucherNo})\nDate: ${dateLabel}\n\nMember: ${params.memberName}\nType: ${readableType}\n${fee > 0 ? `Gross Settled: ${formatBdtPlain(params.amount)}\nPayout Fee (Deducted): ${formatBdtPlain(fee)}\nNet Disbursed: ${formatBdtPlain(netDisbursed)}` : `Amount: ${formatBdtPlain(params.amount)}`}${params.paymentAccountName ? `\nPaid From: ${params.paymentAccountName} (${methodLabel})` : ""}${params.recipientAccount ? `\nSent To: ${params.recipientAccount}` : ""}${params.trxId ? `\nTrxID: ${params.trxId}` : ""}\nProcessed By: ${params.reviewedByName}${params.newNetBalance !== undefined ? `\nRemaining Net Balance: ${formatBdtPlain(params.newNetBalance)}` : ""}`,
       html,
     };
   }

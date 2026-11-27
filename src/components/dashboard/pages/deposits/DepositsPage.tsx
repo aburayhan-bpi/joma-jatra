@@ -312,7 +312,10 @@ export default function DepositsPage() {
                           </span>
                         )}
                         {dep.note && (
-                          <p className="text-[11px] text-muted-foreground truncate max-w-44">
+                          <p
+                            className="text-[11px] text-muted-foreground truncate max-w-44"
+                            title={dep.note}
+                          >
                             {dep.note}
                           </p>
                         )}

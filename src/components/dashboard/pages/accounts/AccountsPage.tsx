@@ -469,7 +469,10 @@ export default function AccountsPage() {
                           {trf.trxId || "—"}
                         </p>
                         {trf.note && (
-                          <p className="text-[11px] truncate max-w-52">
+                          <p
+                            className="text-[11px] truncate max-w-52"
+                            title={trf.note}
+                          >
                             {trf.note}
                           </p>
                         )}

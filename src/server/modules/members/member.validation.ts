@@ -4,7 +4,10 @@ import {
   USER_ROLES,
 } from "@/types/backend";
 import { z } from "zod";
-import { safeImageUrlSchema } from "../../shared/validation-helpers";
+import {
+  feeAmountSchema,
+  safeImageUrlSchema,
+} from "../../shared/validation-helpers";
 
 export const createMemberSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -41,6 +44,7 @@ export const deactivateMemberSchema = z
     // Required when action === "SETTLE_AND_CLOSE" and member has netBalance > 0
     paymentAccountId: z.string().trim().optional(),
     paymentMethod: z.enum(PAYMENT_METHODS).optional(),
+    payoutFee: feeAmountSchema("Settlement payout fee").optional().default(0),
     recipientAccount: z.string().trim().max(100).optional().default(""),
     trxId: z.string().trim().max(80).optional(),
     proofImage: safeImageUrlSchema.optional().default(""),
@@ -52,6 +56,13 @@ export const deactivateMemberSchema = z
         path: ["paymentAccountId"],
         message:
           "Please select the Payment Account used to settle this member's balance",
+      });
+    }
+    if (data.action !== "SETTLE_AND_CLOSE" && data.payoutFee > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["payoutFee"],
+        message: "Payout fee only applies when settling & paying out now",
       });
     }
   });
